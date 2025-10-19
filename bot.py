@@ -581,15 +581,22 @@ async def sync_commands(ctx):
         import traceback
         traceback.print_exc()
 
-# Comando para configurar ticket com imagem
+# Comando para configurar ticket com imagem e personalização
 @bot.command(name='setup_ticket_img')
 @commands.has_permissions(administrator=True)
-async def setup_ticket_with_image(ctx):
-    """Configura sistema de tickets - envie uma imagem junto com o comando"""
+async def setup_ticket_with_image(ctx, *, args=""):
+    """Configura sistema de tickets com imagem e personalização
+    
+    Uso: !setup_ticket_img [título] [cor] [nome_botão]
+    Ex: !setup_ticket_img "🛒 Vendas Premium" "#ff0000" "Comprar Agora"
+    """
     try:
         # Verificar se há anexos
         if not ctx.message.attachments:
-            await ctx.send("❌ Envie uma imagem junto com o comando! Ex: `!setup_ticket_img` + imagem")
+            await ctx.send("❌ **Como usar:**\n"
+                          "1. Arraste uma imagem para o chat\n"
+                          "2. Use: `!setup_ticket_img [título] [cor] [nome_botão]`\n"
+                          "3. Ex: `!setup_ticket_img \"🛒 Vendas Premium\" \"#ff0000\" \"Comprar Agora\"`")
             return
         
         # Pegar a primeira imagem
@@ -600,11 +607,34 @@ async def setup_ticket_with_image(ctx):
             await ctx.send("❌ O arquivo deve ser uma imagem!")
             return
         
-        # Criar embed com a imagem
+        # Processar argumentos
+        parts = args.split('"') if '"' in args else args.split()
+        titulo = parts[1] if len(parts) > 1 and parts[1].strip() else "🛒 Sistema de Vendas Automatizado"
+        cor = parts[3] if len(parts) > 3 and parts[3].strip() else "#0099ff"
+        nome_botao = parts[5] if len(parts) > 5 and parts[5].strip() else "Criar Ticket de Compra"
+        
+        # Converter cor hex para int
+        try:
+            cor_hex = cor.strip().lower()
+            if cor_hex.startswith('#'):
+                cor_hex = cor_hex[1:]
+            elif cor_hex.startswith('0x'):
+                cor_hex = cor_hex[2:]
+            
+            if len(cor_hex) == 3:
+                cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
+            
+            cor_int = int(cor_hex, 16)
+            print(f"Cor convertida: {cor_int} (0x{cor_hex})")
+        except (ValueError, IndexError):
+            print(f"Cor inválida '{cor}', usando padrão")
+            cor_int = 0x0099ff
+        
+        # Criar embed personalizado
         embed = discord.Embed(
-            title="🛒 Sistema de Vendas Automatizado",
+            title=titulo,
             description="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
-            color=0x0099ff
+            color=cor_int
         )
         embed.set_image(url=attachment.url)
         embed.add_field(
@@ -614,12 +644,15 @@ async def setup_ticket_with_image(ctx):
         )
         embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
         
-        # Criar view com botão
+        # Criar view com botão personalizado
         from utils.ticket_views import TicketView
-        view = TicketView("Criar Ticket de Compra")
+        view = TicketView(nome_botao)
         
         await ctx.send(embed=embed, view=view)
-        await ctx.send("✅ Sistema de tickets configurado com imagem!")
+        await ctx.send(f"✅ Sistema de tickets configurado!\n"
+                      f"**Título:** {titulo}\n"
+                      f"**Cor:** {cor} (0x{cor_hex})\n"
+                      f"**Botão:** {nome_botao}")
         
     except Exception as e:
         print(f"Erro no setup_ticket_img: {e}")
