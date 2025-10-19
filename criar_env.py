@@ -7,7 +7,7 @@ def create_env_file():
     """Cria o arquivo .env com todas as credenciais"""
     
     env_content = """# Configurações do Bot Discord ✅
-    DISCORD_TOKEN=SEU_TOKEN_AQUI
+    DISCORD_TOKEN=Nzg0MDU4MTgyNTE1NDI1MzEw.GIwoIJ.OZriga9_Z2AW0bCiBu2kwZPqSzwr427IMK5A5w
 DISCORD_APPLICATION_ID=784058182515425310
 
 # Configurações do Supabase ✅
