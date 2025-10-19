@@ -40,9 +40,28 @@ async def setup_ticket_slash(interaction: discord.Interaction):
     """Comando admin para configurar sistema de tickets via modal"""
     try:
         print(f"Comando setup_ticket executado por {interaction.user.name}")
+        print("Tentando importar SetupTicketModal...")
+        
         from utils.ticket_views import SetupTicketModal
+        print("SetupTicketModal importado com sucesso!")
+        
+        print("Criando instância do modal...")
         modal = SetupTicketModal()
+        print("Modal criado com sucesso!")
+        
+        print("Enviando modal...")
         await interaction.response.send_modal(modal)
+        print("Modal enviado com sucesso!")
+        
+    except ImportError as e:
+        print(f"Erro de importação: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro de importação no sistema de tickets.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
         import traceback
