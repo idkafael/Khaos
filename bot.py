@@ -196,15 +196,32 @@ async def on_ready():
     # Sincronizar comandos slash
     try:
         print("🔄 Sincronizando comandos slash...")
-        synced = await bot.tree.sync()
-        print(f"✅ {len(synced)} comandos sincronizados com sucesso!")
+        
+        # Tentar sincronizar globalmente primeiro
+        try:
+            synced = await bot.tree.sync()
+            print(f"✅ {len(synced)} comandos sincronizados globalmente!")
+        except Exception as e:
+            print(f"❌ Erro na sincronização global: {e}")
+            # Tentar sincronizar por guild
+            for guild in bot.guilds:
+                try:
+                    synced = await bot.tree.sync(guild=guild)
+                    print(f"✅ {len(synced)} comandos sincronizados na guild {guild.name}!")
+                except Exception as guild_error:
+                    print(f"❌ Erro na guild {guild.name}: {guild_error}")
         
         # Listar comandos sincronizados
-        for cmd in synced:
-            print(f"  - /{cmd.name}: {cmd.description}")
+        try:
+            commands = bot.tree.get_commands()
+            print(f"📋 Comandos registrados no bot: {len(commands)}")
+            for cmd in commands:
+                print(f"  - /{cmd.name}: {cmd.description}")
+        except Exception as e:
+            print(f"❌ Erro ao listar comandos: {e}")
             
     except Exception as e:
-        print(f"❌ Erro ao sincronizar comandos: {e}")
+        print(f"❌ Erro geral na sincronização: {e}")
         import traceback
         traceback.print_exc()
     
@@ -477,6 +494,13 @@ async def monitor_payment(transaction_id, user_id):
     except Exception as e:
         print(f"Erro ao monitorar pagamento: {e}")
 
+
+# Comando de teste via prefixo
+@bot.command(name='teste')
+async def teste_prefix(ctx):
+    """Comando de teste via prefixo"""
+    print(f"Comando !teste executado por {ctx.author.name} em {ctx.guild.name}")
+    await respond_with_side_embed(ctx, "✅ Comando de teste funcionando via prefixo!")
 
 # Executar o bot
 if __name__ == "__main__":
