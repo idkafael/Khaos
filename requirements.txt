@@ -1,0 +1,32 @@
+# Discord Bot
+discord.py>=2.3.0
+py-cord>=2.4.0
+
+# Banco de dados
+supabase>=1.0.0
+postgrest>=0.10.0
+
+# Pagamentos
+requests>=2.31.0
+qrcode[pil]>=7.4.0
+pushinpay>=1.0.0
+
+# Configuração
+python-dotenv>=1.0.0
+
+# Utilitários
+asyncio>=3.4.3
+datetime
+typing-extensions>=4.0.0
+
+# Logging
+loguru>=0.7.0
+
+# Validação
+email-validator>=2.0.0
+
+# Desenvolvimento (opcional)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0
