@@ -66,7 +66,8 @@ class TicketButton(ui.Button):
         super().__init__(
             label="🛒 Criar Ticket de Compra",
             style=discord.ButtonStyle.primary,
-            emoji="🎫"
+            emoji="🎫",
+            custom_id="create_ticket_button"
         )
         self.product_model = ProductModel()
     
@@ -117,7 +118,8 @@ class CloseTicketButton(ui.Button):
         super().__init__(
             label="🔒 Fechar Ticket",
             style=discord.ButtonStyle.danger,
-            emoji="❌"
+            emoji="❌",
+            custom_id="close_ticket_button"
         )
     
     async def callback(self, interaction: discord.Interaction):
