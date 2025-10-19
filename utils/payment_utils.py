@@ -23,6 +23,10 @@ class PaymentUtils:
     async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str) -> Optional[Dict]:
         """Cria um pagamento via Pix usando a API PushinPay"""
         try:
+            print(f"🔧 Debug: Iniciando pagamento - Valor: {amount}, Email: {customer_email}")
+            print(f"🔧 Debug: API Key: {self.pushinpay_api_key[:10]}...")
+            print(f"🔧 Debug: Base URL: {self.base_url}")
+            
             # Converter valor para centavos (PushinPay usa centavos)
             amount_cents = int(amount * 100)
             
@@ -38,13 +42,22 @@ class PaymentUtils:
                 "split_rules": []
             }
             
+            print(f"🔧 Debug: Dados do pagamento: {payment_data}")
+            print(f"🔧 Debug: Headers: {self.headers}")
+            
             # Fazer requisição para a API PushinPay
+            url = f"{self.base_url}/api/pix/cashIn"
+            print(f"🔧 Debug: URL da requisição: {url}")
+            
             response = requests.post(
-                f"{self.base_url}/api/pix/cashIn",
+                url,
                 headers=self.headers,
                 json=payment_data,
                 timeout=30
             )
+            
+            print(f"🔧 Debug: Status da resposta: {response.status_code}")
+            print(f"🔧 Debug: Resposta: {response.text}")
             
             if response.status_code == 200:
                 payment_info = response.json()
