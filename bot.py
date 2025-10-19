@@ -47,25 +47,25 @@ async def respond_command(ctx, message, embed=None, ephemeral=False):
             await ctx.send(message)
 
 async def respond_with_side_embed(ctx, message, embed=None, ephemeral=False):
-    """Responde com mensagem + embed lateral roxo"""
+    """Responde apenas com embed lateral roxo"""
     # Criar embed lateral roxo simples apenas com a mensagem
     side_embed = discord.Embed(
         description=message,
         color=0x8B5CF6  # Roxo
     )
     
-    # Se já tem um embed principal, enviar mensagem + ambos embeds
+    # Se já tem um embed principal, enviar apenas ambos embeds
     if embed:
         if ctx.interaction:
-            await ctx.respond(message, embeds=[embed, side_embed], ephemeral=ephemeral)
+            await ctx.respond(embeds=[embed, side_embed], ephemeral=ephemeral)
         else:
-            await ctx.send(message, embeds=[embed, side_embed])
+            await ctx.send(embeds=[embed, side_embed])
     else:
-        # Se não tem embed principal, enviar mensagem + embed lateral
+        # Se não tem embed principal, enviar apenas embed lateral
         if ctx.interaction:
-            await ctx.respond(message, embed=side_embed, ephemeral=ephemeral)
+            await ctx.respond(embed=side_embed, ephemeral=ephemeral)
         else:
-            await ctx.send(message, embed=side_embed)
+            await ctx.send(embed=side_embed)
 
 @bot.event
 async def on_ready():
