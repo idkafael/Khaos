@@ -10,29 +10,29 @@ class SetupTicketModal(ui.Modal):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(title="Configurar Sistema de Tickets", timeout=300)
-        self.add_item(ui.InputText(
+        self.add_item(ui.TextInput(
             label="Headline", 
             placeholder="Ex: Sistema de Vendas Automatizado", 
-            value="🛒 Sistema de Vendas Automatizado",
+            default="🛒 Sistema de Vendas Automatizado",
             max_length=100
         ))
-        self.add_item(ui.InputText(
+        self.add_item(ui.TextInput(
             label="Produto", 
             placeholder="Ex: Produtos Digitais", 
-            value="Produtos Digitais",
+            default="Produtos Digitais",
             max_length=100
         ))
-        self.add_item(ui.InputText(
+        self.add_item(ui.TextInput(
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
-            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
-            style=discord.InputTextStyle.long,
+            default="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            style=discord.TextStyle.long,
             max_length=1000
         ))
-        self.add_item(ui.InputText(
+        self.add_item(ui.TextInput(
             label="Nome do Botão", 
             placeholder="Ex: Criar Ticket de Compra", 
-            value="Criar Ticket de Compra",
+            default="Criar Ticket de Compra",
             max_length=80
         ))
 
