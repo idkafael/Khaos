@@ -166,7 +166,14 @@ async def setup_ticket_command(ctx):
     try:
         from utils.ticket_views import SetupTicketModal
         modal = SetupTicketModal()
-        await ctx.interaction.response.send_modal(modal) if ctx.interaction else await ctx.send("❌ Este comando só funciona como slash command.")
+        
+        if ctx.interaction:
+            # Slash command - usar interaction
+            await ctx.interaction.response.send_modal(modal)
+        else:
+            # Prefix command - enviar mensagem explicativa
+            await respond_with_side_embed(ctx, "❌ Este comando só funciona como slash command. Use `/setup_ticket`")
+            
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
         await respond_with_side_embed(ctx, "❌ Erro ao configurar sistema de tickets.", ephemeral=True)
