@@ -190,25 +190,63 @@ async def buy_product(ctx, *, product_name):
             status='pending'
         )
         
-        # Solicitar email do usuário
-        embed = discord.Embed(
-            title="📧 Informações de Pagamento",
-            description=f"Para processar o pagamento de **{product['name']}** (R$ {product['price']:.2f}), preciso do seu email.",
-            color=0xffa500
+        # Gerar pagamento via Pix diretamente
+        payment_data = await payment_utils.create_pix_payment(
+            amount=product['price'],
+            description=f"Compra: {product['name']}",
+            customer_email=f"{ctx.author.name}@discord.com",  # Email padrão baseado no nome
+            customer_name=ctx.author.name
         )
-        embed.add_field(
-            name="💳 Método de Pagamento",
-            value="Pix (QR Code + Código)",
-            inline=False
-        )
-        embed.set_footer(text="Digite seu email no chat para continuar")
         
-        await ctx.send(embed=embed)
-        
-        # Armazenar transação pendente
-        active_tickets[user_id]['transaction_id'] = transaction['id']
-        active_tickets[user_id]['product'] = product
-        active_tickets[user_id]['status'] = 'waiting_email'
+        if payment_data:
+            # Atualizar transação com payment_id
+            await transaction_model.update_transaction(transaction['id'], {
+                'payment_id': payment_data['id'],
+                'pix_code': payment_data['pix_code'],
+                'qr_code': payment_data['qr_code'],
+                'email': f"{ctx.author.name}@discord.com"
+            })
+            
+            # Exibir informações de pagamento
+            embed = discord.Embed(
+                title="💳 Pagamento via Pix",
+                description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
+                color=0x00ff00
+            )
+            embed.add_field(
+                name="📱 Código Pix",
+                value=f"```{payment_data['pix_code']}```",
+                inline=False
+            )
+            embed.add_field(
+                name="⏰ Tempo para pagamento",
+                value="10 minutos",
+                inline=True
+            )
+            embed.set_footer(text="Escaneie o QR Code ou copie o código Pix")
+            
+            await ctx.send(embed=embed)
+            
+            # Enviar QR Code como imagem se disponível
+            if payment_data.get('qr_code_base64'):
+                # Usar QR Code base64 da PushinPay
+                qr_image = payment_utils.get_qr_code_image_from_base64(payment_data['qr_code_base64'])
+                if qr_image:
+                    await ctx.send(file=discord.File(qr_image, filename='qrcode.png'))
+            elif payment_data.get('qr_code_image'):
+                # Fallback para QR Code gerado localmente
+                await ctx.send(file=discord.File(payment_data['qr_code_image']))
+            
+            # Atualizar status do ticket
+            active_tickets[user_id]['transaction_id'] = transaction['id']
+            active_tickets[user_id]['product'] = product
+            active_tickets[user_id]['status'] = 'waiting_payment'
+            
+            # Iniciar monitoramento do pagamento
+            asyncio.create_task(monitor_payment(transaction['id'], user_id))
+            
+        else:
+            await ctx.send("❌ Erro ao gerar pagamento. Tente novamente.")
         
     except Exception as e:
         print(f"Erro ao iniciar compra: {e}")
@@ -285,92 +323,9 @@ async def check_status(ctx):
 
 @bot.event
 async def on_message(message):
-    """Processa mensagens para capturar email e processar pagamentos"""
+    """Processa mensagens normalmente"""
     if message.author.bot:
         return
-    
-    # Verificar se é uma resposta de email
-    user_id = message.author.id
-    if user_id in active_tickets and active_tickets[user_id]['status'] == 'waiting_email':
-        # Validar se é um email válido
-        email = message.content.strip()
-        if '@' in email and '.' in email:
-            try:
-                # Atualizar transação com email
-                transaction_id = active_tickets[user_id]['transaction_id']
-                await transaction_model.update_transaction(transaction_id, {'email': email})
-                
-                # Gerar pagamento via Pix
-                product = active_tickets[user_id]['product']
-                payment_data = await payment_utils.create_pix_payment(
-                    amount=product['price'],
-                    description=f"Compra: {product['name']}",
-                    customer_email=email,
-                    customer_name=message.author.name
-                )
-                
-                if payment_data:
-                    # Atualizar transação com dados do pagamento
-                    await transaction_model.update_transaction(transaction_id, {
-                        'payment_id': payment_data['id'],
-                        'pix_code': payment_data['pix_code'],
-                        'qr_code': payment_data['qr_code']
-                    })
-                    
-                    # Enviar informações de pagamento
-                    embed = discord.Embed(
-                        title="💳 Pagamento via Pix",
-                        description=f"Pagamento gerado para **{product['name']}**",
-                        color=0x00ff00
-                    )
-                    embed.add_field(
-                        name="💰 Valor",
-                        value=f"R$ {product['price']:.2f}",
-                        inline=True
-                    )
-                    embed.add_field(
-                        name="📧 Email",
-                        value=email,
-                        inline=True
-                    )
-                    embed.add_field(
-                        name="🔢 Código Pix",
-                        value=f"```{payment_data['pix_code']}```",
-                        inline=False
-                    )
-                    embed.add_field(
-                        name="📱 QR Code",
-                        value="Escaneie o QR Code abaixo para pagar:",
-                        inline=False
-                    )
-                    embed.set_footer(text="O pagamento será verificado automaticamente")
-                    
-                    await message.channel.send(embed=embed)
-                    
-                    # Enviar QR Code como imagem se disponível
-                    if payment_data.get('qr_code_base64'):
-                        # Usar QR Code base64 da PushinPay
-                        qr_image = payment_utils.get_qr_code_image_from_base64(payment_data['qr_code_base64'])
-                        if qr_image:
-                            await message.channel.send(file=discord.File(qr_image, filename='qrcode.png'))
-                    elif payment_data.get('qr_code_image'):
-                        # Fallback para QR Code gerado localmente
-                        await message.channel.send(file=discord.File(payment_data['qr_code_image']))
-                    
-                    # Atualizar status do ticket
-                    active_tickets[user_id]['status'] = 'waiting_payment'
-                    
-                    # Iniciar monitoramento do pagamento
-                    asyncio.create_task(monitor_payment(transaction_id, user_id))
-                    
-                else:
-                    await message.channel.send("❌ Erro ao gerar pagamento. Tente novamente.")
-                    
-            except Exception as e:
-                print(f"Erro ao processar email: {e}")
-                await message.channel.send("❌ Erro ao processar email. Tente novamente.")
-        else:
-            await message.channel.send("❌ Email inválido. Por favor, digite um email válido.")
     
     # Processar comandos normalmente
     await bot.process_commands(message)
