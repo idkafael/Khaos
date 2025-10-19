@@ -305,22 +305,34 @@ async def load_sample_products():
     if not products:
         sample_products = [
             {
-                "name": "Camiseta Estilo 2025",
-                "description": "Camiseta unissex com estampa futurista, disponível nas cores preta, branca e cinza.",
-                "price": 49.90,
-                "category": "Roupas"
+                "name": "Contas Instagram",
+                "description": "Contas Instagram verificadas com seguidores reais. Perfeitas para marketing digital e crescimento orgânico.",
+                "price": 25.00,
+                "category": "Contas Sociais"
             },
             {
-                "name": "Caneca Personalizada",
-                "description": "Caneca de cerâmica com design personalizado. Ideal para presentear ou para o seu escritório.",
-                "price": 29.90,
-                "category": "Acessórios"
+                "name": "Contas TikTok",
+                "description": "Contas TikTok ativas com vídeos virais. Ideal para influenciadores e criadores de conteúdo.",
+                "price": 30.00,
+                "category": "Contas Sociais"
             },
             {
-                "name": "Fone de Ouvido Bluetooth",
-                "description": "Fone de ouvido sem fio com cancelamento de ruído. Perfeito para quem busca qualidade de som e conforto.",
-                "price": 199.00,
-                "category": "Eletrônicos"
+                "name": "Contas Discord",
+                "description": "Contas Discord premium com Nitro ativo. Perfeitas para gamers e comunidades.",
+                "price": 15.00,
+                "category": "Contas Sociais"
+            },
+            {
+                "name": "Contas Reddit",
+                "description": "Contas Reddit com karma alto e histórico limpo. Ideais para marketing e engajamento.",
+                "price": 20.00,
+                "category": "Contas Sociais"
+            },
+            {
+                "name": "Contas Telegram",
+                "description": "Contas Telegram premium com recursos avançados. Perfeitas para comunicação e negócios.",
+                "price": 18.00,
+                "category": "Contas Sociais"
             }
         ]
         
@@ -580,6 +592,26 @@ async def sync_commands(ctx):
         await ctx.send(f"❌ Erro: {e}")
         import traceback
         traceback.print_exc()
+
+# Comando para recarregar produtos
+@bot.command(name='reload_products')
+@commands.has_permissions(administrator=True)
+async def reload_products(ctx):
+    """Recarrega os produtos no banco de dados"""
+    try:
+        # Limpar produtos existentes
+        products = await product_model.get_all_products()
+        for product in products:
+            await product_model.delete_product(product['id'])
+        
+        # Carregar novos produtos
+        await load_sample_products()
+        
+        await ctx.send("✅ Produtos recarregados com sucesso!")
+        
+    except Exception as e:
+        print(f"Erro ao recarregar produtos: {e}")
+        await ctx.send("❌ Erro ao recarregar produtos.")
 
 # Comando para configurar ticket com imagem e personalização
 @bot.command(name='setup_ticket_img')
