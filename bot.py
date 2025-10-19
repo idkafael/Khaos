@@ -23,6 +23,121 @@ intents.members = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+# Adicionar comandos slash manualmente
+@bot.tree.command(name="teste", description="Comando de teste")
+async def teste_slash(interaction: discord.Interaction):
+    """Comando de teste simples"""
+    embed = discord.Embed(
+        description="✅ Comando de teste funcionando!",
+        color=0x8B5CF6
+    )
+    await interaction.response.send_message(embed=embed)
+
+@bot.tree.command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
+@discord.app_commands.default_permissions(administrator=True)
+async def setup_ticket_slash(interaction: discord.Interaction):
+    """Comando admin para configurar sistema de tickets via modal"""
+    try:
+        print(f"Comando setup_ticket executado por {interaction.user.name}")
+        from utils.ticket_views import SetupTicketModal
+        modal = SetupTicketModal()
+        await interaction.response.send_modal(modal)
+    except Exception as e:
+        print(f"Erro no comando setup_ticket: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro ao configurar sistema de tickets.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.tree.command(name="ajuda", description="Exibe a lista de comandos disponíveis")
+async def ajuda_slash(interaction: discord.Interaction):
+    """Exibe a lista de comandos disponíveis"""
+    embed = discord.Embed(
+        title="🛒 Comandos de Khaos",
+        description="Sistema completo de vendas com tickets e pagamentos via Pix",
+        color=0xe91e63
+    )
+    
+    embed.add_field(
+        name="» Sistema de Tickets",
+        value="Clique no botão 'Criar Ticket de Compra' para começar\nEscolha seu produto no modal interativo\nAcesse seu canal privado para continuar",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="» Comandos Principais",
+        value="`/ajuda` :: 🤖 Lista de comandos\n`/produtos` :: 🛍️ Ver produtos disponíveis\n`/comprar` :: 💳 Comprar produto (no canal do ticket)\n`/status` :: 📊 Status do pagamento",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="» Comandos Admin",
+        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets\n`/close_ticket` :: 🔒 Fechar ticket manualmente",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="» Sistema de Pagamento",
+        value="💎 **Pix Instantâneo** - QR Code + Código\n🚀 **Entrega Automática** - Após confirmação\n🛡️ **Suporte 24/7** - Atendimento completo",
+        inline=False
+    )
+    
+    embed.set_footer(text="Sistema de vendas automatizado • Powered by Khaos")
+    
+    side_embed = discord.Embed(
+        description="📋 Lista de comandos disponíveis:",
+        color=0x8B5CF6
+    )
+    
+    await interaction.response.send_message(embeds=[embed, side_embed])
+
+@bot.tree.command(name="produtos", description="Ver produtos disponíveis")
+async def produtos_slash(interaction: discord.Interaction):
+    """Exibe os produtos disponíveis via slash command"""
+    try:
+        products = await product_model.get_all_products()
+        
+        if not products:
+            embed = discord.Embed(
+                description="❌ Nenhum produto disponível no momento.",
+                color=0x8B5CF6
+            )
+            await interaction.response.send_message(embed=embed)
+            return
+        
+        embed = discord.Embed(
+            title="🛍️ Produtos Disponíveis",
+            description="Escolha um produto para comprar:",
+            color=0x0099ff
+        )
+        
+        for product in products:
+            embed.add_field(
+                name=f"🛒 {product['name']}",
+                value=f"**Preço:** R$ {product['price']:.2f}\n**Descrição:** {product['description']}",
+                inline=False
+            )
+        
+        embed.set_footer(text="Crie um ticket para comprar um produto")
+        
+        side_embed = discord.Embed(
+            description="🛍️ Produtos disponíveis:",
+            color=0x8B5CF6
+        )
+        
+        await interaction.response.send_message(embeds=[embed, side_embed])
+        
+    except Exception as e:
+        print(f"Erro ao carregar produtos: {e}")
+        embed = discord.Embed(
+            description="❌ Erro ao carregar produtos. Tente novamente.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed)
+
 # Inicializar modelos
 product_model = ProductModel()
 transaction_model = TransactionModel()
