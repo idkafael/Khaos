@@ -197,28 +197,58 @@ async def on_ready():
     try:
         print("🔄 Sincronizando comandos slash...")
         
-        # Tentar sincronizar globalmente primeiro
+        # Aguardar um pouco para garantir que o bot está totalmente conectado
+        await asyncio.sleep(2)
+        
+        # Listar comandos registrados antes da sincronização
+        commands = bot.tree.get_commands()
+        print(f"📋 Comandos registrados no bot: {len(commands)}")
+        for cmd in commands:
+            print(f"  - /{cmd.name}: {cmd.description}")
+        
+        # Tentar sincronizar globalmente
         try:
+            print("🌍 Tentando sincronização global...")
             synced = await bot.tree.sync()
             print(f"✅ {len(synced)} comandos sincronizados globalmente!")
+            
+            # Aguardar um pouco para a sincronização se propagar
+            await asyncio.sleep(3)
+            
         except Exception as e:
             print(f"❌ Erro na sincronização global: {e}")
+            print("🏠 Tentando sincronização por guild...")
+            
             # Tentar sincronizar por guild
             for guild in bot.guilds:
                 try:
+                    print(f"🔄 Sincronizando na guild: {guild.name} (ID: {guild.id})")
                     synced = await bot.tree.sync(guild=guild)
                     print(f"✅ {len(synced)} comandos sincronizados na guild {guild.name}!")
+                    
+                    # Aguardar um pouco entre sincronizações
+                    await asyncio.sleep(1)
+                    
                 except Exception as guild_error:
                     print(f"❌ Erro na guild {guild.name}: {guild_error}")
+                    import traceback
+                    traceback.print_exc()
         
-        # Listar comandos sincronizados
+        # Verificar se os comandos estão disponíveis
+        print("🔍 Verificando comandos disponíveis...")
         try:
-            commands = bot.tree.get_commands()
-            print(f"📋 Comandos registrados no bot: {len(commands)}")
-            for cmd in commands:
-                print(f"  - /{cmd.name}: {cmd.description}")
+            # Tentar acessar os comandos do bot
+            app_commands = bot.tree.get_commands()
+            print(f"📊 Total de comandos app_commands: {len(app_commands)}")
+            
+            # Verificar se o bot tem as permissões necessárias
+            print(f"🔑 Bot ID: {bot.user.id}")
+            print(f"🔑 Application ID: {Config.DISCORD_APPLICATION_ID}")
+            
         except Exception as e:
-            print(f"❌ Erro ao listar comandos: {e}")
+            print(f"❌ Erro ao verificar comandos: {e}")
+            import traceback
+            traceback.print_exc()
             
     except Exception as e:
         print(f"❌ Erro geral na sincronização: {e}")
@@ -501,6 +531,36 @@ async def teste_prefix(ctx):
     """Comando de teste via prefixo"""
     print(f"Comando !teste executado por {ctx.author.name} em {ctx.guild.name}")
     await respond_with_side_embed(ctx, "✅ Comando de teste funcionando via prefixo!")
+
+# Comando para forçar sincronização de slash commands
+@bot.command(name='sync')
+@commands.has_permissions(administrator=True)
+async def sync_commands(ctx):
+    """Força a sincronização dos comandos slash"""
+    try:
+        print(f"🔄 Comando de sincronização executado por {ctx.author.name}")
+        
+        # Listar comandos registrados
+        commands = bot.tree.get_commands()
+        await ctx.send(f"📋 Comandos registrados: {len(commands)}")
+        for cmd in commands:
+            await ctx.send(f"  - /{cmd.name}: {cmd.description}")
+        
+        # Tentar sincronizar globalmente
+        try:
+            synced = await bot.tree.sync()
+            await ctx.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
+        except Exception as e:
+            await ctx.send(f"❌ Erro na sincronização global: {e}")
+            
+            # Tentar sincronizar por guild
+            synced = await bot.tree.sync(guild=ctx.guild)
+            await ctx.send(f"✅ {len(synced)} comandos sincronizados na guild!")
+            
+    except Exception as e:
+        await ctx.send(f"❌ Erro: {e}")
+        import traceback
+        traceback.print_exc()
 
 # Executar o bot
 if __name__ == "__main__":
