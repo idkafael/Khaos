@@ -11,6 +11,8 @@ from commands.payment_commands import PaymentCommands
 from models.product_model import ProductModel
 from models.transaction_model import TransactionModel
 from utils.payment_utils import PaymentUtils
+from utils.ticket_views import TicketView, TicketChannelView
+from utils.ticket_manager import TicketManager
 from config.config import Config
 
 # Configuração do bot
@@ -19,12 +21,13 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = discord.Bot(intents=intents)
 
 # Inicializar modelos
 product_model = ProductModel()
 transaction_model = TransactionModel()
 payment_utils = PaymentUtils()
+ticket_manager = TicketManager()
 
 # Dicionário para armazenar tickets ativos
 active_tickets = {}
@@ -41,6 +44,12 @@ async def on_ready():
     
     # Carregar produtos de exemplo se não existirem
     await load_sample_products()
+    
+    # Adicionar view persistente para tickets
+    bot.add_view(TicketView())
+    bot.add_view(TicketChannelView())
+    
+    print("✅ Bot inicializado com sistema de tickets!")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -82,58 +91,6 @@ async def load_sample_products():
         for product in sample_products:
             await product_model.create_product(product)
 
-@bot.command(name='start')
-async def start_ticket(ctx):
-    """Inicia um ticket de compra"""
-    user_id = ctx.author.id
-    guild = ctx.guild
-    
-    # Verificar se já existe um ticket ativo para o usuário
-    if user_id in active_tickets:
-        await ctx.send("❌ Você já possui um ticket ativo! Use `!status` para verificar o progresso.")
-        return
-    
-    # Criar canal privado para o ticket
-    overwrites = {
-        guild.default_role: discord.PermissionOverwrite(read_messages=False),
-        ctx.author: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-        bot.user: discord.PermissionOverwrite(read_messages=True, send_messages=True)
-    }
-    
-    try:
-        ticket_channel = await guild.create_text_channel(
-            f'ticket-{ctx.author.name}',
-            overwrites=overwrites,
-            category=None
-        )
-        
-        # Armazenar informações do ticket
-        active_tickets[user_id] = {
-            'channel_id': ticket_channel.id,
-            'user_id': user_id,
-            'status': 'active',
-            'created_at': datetime.now()
-        }
-        
-        # Enviar mensagem de boas-vindas
-        embed = discord.Embed(
-            title="🛒 Ticket de Compra Criado!",
-            description=f"Olá {ctx.author.mention}! Bem-vindo ao nosso sistema de vendas.",
-            color=0x00ff00
-        )
-        embed.add_field(
-            name="📋 Próximos Passos",
-            value="1. Use `!products` para ver os produtos disponíveis\n2. Use `!buy <produto>` para comprar um produto\n3. Use `!status` para verificar o progresso",
-            inline=False
-        )
-        embed.set_footer(text="Digite !help para ver todos os comandos disponíveis")
-        
-        await ticket_channel.send(embed=embed)
-        await ctx.send(f"✅ Ticket criado com sucesso! Acesse {ticket_channel.mention}")
-        
-    except Exception as e:
-        print(f"Erro ao criar ticket: {e}")
-        await ctx.send("❌ Erro ao criar ticket. Tente novamente.")
 
 @bot.command(name='products')
 async def show_products(ctx):
@@ -165,6 +122,283 @@ async def show_products(ctx):
         print(f"Erro ao carregar produtos: {e}")
         await ctx.send("❌ Erro ao carregar produtos. Tente novamente.")
 
+# ==================== SLASH COMMANDS ====================
+
+@bot.slash_command(name="setup_ticket", description="[ADMIN] Enviar mensagem para criar tickets")
+@discord.default_permissions(administrator=True)
+async def setup_ticket_command(ctx):
+    """Comando admin para enviar mensagem com botão de criar ticket"""
+    try:
+        success = await ticket_manager.send_ticket_embed(ctx.channel)
+        if success:
+            await ctx.respond("✅ Mensagem de ticket enviada com sucesso!", ephemeral=True)
+        else:
+            await ctx.respond("❌ Erro ao enviar mensagem de ticket.", ephemeral=True)
+    except Exception as e:
+        print(f"Erro no comando setup_ticket: {e}")
+        await ctx.respond("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+
+@bot.slash_command(name="ajuda", description="Exibe a lista de comandos disponíveis")
+async def help_command(ctx):
+    """Exibe a lista de comandos disponíveis"""
+    embed = discord.Embed(
+        title="🤖 Comandos do Bot de Vendas",
+        description="Lista de comandos disponíveis:",
+        color=0x0099ff
+    )
+    
+    embed.add_field(
+        name="🎫 Sistema de Tickets",
+        value="• Clique no botão 'Criar Ticket de Compra' para começar\n• Escolha seu produto no modal\n• Acesse seu canal privado",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="📱 Comandos Principais",
+        value="• `/produtos` - Ver produtos disponíveis\n• `/comprar` - Comprar produto (no canal do ticket)\n• `/status` - Verificar status do pagamento",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="👨‍💼 Comandos Admin",
+        value="• `/setup_ticket` - Enviar mensagem de tickets\n• `/close_ticket` - Fechar ticket manualmente",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="💳 Pagamento",
+        value="• Pix com QR Code e código\n• Entrega automática após confirmação\n• Suporte 24/7",
+        inline=False
+    )
+    
+    embed.set_footer(text="Sistema de vendas automatizado • Suporte completo")
+    await ctx.respond(embed=embed)
+
+@bot.slash_command(name="produtos", description="Ver produtos disponíveis")
+async def show_products_slash(ctx):
+    """Exibe os produtos disponíveis via slash command"""
+    try:
+        products = await product_model.get_all_products()
+        
+        if not products:
+            await ctx.respond("❌ Nenhum produto disponível no momento.")
+            return
+        
+        embed = discord.Embed(
+            title="🛍️ Produtos Disponíveis",
+            description="Escolha um produto para comprar:",
+            color=0x0099ff
+        )
+        
+        for product in products:
+            embed.add_field(
+                name=f"🛒 {product['name']}",
+                value=f"**Preço:** R$ {product['price']:.2f}\n**Descrição:** {product['description']}",
+                inline=False
+            )
+        
+        embed.set_footer(text="Crie um ticket para comprar um produto")
+        await ctx.respond(embed=embed)
+        
+    except Exception as e:
+        print(f"Erro ao carregar produtos: {e}")
+        await ctx.respond("❌ Erro ao carregar produtos. Tente novamente.")
+
+@bot.slash_command(name="comprar", description="Comprar produto (use no canal do ticket)")
+async def buy_product_slash(ctx, produto: str = None):
+    """Inicia o processo de compra de um produto via slash command"""
+    try:
+        # Verificar se está em canal de ticket
+        if not ctx.channel.name.startswith('ticket-'):
+            await ctx.respond("❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
+            return
+        
+        # Verificar se o usuário tem um ticket ativo
+        user_id = ctx.author.id
+        if user_id not in active_tickets:
+            await ctx.respond("❌ Você não possui um ticket ativo.", ephemeral=True)
+            return
+        
+        # Usar produto do ticket se não especificado
+        if not produto:
+            ticket_data = active_tickets[user_id]
+            if 'product_name' in ticket_data:
+                produto = ticket_data['product_name']
+            else:
+                await ctx.respond("❌ Nenhum produto especificado. Use: `/comprar produto: Nome do Produto`", ephemeral=True)
+                return
+        
+        # Buscar produto no banco de dados
+        product = await product_model.get_product_by_name(produto)
+        
+        if not product:
+            await ctx.respond("❌ Produto não encontrado. Use `/produtos` para ver os produtos disponíveis.", ephemeral=True)
+            return
+        
+        # Criar transação
+        transaction = await transaction_model.create_transaction(
+            user_id=user_id,
+            product_id=product['id'],
+            amount=product['price'],
+            status='pending'
+        )
+        
+        # Gerar pagamento via Pix diretamente
+        payment_data = await payment_utils.create_pix_payment(
+            amount=product['price'],
+            description=f"Compra: {product['name']}",
+            customer_email=f"{ctx.author.name}@discord.com",
+            customer_name=ctx.author.name
+        )
+        
+        if payment_data:
+            # Atualizar transação com payment_id
+            await transaction_model.update_transaction(transaction['id'], {
+                'payment_id': payment_data['id'],
+                'pix_code': payment_data['pix_code'],
+                'qr_code': payment_data['qr_code'],
+                'email': f"{ctx.author.name}@discord.com"
+            })
+            
+            # Exibir informações de pagamento
+            embed = discord.Embed(
+                title="💳 Pagamento via Pix",
+                description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
+                color=0x00ff00
+            )
+            embed.add_field(
+                name="📱 Código Pix",
+                value=f"```{payment_data['pix_code']}```",
+                inline=False
+            )
+            embed.add_field(
+                name="⏰ Tempo para pagamento",
+                value="10 minutos",
+                inline=True
+            )
+            embed.set_footer(text="Escaneie o QR Code ou copie o código Pix")
+            
+            await ctx.respond(embed=embed)
+            
+            # Enviar QR Code como imagem se disponível
+            if payment_data.get('qr_code_base64'):
+                # Usar QR Code base64 da PushinPay
+                qr_image = payment_utils.get_qr_code_image_from_base64(payment_data['qr_code_base64'])
+                if qr_image:
+                    await ctx.followup.send(file=discord.File(qr_image, filename='qrcode.png'))
+            elif payment_data.get('qr_code_image'):
+                # Fallback para QR Code gerado localmente
+                await ctx.followup.send(file=discord.File(payment_data['qr_code_image']))
+            
+            # Atualizar status do ticket
+            active_tickets[user_id]['status'] = 'waiting_payment'
+            
+            # Iniciar monitoramento do pagamento
+            asyncio.create_task(monitor_payment(transaction['id'], user_id))
+            
+        else:
+            await ctx.respond("❌ Erro ao gerar pagamento. Tente novamente.", ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro ao iniciar compra: {e}")
+        await ctx.respond("❌ Erro ao iniciar processo de compra. Tente novamente.", ephemeral=True)
+
+@bot.slash_command(name="status", description="Verificar status do pagamento")
+async def check_status_slash(ctx):
+    """Verifica o status do pagamento via slash command"""
+    user_id = ctx.author.id
+    
+    if user_id not in active_tickets:
+        await ctx.respond("❌ Você não possui um ticket ativo.", ephemeral=True)
+        return
+    
+    ticket = active_tickets[user_id]
+    
+    if 'transaction_id' not in ticket:
+        await ctx.respond("✅ Ticket ativo, mas nenhuma compra iniciada. Use `/comprar` para comprar.", ephemeral=True)
+        return
+    
+    try:
+        # Buscar transação no banco de dados
+        transaction = await transaction_model.get_transaction(ticket['transaction_id'])
+        
+        if not transaction:
+            await ctx.respond("❌ Transação não encontrada.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="📊 Status da Compra",
+            color=0x0099ff
+        )
+        
+        embed.add_field(
+            name="🛒 Produto",
+            value=ticket['product_name'],
+            inline=True
+        )
+        embed.add_field(
+            name="💰 Valor",
+            value=f"R$ {transaction['amount']:.2f}",
+            inline=True
+        )
+        embed.add_field(
+            name="📈 Status",
+            value=transaction['status'].upper(),
+            inline=True
+        )
+        
+        if transaction['status'] == 'approved':
+            embed.add_field(
+                name="✅ Entrega",
+                value="Produto entregue com sucesso!",
+                inline=False
+            )
+        elif transaction['status'] == 'pending':
+            embed.add_field(
+                name="⏳ Aguardando",
+                value="Aguardando confirmação do pagamento...",
+                inline=False
+            )
+        elif transaction['status'] == 'failed':
+            embed.add_field(
+                name="❌ Falha",
+                value="Pagamento não foi confirmado.",
+                inline=False
+            )
+        
+        await ctx.respond(embed=embed)
+        
+    except Exception as e:
+        print(f"Erro ao verificar status: {e}")
+        await ctx.respond("❌ Erro ao verificar status. Tente novamente.", ephemeral=True)
+
+@bot.slash_command(name="close_ticket", description="[ADMIN] Fechar ticket manualmente")
+@discord.default_permissions(administrator=True)
+async def close_ticket_slash(ctx):
+    """Fecha um ticket manualmente via slash command"""
+    try:
+        # Verificar se é canal de ticket
+        if not ctx.channel.name.startswith('ticket-'):
+            await ctx.respond("❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
+            return
+        
+        # Fechar ticket
+        success, message = await ticket_manager.close_ticket(ctx.channel, ctx.author)
+        
+        if success:
+            await ctx.respond(f"✅ {message}")
+            # Deletar canal após 5 segundos
+            await asyncio.sleep(5)
+            await ctx.channel.delete()
+        else:
+            await ctx.respond(f"❌ {message}")
+            
+    except Exception as e:
+        print(f"Erro ao fechar ticket: {e}")
+        await ctx.respond("❌ Erro ao fechar ticket. Tente novamente.", ephemeral=True)
+
+# ==================== COMANDOS DE PREFIXO (COMPATIBILIDADE) ====================
+
 @bot.command(name='buy')
 async def buy_product(ctx, *, product_name):
     """Inicia o processo de compra de um produto"""
@@ -179,7 +413,7 @@ async def buy_product(ctx, *, product_name):
         # Verificar se o usuário tem um ticket ativo
         user_id = ctx.author.id
         if user_id not in active_tickets:
-            await ctx.send("❌ Você precisa criar um ticket primeiro! Use `!start` para começar.")
+            await ctx.send("❌ Você precisa criar um ticket primeiro! Use o botão 'Criar Ticket de Compra' para começar.")
             return
         
         # Criar transação
@@ -408,26 +642,39 @@ async def monitor_payment(transaction_id, user_id):
         print(f"Erro ao monitorar pagamento: {e}")
 
 @bot.command(name='ajuda')
-async def help_command(ctx):
-    """Exibe a lista de comandos disponíveis"""
+async def help_command_legacy(ctx):
+    """Exibe a lista de comandos disponíveis (compatibilidade)"""
     embed = discord.Embed(
         title="🤖 Comandos do Bot de Vendas",
-        description="Lista de comandos disponíveis:",
+        description="**NOVO:** Use comandos slash (/) para melhor experiência!",
         color=0x0099ff
     )
     
-    commands_list = [
-        ("!start", "Cria um ticket e inicia o processo de compra"),
-        ("!products", "Exibe os produtos disponíveis para compra"),
-        ("!buy <produto>", "Inicia o processo de pagamento para o produto escolhido"),
-        ("!status", "Verifica o status do pagamento e entrega do produto"),
-        ("!help", "Exibe esta lista de comandos")
-    ]
+    embed.add_field(
+        name="🎫 Sistema de Tickets",
+        value="• Clique no botão 'Criar Ticket de Compra' para começar\n• Escolha seu produto no modal\n• Acesse seu canal privado",
+        inline=False
+    )
     
-    for cmd, desc in commands_list:
-        embed.add_field(name=cmd, value=desc, inline=False)
+    embed.add_field(
+        name="📱 Comandos Slash (Recomendado)",
+        value="• `/ajuda` - Esta lista de comandos\n• `/produtos` - Ver produtos disponíveis\n• `/comprar` - Comprar produto (no canal do ticket)\n• `/status` - Verificar status do pagamento",
+        inline=False
+    )
     
-    embed.set_footer(text="Para mais informações, consulte a documentação do projeto")
+    embed.add_field(
+        name="🔧 Comandos Legacy (!)",
+        value="• `!products` - Ver produtos\n• `!buy <produto>` - Comprar (no canal do ticket)\n• `!status` - Status do pagamento",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="👨‍💼 Comandos Admin",
+        value="• `/setup_ticket` - Enviar mensagem de tickets\n• `/close_ticket` - Fechar ticket manualmente",
+        inline=False
+    )
+    
+    embed.set_footer(text="Sistema de vendas automatizado • Suporte completo")
     await ctx.send(embed=embed)
 
 # Executar o bot

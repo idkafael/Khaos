@@ -1,5 +1,4 @@
 # Discord Bot
-discord.py>=2.3.0
 py-cord>=2.4.0
 
 # Banco de dados
@@ -15,8 +14,6 @@ pushinpay>=0.3.0
 python-dotenv>=1.0.0
 
 # Utilitários
-asyncio>=3.4.3
-datetime
 typing-extensions>=4.0.0
 
 # Logging

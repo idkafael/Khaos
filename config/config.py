@@ -37,6 +37,11 @@ class Config:
     DB_POOL_SIZE = int(os.getenv('DB_POOL_SIZE', '10'))
     DB_MAX_OVERFLOW = int(os.getenv('DB_MAX_OVERFLOW', '20'))
     
+    # Configurações de tickets
+    TICKET_CATEGORY_ID = int(os.getenv('TICKET_CATEGORY_ID', '0')) if os.getenv('TICKET_CATEGORY_ID') else None
+    ADMIN_ROLE_ID = int(os.getenv('ADMIN_ROLE_ID', '0')) if os.getenv('ADMIN_ROLE_ID') else None
+    TICKET_LOGS_CHANNEL_ID = int(os.getenv('TICKET_LOGS_CHANNEL_ID', '0')) if os.getenv('TICKET_LOGS_CHANNEL_ID') else None
+    
     @classmethod
     def validate_config(cls):
         """Valida se todas as configurações necessárias estão definidas"""

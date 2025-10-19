@@ -1,14 +1,25 @@
-# Bot de Vendas no Discord com Pagamento via Pix
+# Bot de Vendas no Discord com Sistema de Tickets e Pagamento via Pix
 
-Este bot de vendas no Discord permite que os usuários escolham produtos, façam pagamentos via Pix e recebam seus produtos automaticamente após confirmação do pagamento. Ele está integrado com o banco de dados **Supabase** e a **PushinPay** para processar pagamentos via Pix.
+Bot moderno de vendas no Discord com sistema de tickets automatizado, interface com botões e modals, comandos slash, e integração completa com **Supabase** e **PushinPay** para processamento de pagamentos via Pix.
 
 ## 🚀 Funcionalidades
 
-- **Criação de Ticket**: Usuário abre um ticket e o bot cria um canal privado para o atendimento
-- **Escolha do Produto**: O bot exibe um modal com produtos disponíveis e o usuário seleciona o produto desejado
-- **Geração de Pagamento via Pix**: O bot solicita o e-mail do usuário e gera uma cobrança via Pix com QR Code e código de pagamento
-- **Acompanhamento de Pagamento**: O bot monitora o status do pagamento via PushinPay e, após confirmação, entrega o produto automaticamente
-- **Entrega do Produto**: O bot realiza a entrega do produto após a confirmação do pagamento, utilizando o banco de dados para registrar transações
+### 🎫 Sistema de Tickets
+- **Criação via Botão**: Admin envia mensagem com botão "Criar Ticket de Compra"
+- **Modal de Seleção**: Usuário escolhe produto em modal interativo
+- **Canais Privados**: Criação automática de canais privados para cada ticket
+- **Fechamento Automático**: Tickets fecham após pagamento aprovado ou manualmente por admin
+
+### 💳 Sistema de Pagamento
+- **Pagamento via Pix**: Geração automática de QR Code e código Pix
+- **Sem Email Obrigatório**: Usa email padrão baseado no nome do usuário
+- **Monitoramento Automático**: Verificação automática do status do pagamento
+- **Entrega Instantânea**: Entrega automática após confirmação
+
+### 🤖 Comandos Modernos
+- **Slash Commands**: Comandos com `/` para melhor experiência
+- **Compatibilidade**: Mantém comandos com `!` para compatibilidade
+- **Interface Intuitiva**: Botões, modals e embeds interativos
 
 ## 🛠️ Tecnologias
 
@@ -112,7 +123,22 @@ INSERT INTO products (name, description, price, category) VALUES
 ON CONFLICT DO NOTHING;
 ```
 
-### 3. Convidar Bot para Servidor
+### 3. Configurar Sistema de Tickets (Opcional)
+Adicione estas variáveis ao `.env` para configurar o sistema de tickets:
+
+```env
+# Configurações de Tickets (Opcional)
+TICKET_CATEGORY_ID=1234567890123456789  # ID da categoria para tickets
+ADMIN_ROLE_ID=1234567890123456789       # ID do role de admin
+TICKET_LOGS_CHANNEL_ID=1234567890123456789  # ID do canal para logs
+```
+
+**Como obter os IDs:**
+- **Categoria**: Clique com botão direito na categoria > "Copiar ID"
+- **Role**: Clique com botão direito no role > "Copiar ID"  
+- **Canal**: Clique com botão direito no canal > "Copiar ID"
+
+### 4. Convidar Bot para Servidor
 1. Acesse: https://discord.com/developers/applications/784058182515425310
 2. Vá para "OAuth2" > "URL Generator"
 3. Selecione "bot" e "Send Messages"
@@ -121,20 +147,48 @@ ON CONFLICT DO NOTHING;
 
 ## 🎮 Comandos do Bot
 
-- `!start` - Abre um ticket e inicia o processo de compra
-- `!products` - Exibe os produtos disponíveis para compra
-- `!buy <produto>` - Inicia o processo de pagamento para o produto escolhido
-- `!status` - Verifica o status do pagamento e entrega do produto
-- `!help` - Exibe a lista de comandos disponíveis
+### 🎫 Sistema de Tickets
+1. **Admin**: Use `/setup_ticket` para enviar mensagem com botão
+2. **Usuário**: Clique em "Criar Ticket de Compra"
+3. **Modal**: Escolha o produto desejado
+4. **Canal**: Acesse seu canal privado para continuar
 
-### Comandos Adicionais
+### 📱 Comandos Slash (Recomendado)
+- `/ajuda` - Lista de comandos e instruções
+- `/produtos` - Ver produtos disponíveis
+- `/comprar` - Comprar produto (no canal do ticket)
+- `/status` - Verificar status do pagamento
+- `/setup_ticket` - [ADMIN] Enviar mensagem de tickets
+- `/close_ticket` - [ADMIN] Fechar ticket manualmente
 
-- `!list_products` - Lista todos os produtos com detalhes
-- `!product_info <nome>` - Informações detalhadas de um produto
-- `!search_products <termo>` - Busca produtos por nome ou descrição
-- `!payment_history` - Histórico de pagamentos do usuário
-- `!payment_details <id>` - Detalhes de uma transação específica
-- `!cancel_payment <id>` - Cancela uma transação pendente
+### 🔧 Comandos Legacy (!)
+- `!products` - Ver produtos disponíveis
+- `!buy <produto>` - Comprar produto (no canal do ticket)
+- `!status` - Status do pagamento
+- `!ajuda` - Lista de comandos (compatibilidade)
+
+## 🎯 Como Usar o Sistema de Tickets
+
+### Para Administradores:
+1. **Configurar Sistema**: Use `/setup_ticket` no canal onde quer que apareça o botão
+2. **Gerenciar Tickets**: Use `/close_ticket` em qualquer canal de ticket para fechá-lo
+3. **Monitorar Logs**: Configure `TICKET_LOGS_CHANNEL_ID` para receber logs de criação/fechamento
+
+### Para Usuários:
+1. **Criar Ticket**: Clique no botão "Criar Ticket de Compra" na mensagem do bot
+2. **Escolher Produto**: Selecione o produto desejado no modal que aparece
+3. **Acessar Canal**: Vá para o canal privado criado automaticamente
+4. **Comprar**: Use `/comprar` no canal do ticket para gerar pagamento
+5. **Acompanhar**: Use `/status` para verificar o progresso do pagamento
+
+### Fluxo Completo:
+```
+Admin → /setup_ticket → Botão aparece
+Usuário → Clica botão → Modal com produtos
+Usuário → Escolhe produto → Canal privado criado
+Usuário → /comprar → Pagamento Pix gerado
+Usuário → Paga → Bot detecta → Entrega automática
+```
 
 ## 🏗️ Estrutura do Projeto
 
@@ -151,7 +205,9 @@ ON CONFLICT DO NOTHING;
 │   └── transaction_model.py  # Interações com as transações no banco
 ├── utils/                    # Funções utilitárias
 │   ├── __init__.py
-│   └── payment_utils.py      # Funções para gerar cobrança via Pix
+│   ├── payment_utils.py      # Funções para gerar cobrança via Pix
+│   ├── ticket_views.py       # Views e Modals do Discord para tickets
+│   └── ticket_manager.py     # Gerenciador de canais de ticket
 ├── config/                   # Arquivos de configuração
 │   ├── __init__.py
 │   └── config.py            # Configurações do bot
@@ -159,8 +215,7 @@ ON CONFLICT DO NOTHING;
 │   └── .gitkeep
 ├── requirements.txt          # Dependências do projeto
 ├── env.example              # Exemplo de configuração
-├── PUSHINPAY_SETUP.md       # Guia de configuração PushinPay
-├── CONFIGURACAO_RAPIDA.md   # Guia de configuração rápida
+├── criar_env.py             # Script para criar arquivo .env
 └── README.md                # Documentação
 ```
 
