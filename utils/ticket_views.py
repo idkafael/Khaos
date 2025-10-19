@@ -17,12 +17,6 @@ class SetupTicketModal(ui.Modal):
             max_length=100
         ))
         self.add_item(ui.TextInput(
-            label="Produto", 
-            placeholder="Ex: Produtos Digitais", 
-            default="Produtos Digitais",
-            max_length=100
-        ))
-        self.add_item(ui.TextInput(
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
             default="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
@@ -54,13 +48,12 @@ class SetupTicketModal(ui.Modal):
         try:
             print(f"Modal submetido por {interaction.user.name}")
             headline = self.children[0].value
-            produto = self.children[1].value
-            descricao = self.children[2].value
-            nome_botao = self.children[3].value
-            url_imagem = self.children[4].value.strip()
-            cor_hex = self.children[5].value.strip()
+            descricao = self.children[1].value
+            nome_botao = self.children[2].value
+            url_imagem = self.children[3].value.strip()
+            cor_hex = self.children[4].value.strip()
             
-            print(f"Valores: {headline}, {produto}, {descricao}, {nome_botao}, {url_imagem}, {cor_hex}")
+            print(f"Valores: {headline}, {descricao}, {nome_botao}, {url_imagem}, {cor_hex}")
             
             # Converter cor hex para int
             try:
