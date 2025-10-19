@@ -73,6 +73,14 @@ async def on_ready():
     print(f'ID: {bot.user.id}')
     print(f'Guilds: {len(bot.guilds)}')
     
+    # Sincronizar comandos slash
+    try:
+        print("🔄 Sincronizando comandos slash...")
+        synced = await bot.tree.sync()
+        print(f"✅ {len(synced)} comandos sincronizados com sucesso!")
+    except Exception as e:
+        print(f"❌ Erro ao sincronizar comandos: {e}")
+    
     # Inicializar banco de dados
     await product_model.initialize()
     await transaction_model.initialize()
