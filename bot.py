@@ -46,6 +46,39 @@ async def respond_command(ctx, message, embed=None, ephemeral=False):
         else:
             await ctx.send(message)
 
+async def respond_with_side_embed(ctx, message, embed=None, ephemeral=False):
+    """Responde com mensagem + embed lateral roxo"""
+    # Criar embed lateral roxo com informações do comando
+    side_embed = discord.Embed(
+        title="ℹ️ Informações",
+        description=f"**Comando:** `/{ctx.command.name if ctx.command else 'comando'}`\n**Usuário:** {ctx.author.mention}\n**Canal:** {ctx.channel.mention}",
+        color=0x8B5CF6  # Roxo
+    )
+    side_embed.add_field(
+        name="🕒 Timestamp",
+        value=f"<t:{int(discord.utils.utcnow().timestamp())}:R>",
+        inline=True
+    )
+    side_embed.add_field(
+        name="🆔 ID do Usuário",
+        value=f"`{ctx.author.id}`",
+        inline=True
+    )
+    side_embed.set_footer(text="Khaos Bot • Sistema de Vendas")
+    
+    # Se já tem um embed principal, enviar ambos
+    if embed:
+        if ctx.interaction:
+            await ctx.respond(message, embeds=[embed, side_embed], ephemeral=ephemeral)
+        else:
+            await ctx.send(message, embeds=[embed, side_embed])
+    else:
+        # Se não tem embed principal, enviar mensagem + embed lateral
+        if ctx.interaction:
+            await ctx.respond(message, embed=side_embed, ephemeral=ephemeral)
+        else:
+            await ctx.send(message, embed=side_embed)
+
 @bot.event
 async def on_ready():
     print(f'Bot {bot.user} está online!')
@@ -145,21 +178,12 @@ async def setup_ticket_command(ctx):
     try:
         success = await ticket_manager.send_ticket_embed(ctx.channel)
         if success:
-            if ctx.interaction:
-                await ctx.respond("✅ Mensagem de ticket enviada com sucesso!", ephemeral=True)
-            else:
-                await ctx.send("✅ Mensagem de ticket enviada com sucesso!")
+            await respond_with_side_embed(ctx, "✅ Mensagem de ticket enviada com sucesso!", ephemeral=True)
         else:
-            if ctx.interaction:
-                await ctx.respond("❌ Erro ao enviar mensagem de ticket.", ephemeral=True)
-            else:
-                await ctx.send("❌ Erro ao enviar mensagem de ticket.")
+            await respond_with_side_embed(ctx, "❌ Erro ao enviar mensagem de ticket.", ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
-        if ctx.interaction:
-            await ctx.respond("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
-        else:
-            await ctx.send("❌ Erro ao configurar sistema de tickets.")
+        await respond_with_side_embed(ctx, "❌ Erro ao configurar sistema de tickets.", ephemeral=True)
 
 @bot.hybrid_command(name="ajuda", description="Exibe a lista de comandos disponíveis")
 async def help_command(ctx):
@@ -195,10 +219,7 @@ async def help_command(ctx):
     )
     
     embed.set_footer(text="Sistema de vendas automatizado • Powered by Khaos")
-    if ctx.interaction:
-        await ctx.respond(embed=embed)
-    else:
-        await ctx.send(embed=embed)
+    await respond_with_side_embed(ctx, "📋 Lista de comandos disponíveis:", embed)
 
 @bot.hybrid_command(name="produtos", description="Ver produtos disponíveis")
 async def show_products_slash(ctx):
@@ -227,17 +248,11 @@ async def show_products_slash(ctx):
             )
         
         embed.set_footer(text="Crie um ticket para comprar um produto")
-        if ctx.interaction:
-            await ctx.respond(embed=embed)
-        else:
-            await ctx.send(embed=embed)
+        await respond_with_side_embed(ctx, "🛍️ Produtos disponíveis:", embed)
         
     except Exception as e:
         print(f"Erro ao carregar produtos: {e}")
-        if ctx.interaction:
-            await ctx.respond("❌ Erro ao carregar produtos. Tente novamente.")
-        else:
-            await ctx.send("❌ Erro ao carregar produtos. Tente novamente.")
+        await respond_with_side_embed(ctx, "❌ Erro ao carregar produtos. Tente novamente.")
 
 @bot.hybrid_command(name="comprar", description="Comprar produto (use no canal do ticket)")
 async def buy_product_slash(ctx, produto: str = None):
@@ -245,19 +260,13 @@ async def buy_product_slash(ctx, produto: str = None):
     try:
         # Verificar se está em canal de ticket
         if not ctx.channel.name.startswith('ticket-'):
-            if ctx.interaction:
-                await ctx.respond("❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
-            else:
-                await ctx.send("❌ Este comando só pode ser usado em canais de ticket.")
+            await respond_with_side_embed(ctx, "❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
             return
         
         # Verificar se o usuário tem um ticket ativo
         user_id = ctx.author.id
         if user_id not in active_tickets:
-            if ctx.interaction:
-                await ctx.respond("❌ Você não possui um ticket ativo.", ephemeral=True)
-            else:
-                await ctx.send("❌ Você não possui um ticket ativo.")
+            await respond_with_side_embed(ctx, "❌ Você não possui um ticket ativo.", ephemeral=True)
             return
         
         # Usar produto do ticket se não especificado
@@ -266,14 +275,14 @@ async def buy_product_slash(ctx, produto: str = None):
             if 'product_name' in ticket_data:
                 produto = ticket_data['product_name']
             else:
-                await ctx.respond("❌ Nenhum produto especificado. Use: `/comprar produto: Nome do Produto`", ephemeral=True)
+                await respond_with_side_embed(ctx, "❌ Nenhum produto especificado. Use: `/comprar produto: Nome do Produto`", ephemeral=True)
                 return
         
         # Buscar produto no banco de dados
         product = await product_model.get_product_by_name(produto)
         
         if not product:
-            await ctx.respond("❌ Produto não encontrado. Use `/produtos` para ver os produtos disponíveis.", ephemeral=True)
+            await respond_with_side_embed(ctx, "❌ Produto não encontrado. Use `/produtos` para ver os produtos disponíveis.", ephemeral=True)
             return
         
         # Criar transação
@@ -319,7 +328,7 @@ async def buy_product_slash(ctx, produto: str = None):
             )
             embed.set_footer(text="Escaneie o QR Code ou copie o código Pix")
             
-            await ctx.respond(embed=embed)
+            await respond_with_side_embed(ctx, "💳 Pagamento gerado com sucesso!", embed)
             
             # Enviar QR Code como imagem se disponível
             if payment_data.get('qr_code_base64'):
@@ -338,11 +347,11 @@ async def buy_product_slash(ctx, produto: str = None):
             asyncio.create_task(monitor_payment(transaction['id'], user_id))
             
         else:
-            await ctx.respond("❌ Erro ao gerar pagamento. Tente novamente.", ephemeral=True)
+            await respond_with_side_embed(ctx, "❌ Erro ao gerar pagamento. Tente novamente.", ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao iniciar compra: {e}")
-        await ctx.respond("❌ Erro ao iniciar processo de compra. Tente novamente.", ephemeral=True)
+        await respond_with_side_embed(ctx, "❌ Erro ao iniciar processo de compra. Tente novamente.", ephemeral=True)
 
 @bot.hybrid_command(name="status", description="Verificar status do pagamento")
 async def check_status_slash(ctx):
@@ -350,13 +359,13 @@ async def check_status_slash(ctx):
     user_id = ctx.author.id
     
     if user_id not in active_tickets:
-        await ctx.respond("❌ Você não possui um ticket ativo.", ephemeral=True)
+        await respond_with_side_embed(ctx, "❌ Você não possui um ticket ativo.", ephemeral=True)
         return
     
     ticket = active_tickets[user_id]
     
     if 'transaction_id' not in ticket:
-        await ctx.respond("✅ Ticket ativo, mas nenhuma compra iniciada. Use `/comprar` para comprar.", ephemeral=True)
+        await respond_with_side_embed(ctx, "✅ Ticket ativo, mas nenhuma compra iniciada. Use `/comprar` para comprar.", ephemeral=True)
         return
     
     try:
@@ -364,7 +373,7 @@ async def check_status_slash(ctx):
         transaction = await transaction_model.get_transaction(ticket['transaction_id'])
         
         if not transaction:
-            await ctx.respond("❌ Transação não encontrada.", ephemeral=True)
+            await respond_with_side_embed(ctx, "❌ Transação não encontrada.", ephemeral=True)
             return
         
         embed = discord.Embed(
@@ -407,11 +416,11 @@ async def check_status_slash(ctx):
                 inline=False
             )
         
-        await ctx.respond(embed=embed)
+        await respond_with_side_embed(ctx, "📊 Status da sua compra:", embed)
         
     except Exception as e:
         print(f"Erro ao verificar status: {e}")
-        await ctx.respond("❌ Erro ao verificar status. Tente novamente.", ephemeral=True)
+        await respond_with_side_embed(ctx, "❌ Erro ao verificar status. Tente novamente.", ephemeral=True)
 
 @bot.hybrid_command(name="close_ticket", description="[ADMIN] Fechar ticket manualmente")
 @commands.has_permissions(administrator=True)
@@ -420,23 +429,23 @@ async def close_ticket_slash(ctx):
     try:
         # Verificar se é canal de ticket
         if not ctx.channel.name.startswith('ticket-'):
-            await ctx.respond("❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
+            await respond_with_side_embed(ctx, "❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
             return
         
         # Fechar ticket
         success, message = await ticket_manager.close_ticket(ctx.channel, ctx.author)
         
         if success:
-            await ctx.respond(f"✅ {message}")
+            await respond_with_side_embed(ctx, f"✅ {message}")
             # Deletar canal após 5 segundos
             await asyncio.sleep(5)
             await ctx.channel.delete()
         else:
-            await ctx.respond(f"❌ {message}")
+            await respond_with_side_embed(ctx, f"❌ {message}")
             
     except Exception as e:
         print(f"Erro ao fechar ticket: {e}")
-        await ctx.respond("❌ Erro ao fechar ticket. Tente novamente.", ephemeral=True)
+        await respond_with_side_embed(ctx, "❌ Erro ao fechar ticket. Tente novamente.", ephemeral=True)
 
 # ==================== COMANDOS DE PREFIXO (COMPATIBILIDADE) ====================
 
