@@ -21,7 +21,7 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = discord.Bot(intents=intents)
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Inicializar modelos
 product_model = ProductModel()
@@ -31,6 +31,20 @@ ticket_manager = TicketManager()
 
 # Dicionário para armazenar tickets ativos
 active_tickets = {}
+
+# Função auxiliar para responder comandos
+async def respond_command(ctx, message, embed=None, ephemeral=False):
+    """Responde comandos tanto slash quanto prefixo"""
+    if ctx.interaction:
+        if embed:
+            await ctx.respond(embed=embed, ephemeral=ephemeral)
+        else:
+            await ctx.respond(message, ephemeral=ephemeral)
+    else:
+        if embed:
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send(message)
 
 @bot.event
 async def on_ready():
@@ -124,21 +138,30 @@ async def show_products(ctx):
 
 # ==================== SLASH COMMANDS ====================
 
-@bot.slash_command(name="setup_ticket", description="[ADMIN] Enviar mensagem para criar tickets")
-@discord.default_permissions(administrator=True)
+@bot.hybrid_command(name="setup_ticket", description="[ADMIN] Enviar mensagem para criar tickets")
+@commands.has_permissions(administrator=True)
 async def setup_ticket_command(ctx):
     """Comando admin para enviar mensagem com botão de criar ticket"""
     try:
         success = await ticket_manager.send_ticket_embed(ctx.channel)
         if success:
-            await ctx.respond("✅ Mensagem de ticket enviada com sucesso!", ephemeral=True)
+            if ctx.interaction:
+                await ctx.respond("✅ Mensagem de ticket enviada com sucesso!", ephemeral=True)
+            else:
+                await ctx.send("✅ Mensagem de ticket enviada com sucesso!")
         else:
-            await ctx.respond("❌ Erro ao enviar mensagem de ticket.", ephemeral=True)
+            if ctx.interaction:
+                await ctx.respond("❌ Erro ao enviar mensagem de ticket.", ephemeral=True)
+            else:
+                await ctx.send("❌ Erro ao enviar mensagem de ticket.")
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
-        await ctx.respond("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+        if ctx.interaction:
+            await ctx.respond("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+        else:
+            await ctx.send("❌ Erro ao configurar sistema de tickets.")
 
-@bot.slash_command(name="ajuda", description="Exibe a lista de comandos disponíveis")
+@bot.hybrid_command(name="ajuda", description="Exibe a lista de comandos disponíveis")
 async def help_command(ctx):
     """Exibe a lista de comandos disponíveis"""
     embed = discord.Embed(
@@ -172,16 +195,22 @@ async def help_command(ctx):
     )
     
     embed.set_footer(text="Sistema de vendas automatizado • Suporte completo")
-    await ctx.respond(embed=embed)
+    if ctx.interaction:
+        await ctx.respond(embed=embed)
+    else:
+        await ctx.send(embed=embed)
 
-@bot.slash_command(name="produtos", description="Ver produtos disponíveis")
+@bot.hybrid_command(name="produtos", description="Ver produtos disponíveis")
 async def show_products_slash(ctx):
     """Exibe os produtos disponíveis via slash command"""
     try:
         products = await product_model.get_all_products()
         
         if not products:
-            await ctx.respond("❌ Nenhum produto disponível no momento.")
+            if ctx.interaction:
+                await ctx.respond("❌ Nenhum produto disponível no momento.")
+            else:
+                await ctx.send("❌ Nenhum produto disponível no momento.")
             return
         
         embed = discord.Embed(
@@ -198,25 +227,37 @@ async def show_products_slash(ctx):
             )
         
         embed.set_footer(text="Crie um ticket para comprar um produto")
-        await ctx.respond(embed=embed)
+        if ctx.interaction:
+            await ctx.respond(embed=embed)
+        else:
+            await ctx.send(embed=embed)
         
     except Exception as e:
         print(f"Erro ao carregar produtos: {e}")
-        await ctx.respond("❌ Erro ao carregar produtos. Tente novamente.")
+        if ctx.interaction:
+            await ctx.respond("❌ Erro ao carregar produtos. Tente novamente.")
+        else:
+            await ctx.send("❌ Erro ao carregar produtos. Tente novamente.")
 
-@bot.slash_command(name="comprar", description="Comprar produto (use no canal do ticket)")
+@bot.hybrid_command(name="comprar", description="Comprar produto (use no canal do ticket)")
 async def buy_product_slash(ctx, produto: str = None):
     """Inicia o processo de compra de um produto via slash command"""
     try:
         # Verificar se está em canal de ticket
         if not ctx.channel.name.startswith('ticket-'):
-            await ctx.respond("❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
+            if ctx.interaction:
+                await ctx.respond("❌ Este comando só pode ser usado em canais de ticket.", ephemeral=True)
+            else:
+                await ctx.send("❌ Este comando só pode ser usado em canais de ticket.")
             return
         
         # Verificar se o usuário tem um ticket ativo
         user_id = ctx.author.id
         if user_id not in active_tickets:
-            await ctx.respond("❌ Você não possui um ticket ativo.", ephemeral=True)
+            if ctx.interaction:
+                await ctx.respond("❌ Você não possui um ticket ativo.", ephemeral=True)
+            else:
+                await ctx.send("❌ Você não possui um ticket ativo.")
             return
         
         # Usar produto do ticket se não especificado
@@ -303,7 +344,7 @@ async def buy_product_slash(ctx, produto: str = None):
         print(f"Erro ao iniciar compra: {e}")
         await ctx.respond("❌ Erro ao iniciar processo de compra. Tente novamente.", ephemeral=True)
 
-@bot.slash_command(name="status", description="Verificar status do pagamento")
+@bot.hybrid_command(name="status", description="Verificar status do pagamento")
 async def check_status_slash(ctx):
     """Verifica o status do pagamento via slash command"""
     user_id = ctx.author.id
@@ -372,8 +413,8 @@ async def check_status_slash(ctx):
         print(f"Erro ao verificar status: {e}")
         await ctx.respond("❌ Erro ao verificar status. Tente novamente.", ephemeral=True)
 
-@bot.slash_command(name="close_ticket", description="[ADMIN] Fechar ticket manualmente")
-@discord.default_permissions(administrator=True)
+@bot.hybrid_command(name="close_ticket", description="[ADMIN] Fechar ticket manualmente")
+@commands.has_permissions(administrator=True)
 async def close_ticket_slash(ctx):
     """Fecha um ticket manualmente via slash command"""
     try:
