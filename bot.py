@@ -527,74 +527,6 @@ async def buy_product(ctx, *, product_name):
         print(f"Erro ao iniciar compra: {e}")
         await ctx.send("❌ Erro ao iniciar processo de compra. Tente novamente.")
 
-@bot.command(name='status')
-async def check_status(ctx):
-    """Verifica o status do pagamento e entrega"""
-    user_id = ctx.author.id
-    
-    if user_id not in active_tickets:
-        await ctx.send("❌ Você não possui um ticket ativo. Use `!start` para começar.")
-        return
-    
-    ticket = active_tickets[user_id]
-    
-    if 'transaction_id' not in ticket:
-        await ctx.send("✅ Ticket ativo, mas nenhuma compra iniciada. Use `!buy <produto>` para comprar.")
-        return
-    
-    try:
-        # Buscar transação no banco de dados
-        transaction = await transaction_model.get_transaction(ticket['transaction_id'])
-        
-        if not transaction:
-            await ctx.send("❌ Transação não encontrada.")
-            return
-        
-        embed = discord.Embed(
-            title="📊 Status da Compra",
-            color=0x0099ff
-        )
-        
-        embed.add_field(
-            name="🛒 Produto",
-            value=ticket['product']['name'],
-            inline=True
-        )
-        embed.add_field(
-            name="💰 Valor",
-            value=f"R$ {transaction['amount']:.2f}",
-            inline=True
-        )
-        embed.add_field(
-            name="📈 Status",
-            value=transaction['status'].upper(),
-            inline=True
-        )
-        
-        if transaction['status'] == 'approved':
-            embed.add_field(
-                name="✅ Entrega",
-                value="Produto entregue com sucesso!",
-                inline=False
-            )
-        elif transaction['status'] == 'pending':
-            embed.add_field(
-                name="⏳ Aguardando",
-                value="Aguardando confirmação do pagamento...",
-                inline=False
-            )
-        elif transaction['status'] == 'failed':
-            embed.add_field(
-                name="❌ Falha",
-                value="Pagamento não foi confirmado.",
-                inline=False
-            )
-        
-        await ctx.send(embed=embed)
-        
-    except Exception as e:
-        print(f"Erro ao verificar status: {e}")
-        await ctx.send("❌ Erro ao verificar status. Tente novamente.")
 
 @bot.event
 async def on_message(message):
@@ -682,41 +614,6 @@ async def monitor_payment(transaction_id, user_id):
     except Exception as e:
         print(f"Erro ao monitorar pagamento: {e}")
 
-@bot.command(name='ajuda')
-async def help_command_legacy(ctx):
-    """Exibe a lista de comandos disponíveis (compatibilidade)"""
-    embed = discord.Embed(
-        title="🤖 Comandos do Bot de Vendas",
-        description="**NOVO:** Use comandos slash (/) para melhor experiência!",
-        color=0x0099ff
-    )
-    
-    embed.add_field(
-        name="🎫 Sistema de Tickets",
-        value="• Clique no botão 'Criar Ticket de Compra' para começar\n• Escolha seu produto no modal\n• Acesse seu canal privado",
-        inline=False
-    )
-    
-    embed.add_field(
-        name="📱 Comandos Slash (Recomendado)",
-        value="• `/ajuda` - Esta lista de comandos\n• `/produtos` - Ver produtos disponíveis\n• `/comprar` - Comprar produto (no canal do ticket)\n• `/status` - Verificar status do pagamento",
-        inline=False
-    )
-    
-    embed.add_field(
-        name="🔧 Comandos Legacy (!)",
-        value="• `!products` - Ver produtos\n• `!buy <produto>` - Comprar (no canal do ticket)\n• `!status` - Status do pagamento",
-        inline=False
-    )
-    
-    embed.add_field(
-        name="👨‍💼 Comandos Admin",
-        value="• `/setup_ticket` - Enviar mensagem de tickets\n• `/close_ticket` - Fechar ticket manualmente",
-        inline=False
-    )
-    
-    embed.set_footer(text="Sistema de vendas automatizado • Suporte completo")
-    await ctx.send(embed=embed)
 
 # Executar o bot
 if __name__ == "__main__":
