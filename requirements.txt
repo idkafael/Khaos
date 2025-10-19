@@ -9,7 +9,7 @@ postgrest>=0.10.0
 # Pagamentos
 requests>=2.31.0
 qrcode[pil]>=7.4.0
-pushinpay>=1.0.0
+pushinpay>=0.3.0
 
 # Configuração
 python-dotenv>=1.0.0
