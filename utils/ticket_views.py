@@ -31,7 +31,7 @@ class SetupTicketModal(ui.Modal):
         ))
         self.add_item(ui.TextInput(
             label="URL da Imagem", 
-            placeholder="Ex: https://exemplo.com/imagem.png (opcional)", 
+            placeholder="Cole o link da imagem ou envie uma imagem no chat", 
             default="",
             required=False,
             max_length=500
@@ -57,15 +57,22 @@ class SetupTicketModal(ui.Modal):
             
             # Converter cor hex para int
             try:
+                # Limpar a string de cor
+                cor_hex = cor_hex.strip().lower()
+                
                 if cor_hex.startswith('#'):
                     cor_hex = cor_hex[1:]  # Remove #
-                if cor_hex.startswith('0x'):
+                elif cor_hex.startswith('0x'):
                     cor_hex = cor_hex[2:]  # Remove 0x
+                
+                # Garantir que tem 6 caracteres
+                if len(cor_hex) == 3:
+                    cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
                 
                 cor_int = int(cor_hex, 16)
                 print(f"Cor convertida: {cor_int} (0x{cor_hex})")
-            except ValueError:
-                print(f"Cor inválida '{cor_hex}', usando padrão")
+            except (ValueError, IndexError) as e:
+                print(f"Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
                 cor_int = 0x0099ff  # Azul padrão
             
             # Criar embed com as configurações

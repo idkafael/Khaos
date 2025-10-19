@@ -581,6 +581,52 @@ async def sync_commands(ctx):
         import traceback
         traceback.print_exc()
 
+# Comando para configurar ticket com imagem
+@bot.command(name='setup_ticket_img')
+@commands.has_permissions(administrator=True)
+async def setup_ticket_with_image(ctx):
+    """Configura sistema de tickets - envie uma imagem junto com o comando"""
+    try:
+        # Verificar se há anexos
+        if not ctx.message.attachments:
+            await ctx.send("❌ Envie uma imagem junto com o comando! Ex: `!setup_ticket_img` + imagem")
+            return
+        
+        # Pegar a primeira imagem
+        attachment = ctx.message.attachments[0]
+        
+        # Verificar se é uma imagem
+        if not attachment.content_type or not attachment.content_type.startswith('image/'):
+            await ctx.send("❌ O arquivo deve ser uma imagem!")
+            return
+        
+        # Criar embed com a imagem
+        embed = discord.Embed(
+            title="🛒 Sistema de Vendas Automatizado",
+            description="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            color=0x0099ff
+        )
+        embed.set_image(url=attachment.url)
+        embed.add_field(
+            name="🚀 Como Funciona?",
+            value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
+            inline=False
+        )
+        embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+        
+        # Criar view com botão
+        from utils.ticket_views import TicketView
+        view = TicketView("Criar Ticket de Compra")
+        
+        await ctx.send(embed=embed, view=view)
+        await ctx.send("✅ Sistema de tickets configurado com imagem!")
+        
+    except Exception as e:
+        print(f"Erro no setup_ticket_img: {e}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send("❌ Erro ao configurar sistema de tickets.")
+
 # Executar o bot
 if __name__ == "__main__":
     try:
