@@ -48,25 +48,13 @@ async def respond_command(ctx, message, embed=None, ephemeral=False):
 
 async def respond_with_side_embed(ctx, message, embed=None, ephemeral=False):
     """Responde com mensagem + embed lateral roxo"""
-    # Criar embed lateral roxo com informações do comando
+    # Criar embed lateral roxo simples apenas com a mensagem
     side_embed = discord.Embed(
-        title="ℹ️ Informações",
-        description=f"**Comando:** `/{ctx.command.name if ctx.command else 'comando'}`\n**Usuário:** {ctx.author.mention}\n**Canal:** {ctx.channel.mention}",
+        description=message,
         color=0x8B5CF6  # Roxo
     )
-    side_embed.add_field(
-        name="🕒 Timestamp",
-        value=f"<t:{int(discord.utils.utcnow().timestamp())}:R>",
-        inline=True
-    )
-    side_embed.add_field(
-        name="🆔 ID do Usuário",
-        value=f"`{ctx.author.id}`",
-        inline=True
-    )
-    side_embed.set_footer(text="Khaos Bot • Sistema de Vendas")
     
-    # Se já tem um embed principal, enviar ambos
+    # Se já tem um embed principal, enviar mensagem + ambos embeds
     if embed:
         if ctx.interaction:
             await ctx.respond(message, embeds=[embed, side_embed], ephemeral=ephemeral)
