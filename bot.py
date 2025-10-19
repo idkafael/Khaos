@@ -27,6 +27,7 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 @bot.tree.command(name="teste", description="Comando de teste")
 async def teste_slash(interaction: discord.Interaction):
     """Comando de teste simples"""
+    print(f"Comando /teste executado por {interaction.user.name} em {interaction.guild.name}")
     embed = discord.Embed(
         description="✅ Comando de teste funcionando!",
         color=0x8B5CF6
@@ -188,13 +189,24 @@ async def on_ready():
     print(f'ID: {bot.user.id}')
     print(f'Guilds: {len(bot.guilds)}')
     
+    # Listar guilds conectadas
+    for guild in bot.guilds:
+        print(f"  - {guild.name} (ID: {guild.id})")
+    
     # Sincronizar comandos slash
     try:
         print("🔄 Sincronizando comandos slash...")
         synced = await bot.tree.sync()
         print(f"✅ {len(synced)} comandos sincronizados com sucesso!")
+        
+        # Listar comandos sincronizados
+        for cmd in synced:
+            print(f"  - /{cmd.name}: {cmd.description}")
+            
     except Exception as e:
         print(f"❌ Erro ao sincronizar comandos: {e}")
+        import traceback
+        traceback.print_exc()
     
     # Inicializar banco de dados
     await product_model.initialize()
