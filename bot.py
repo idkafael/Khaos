@@ -599,19 +599,34 @@ async def sync_commands(ctx):
 async def reload_products(ctx):
     """Recarrega os produtos no banco de dados"""
     try:
+        await ctx.send("🔄 Limpando produtos antigos...")
+        
         # Limpar produtos existentes
         products = await product_model.get_all_products()
+        deleted_count = 0
         for product in products:
             await product_model.delete_product(product['id'])
+            deleted_count += 1
+        
+        await ctx.send(f"✅ {deleted_count} produtos antigos removidos!")
         
         # Carregar novos produtos
+        await ctx.send("🔄 Carregando novos produtos...")
         await load_sample_products()
         
-        await ctx.send("✅ Produtos recarregados com sucesso!")
+        # Verificar se foram carregados
+        new_products = await product_model.get_all_products()
+        await ctx.send(f"✅ {len(new_products)} novos produtos carregados!")
+        
+        # Listar os novos produtos
+        for product in new_products:
+            await ctx.send(f"📦 **{product['name']}** - R$ {product['price']:.2f}")
         
     except Exception as e:
         print(f"Erro ao recarregar produtos: {e}")
-        await ctx.send("❌ Erro ao recarregar produtos.")
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Erro ao recarregar produtos: {e}")
 
 # Comando para configurar ticket com imagem e personalização
 @bot.command(name='setup_ticket_img')
