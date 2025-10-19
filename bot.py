@@ -159,16 +159,14 @@ async def show_products(ctx):
 
 # ==================== SLASH COMMANDS ====================
 
-@bot.hybrid_command(name="setup_ticket", description="[ADMIN] Enviar mensagem para criar tickets")
+@bot.hybrid_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
 @commands.has_permissions(administrator=True)
 async def setup_ticket_command(ctx):
-    """Comando admin para enviar mensagem com botão de criar ticket"""
+    """Comando admin para configurar sistema de tickets via modal"""
     try:
-        success = await ticket_manager.send_ticket_embed(ctx.channel)
-        if success:
-            await respond_with_side_embed(ctx, "✅ Mensagem de ticket enviada com sucesso!", ephemeral=True)
-        else:
-            await respond_with_side_embed(ctx, "❌ Erro ao enviar mensagem de ticket.", ephemeral=True)
+        from utils.ticket_views import SetupTicketModal
+        modal = SetupTicketModal()
+        await ctx.interaction.response.send_modal(modal) if ctx.interaction else await ctx.send("❌ Este comando só funciona como slash command.")
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
         await respond_with_side_embed(ctx, "❌ Erro ao configurar sistema de tickets.", ephemeral=True)

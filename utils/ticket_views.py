@@ -5,6 +5,67 @@ from models.product_model import ProductModel
 from utils.ticket_manager import TicketManager
 import asyncio
 
+class SetupTicketModal(ui.Modal):
+    """Modal para configurar o sistema de tickets"""
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(title="Configurar Sistema de Tickets", timeout=300)
+        self.add_item(ui.InputText(
+            label="Headline", 
+            placeholder="Ex: Sistema de Vendas Automatizado", 
+            value="🛒 Sistema de Vendas Automatizado",
+            max_length=100
+        ))
+        self.add_item(ui.InputText(
+            label="Produto", 
+            placeholder="Ex: Produtos Digitais", 
+            value="Produtos Digitais",
+            max_length=100
+        ))
+        self.add_item(ui.InputText(
+            label="Descrição", 
+            placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
+            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            style=discord.InputTextStyle.long,
+            max_length=1000
+        ))
+        self.add_item(ui.InputText(
+            label="Nome do Botão", 
+            placeholder="Ex: Criar Ticket de Compra", 
+            value="Criar Ticket de Compra",
+            max_length=80
+        ))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        """Processa a configuração do sistema de tickets"""
+        try:
+            headline = self.children[0].value
+            produto = self.children[1].value
+            descricao = self.children[2].value
+            nome_botao = self.children[3].value
+            
+            # Criar embed com as configurações
+            embed = discord.Embed(
+                title=headline,
+                description=descricao,
+                color=0x0099ff
+            )
+            embed.add_field(
+                name="🚀 Como Funciona?",
+                value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
+                inline=False
+            )
+            embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+            
+            # Criar view com botão personalizado
+            view = TicketView(nome_botao)
+            
+            await interaction.response.send_message(embed=embed, view=view)
+            
+        except Exception as e:
+            print(f"Erro ao configurar sistema de tickets: {e}")
+            await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+
 class TicketModal(ui.Modal):
     """Modal para usuário escolher produto ao criar ticket"""
     
@@ -62,9 +123,9 @@ class TicketModal(ui.Modal):
 class TicketButton(ui.Button):
     """Botão para criar ticket que abre o modal"""
     
-    def __init__(self):
+    def __init__(self, nome_botao="Criar Ticket de Compra"):
         super().__init__(
-            label="🛒 Criar Ticket de Compra",
+            label=f"🛒 {nome_botao}",
             style=discord.ButtonStyle.primary,
             emoji="🎫",
             custom_id="create_ticket_button"
@@ -107,9 +168,9 @@ class TicketButton(ui.Button):
 class TicketView(ui.View):
     """View persistente com botão de criar ticket"""
     
-    def __init__(self):
+    def __init__(self, nome_botao="Criar Ticket de Compra"):
         super().__init__(timeout=None)
-        self.add_item(TicketButton())
+        self.add_item(TicketButton(nome_botao))
 
 class CloseTicketButton(ui.Button):
     """Botão para admin fechar ticket"""
