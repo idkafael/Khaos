@@ -452,7 +452,7 @@ async def monitor_payment(transaction_id, user_id):
     except Exception as e:
         print(f"Erro ao monitorar pagamento: {e}")
 
-@bot.command(name='help')
+@bot.command(name='ajuda')
 async def help_command(ctx):
     """Exibe a lista de comandos disponíveis"""
     embed = discord.Embed(
