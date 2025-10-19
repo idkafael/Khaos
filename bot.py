@@ -159,16 +159,22 @@ async def show_products(ctx):
 
 # ==================== SLASH COMMANDS ====================
 
+@bot.hybrid_command(name="teste", description="Comando de teste")
+async def teste_command(ctx):
+    """Comando de teste simples"""
+    await respond_with_side_embed(ctx, "✅ Comando de teste funcionando!")
+
 @bot.hybrid_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
 @commands.has_permissions(administrator=True)
 async def setup_ticket_command(ctx):
     """Comando admin para configurar sistema de tickets via modal"""
     try:
-        from utils.ticket_views import SetupTicketModal
-        modal = SetupTicketModal()
+        print(f"Comando setup_ticket executado por {ctx.author.name}")
         
         if ctx.interaction:
             # Slash command - usar interaction
+            from utils.ticket_views import SetupTicketModal
+            modal = SetupTicketModal()
             await ctx.interaction.response.send_modal(modal)
         else:
             # Prefix command - enviar mensagem explicativa
@@ -176,6 +182,8 @@ async def setup_ticket_command(ctx):
             
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
+        import traceback
+        traceback.print_exc()
         await respond_with_side_embed(ctx, "❌ Erro ao configurar sistema de tickets.", ephemeral=True)
 
 @bot.hybrid_command(name="ajuda", description="Exibe a lista de comandos disponíveis")

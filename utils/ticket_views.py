@@ -39,10 +39,13 @@ class SetupTicketModal(ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets"""
         try:
+            print(f"Modal submetido por {interaction.user.name}")
             headline = self.children[0].value
             produto = self.children[1].value
             descricao = self.children[2].value
             nome_botao = self.children[3].value
+            
+            print(f"Valores: {headline}, {produto}, {descricao}, {nome_botao}")
             
             # Criar embed com as configurações
             embed = discord.Embed(
@@ -61,9 +64,12 @@ class SetupTicketModal(ui.Modal):
             view = TicketView(nome_botao)
             
             await interaction.response.send_message(embed=embed, view=view)
+            print("Modal processado com sucesso")
             
         except Exception as e:
             print(f"Erro ao configurar sistema de tickets: {e}")
+            import traceback
+            traceback.print_exc()
             await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
 
 class TicketModal(ui.Modal):
