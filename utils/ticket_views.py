@@ -35,6 +35,19 @@ class SetupTicketModal(ui.Modal):
             default="Criar Ticket de Compra",
             max_length=80
         ))
+        self.add_item(ui.TextInput(
+            label="URL da Imagem", 
+            placeholder="Ex: https://exemplo.com/imagem.png (opcional)", 
+            default="",
+            required=False,
+            max_length=500
+        ))
+        self.add_item(ui.TextInput(
+            label="Cor do Embed (Hex)", 
+            placeholder="Ex: #0099ff ou 0x0099ff", 
+            default="#0099ff",
+            max_length=10
+        ))
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets"""
@@ -44,15 +57,41 @@ class SetupTicketModal(ui.Modal):
             produto = self.children[1].value
             descricao = self.children[2].value
             nome_botao = self.children[3].value
+            url_imagem = self.children[4].value.strip()
+            cor_hex = self.children[5].value.strip()
             
-            print(f"Valores: {headline}, {produto}, {descricao}, {nome_botao}")
+            print(f"Valores: {headline}, {produto}, {descricao}, {nome_botao}, {url_imagem}, {cor_hex}")
+            
+            # Converter cor hex para int
+            try:
+                if cor_hex.startswith('#'):
+                    cor_hex = cor_hex[1:]  # Remove #
+                if cor_hex.startswith('0x'):
+                    cor_hex = cor_hex[2:]  # Remove 0x
+                
+                cor_int = int(cor_hex, 16)
+                print(f"Cor convertida: {cor_int} (0x{cor_hex})")
+            except ValueError:
+                print(f"Cor inválida '{cor_hex}', usando padrão")
+                cor_int = 0x0099ff  # Azul padrão
             
             # Criar embed com as configurações
             embed = discord.Embed(
                 title=headline,
                 description=descricao,
-                color=0x0099ff
+                color=cor_int
             )
+            
+            # Adicionar imagem se fornecida
+            if url_imagem and url_imagem.startswith(('http://', 'https://')):
+                try:
+                    embed.set_image(url=url_imagem)
+                    print(f"Imagem adicionada: {url_imagem}")
+                except Exception as e:
+                    print(f"Erro ao adicionar imagem: {e}")
+            elif url_imagem:
+                print(f"URL de imagem inválida: {url_imagem}")
+            
             embed.add_field(
                 name="🚀 Como Funciona?",
                 value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
