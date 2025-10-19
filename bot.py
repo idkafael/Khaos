@@ -165,36 +165,36 @@ async def setup_ticket_command(ctx):
 async def help_command(ctx):
     """Exibe a lista de comandos disponíveis"""
     embed = discord.Embed(
-        title="🤖 Comandos do Bot de Vendas",
-        description="Lista de comandos disponíveis:",
-        color=0x0099ff
+        title="🛒 Comandos de Khaos",
+        description="Sistema completo de vendas com tickets e pagamentos via Pix",
+        color=0xe91e63
     )
     
     embed.add_field(
-        name="🎫 Sistema de Tickets",
-        value="• Clique no botão 'Criar Ticket de Compra' para começar\n• Escolha seu produto no modal\n• Acesse seu canal privado",
+        name="» Sistema de Tickets",
+        value="Clique no botão 'Criar Ticket de Compra' para começar\nEscolha seu produto no modal interativo\nAcesse seu canal privado para continuar",
         inline=False
     )
     
     embed.add_field(
-        name="📱 Comandos Principais",
-        value="• `/produtos` - Ver produtos disponíveis\n• `/comprar` - Comprar produto (no canal do ticket)\n• `/status` - Verificar status do pagamento",
+        name="» Comandos Principais",
+        value="`/ajuda` :: 🤖 Lista de comandos\n`/produtos` :: 🛍️ Ver produtos disponíveis\n`/comprar` :: 💳 Comprar produto (no canal do ticket)\n`/status` :: 📊 Status do pagamento",
         inline=False
     )
     
     embed.add_field(
-        name="👨‍💼 Comandos Admin",
-        value="• `/setup_ticket` - Enviar mensagem de tickets\n• `/close_ticket` - Fechar ticket manualmente",
+        name="» Comandos Admin",
+        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets\n`/close_ticket` :: 🔒 Fechar ticket manualmente",
         inline=False
     )
     
     embed.add_field(
-        name="💳 Pagamento",
-        value="• Pix com QR Code e código\n• Entrega automática após confirmação\n• Suporte 24/7",
+        name="» Sistema de Pagamento",
+        value="💎 **Pix Instantâneo** - QR Code + Código\n🚀 **Entrega Automática** - Após confirmação\n🛡️ **Suporte 24/7** - Atendimento completo",
         inline=False
     )
     
-    embed.set_footer(text="Sistema de vendas automatizado • Suporte completo")
+    embed.set_footer(text="Sistema de vendas automatizado • Powered by Khaos")
     if ctx.interaction:
         await ctx.respond(embed=embed)
     else:
