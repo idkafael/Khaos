@@ -259,8 +259,10 @@ class TicketManager:
                 qr_base64 = payment_data['qr_code_base64']
                 if qr_base64.startswith('data:image'):
                     qr_base64 = qr_base64.split(',')[1]
+                    print(f"🔧 Debug: Base64 limpo: {len(qr_base64)} caracteres")
                 
                 qr_bytes = base64.b64decode(qr_base64)
+                print(f"🔧 Debug: QR Code bytes decodificados: {len(qr_bytes)} bytes")
                 qr_file = discord.File(io.BytesIO(qr_bytes), filename="qrcode.png")
                 
                 await channel.send(embed=embed, file=qr_file)

@@ -145,13 +145,25 @@ class ProductSelect(ui.Select):
             )
             
             if success:
-                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+                try:
+                    await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+                except discord.errors.NotFound:
+                    # Interação já foi respondida, não fazer nada
+                    pass
             else:
-                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                try:
+                    await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                except discord.errors.NotFound:
+                    # Interação já foi respondida, não fazer nada
+                    pass
                 
         except Exception as e:
             print(f"Erro ao processar seleção de produto: {e}")
-            await interaction.response.send_message("❌ Erro ao criar ticket. Tente novamente.", ephemeral=True)
+            try:
+                await interaction.response.send_message("❌ Erro ao criar ticket. Tente novamente.", ephemeral=True)
+            except discord.errors.NotFound:
+                # Interação já foi respondida, não fazer nada
+                pass
 
 class ProductSelectView(ui.View):
     """View com select menu para escolher produto"""
