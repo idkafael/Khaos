@@ -12,8 +12,8 @@ class PaymentUtils:
         self.pushinpay_api_key = Config.PUSHINPAY_API_KEY
         self.pushinpay_base_url = "https://api.pushinpay.com.br"
         self.pushinpay_sandbox_url = "https://api-sandbox.pushinpay.com.br"
-        self.use_sandbox = getattr(Config, 'PUSHINPAY_SANDBOX', False)
-        self.base_url = self.pushinpay_sandbox_url if self.use_sandbox else self.pushinpay_base_url
+        self.use_sandbox = False  # FORÇAR PRODUÇÃO
+        self.base_url = self.pushinpay_base_url  # SEMPRE PRODUÇÃO
         self.headers = {
             "Authorization": f"Bearer {self.pushinpay_api_key}",
             "Accept": "application/json",
@@ -21,10 +21,10 @@ class PaymentUtils:
         }
         
         # Debug: Verificar configuração
-        print(f"🔧 Debug PaymentUtils: API Key carregada: {self.pushinpay_api_key[:10]}...")
-        print(f"🔧 Debug PaymentUtils: Sandbox mode: {self.use_sandbox}")
-        print(f"🔧 Debug PaymentUtils: Base URL: {self.base_url}")
-        print(f"🔧 Debug PaymentUtils: Headers: {self.headers}")
+        print(f"🚀 PRODUÇÃO PaymentUtils: API Key carregada: {self.pushinpay_api_key[:10]}...")
+        print(f"🚀 PRODUÇÃO PaymentUtils: Modo: PRODUÇÃO (não sandbox)")
+        print(f"🚀 PRODUÇÃO PaymentUtils: Base URL: {self.base_url}")
+        print(f"🚀 PRODUÇÃO PaymentUtils: Headers: {self.headers}")
     
     async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str) -> Optional[Dict]:
         """Cria um pagamento via Pix usando a API PushinPay"""
