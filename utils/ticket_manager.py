@@ -246,30 +246,40 @@ class TicketManager:
         embed.set_footer(text="Use /status para verificar o progresso do pagamento")
         
         # Enviar QR Code como imagem se disponível
-        if payment_data.get('qr_code_base64'):
+        if payment_data.get('qr_code'):
             try:
-                import base64
+                import qrcode
                 import io
                 
                 # Debug: Verificar QR Code
-                print(f"🔧 Debug: QR Code base64 disponível: {len(payment_data['qr_code_base64'])} caracteres")
                 print(f"🔧 Debug: QR Code data: {payment_data.get('qr_code', 'N/A')[:50]}...")
                 
-                # Converter base64 para bytes
-                qr_base64 = payment_data['qr_code_base64']
-                if qr_base64.startswith('data:image'):
-                    qr_base64 = qr_base64.split(',')[1]
-                    print(f"🔧 Debug: Base64 limpo: {len(qr_base64)} caracteres")
+                # Gerar QR Code usando o código Pix
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4,
+                )
+                qr.add_data(payment_data['qr_code'])
+                qr.make(fit=True)
                 
-                qr_bytes = base64.b64decode(qr_base64)
-                print(f"🔧 Debug: QR Code bytes decodificados: {len(qr_bytes)} bytes")
-                qr_file = discord.File(io.BytesIO(qr_bytes), filename="qrcode.png")
+                # Criar imagem
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                # Converter para bytes
+                img_bytes = io.BytesIO()
+                img.save(img_bytes, format='PNG')
+                img_bytes.seek(0)
+                
+                qr_file = discord.File(img_bytes, filename="qrcode.png")
+                print(f"🔧 Debug: QR Code gerado: {len(img_bytes.getvalue())} bytes")
                 
                 await channel.send(embed=embed, file=qr_file)
-                print("✅ QR Code enviado como imagem!")
+                print("✅ QR Code gerado e enviado como imagem!")
                 
             except Exception as e:
-                print(f"Erro ao enviar QR Code como imagem: {e}")
+                print(f"Erro ao gerar QR Code: {e}")
                 await channel.send(embed=embed)
                 await channel.send(f"📱 **QR Code:**\n```\n{payment_data.get('qr_code', 'N/A')}\n```")
         else:
