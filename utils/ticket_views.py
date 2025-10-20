@@ -180,6 +180,11 @@ class TicketButton(ui.Button):
     async def callback(self, interaction: discord.Interaction):
         """Callback do botão - carrega produtos e abre modal"""
         try:
+            # Debug: Verificar configurações
+            from config.config import Config
+            print(f"🔧 Debug: SUPABASE_URL: {Config.SUPABASE_URL[:20]}...")
+            print(f"🔧 Debug: SUPABASE_KEY: {Config.SUPABASE_KEY[:20]}...")
+            
             # Verificar se usuário já tem ticket ativo
             from bot import active_tickets
             if interaction.user.id in active_tickets:
@@ -190,7 +195,9 @@ class TicketButton(ui.Button):
                 return
             
             # Carregar produtos disponíveis
+            print(f"🔧 Debug: Tentando carregar produtos...")
             products = await self.product_model.get_all_products()
+            print(f"🔧 Debug: Produtos carregados: {len(products) if products else 0}")
             
             if not products:
                 await interaction.response.send_message(
@@ -204,7 +211,9 @@ class TicketButton(ui.Button):
             await interaction.response.send_modal(modal)
             
         except Exception as e:
-            print(f"Erro no callback do botão de ticket: {e}")
+            print(f"❌ Erro no callback do botão de ticket: {e}")
+            import traceback
+            traceback.print_exc()
             await interaction.response.send_message(
                 "❌ Erro ao carregar produtos. Tente novamente.",
                 ephemeral=True
