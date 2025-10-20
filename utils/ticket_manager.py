@@ -151,7 +151,8 @@ class TicketManager:
             payment_data = await payment_utils.create_pix_payment(
                 amount=product['price'],
                 description=f"Compra: {product['name']}",
-                email=f"{user.name.lower().replace(' ', '')}@khaos.com"  # Email automático
+                customer_email=f"{user.name.lower().replace(' ', '')}@khaos.com",
+                customer_name=user.display_name
             )
             
             if payment_data:

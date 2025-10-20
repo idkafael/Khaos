@@ -72,6 +72,90 @@ async def setup_ticket_slash(interaction: discord.Interaction):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="comprar", description="Comprar produto (use no canal do ticket)")
+async def comprar_slash(interaction: discord.Interaction, produto: str):
+    """Comando para comprar produto no canal do ticket"""
+    try:
+        # Verificar se está em canal de ticket
+        if not interaction.channel.name.startswith('ticket-'):
+            await interaction.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
+            return
+        
+        # Buscar produto por nome
+        product_model = ProductModel()
+        product = await product_model.get_product_by_name(produto)
+        
+        if not product:
+            await interaction.response.send_message(f"❌ Produto '{produto}' não encontrado!", ephemeral=True)
+            return
+        
+        # Criar transação
+        transaction_model = TransactionModel()
+        transaction = await transaction_model.create_transaction(
+            user_id=interaction.user.id,
+            product_id=product['id'],
+            amount=product['price'],
+            status='pending'
+        )
+        
+        if not transaction:
+            await interaction.response.send_message("❌ Erro ao criar transação!", ephemeral=True)
+            return
+        
+        # Gerar pagamento Pix
+        payment_utils = PaymentUtils()
+        payment_data = await payment_utils.create_pix_payment(
+            amount=product['price'],
+            description=f"Compra: {product['name']}",
+            customer_email=f"{interaction.user.name.lower().replace(' ', '')}@khaos.com",
+            customer_name=interaction.user.display_name
+        )
+        
+        if payment_data:
+            # Atualizar transação
+            await transaction_model.update_transaction(transaction['id'], {
+                'payment_id': payment_data.get('id'),
+                'pix_code': payment_data.get('pix_code'),
+                'qr_code': payment_data.get('qr_code'),
+                'email': f"{interaction.user.name.lower().replace(' ', '')}@khaos.com"
+            })
+            
+            # Enviar pagamento
+            embed = discord.Embed(
+                title="💳 Pagamento Pix Gerado!",
+                description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
+                color=0x00ff00
+            )
+            
+            embed.add_field(
+                name="📱 QR Code",
+                value="Escaneie o QR Code abaixo com seu app de pagamento:",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="🔢 Código Pix",
+                value=f"```{payment_data.get('pix_code', 'N/A')}```",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="⏰ Validade",
+                value="⏱️ **30 minutos** para efetuar o pagamento",
+                inline=False
+            )
+            
+            embed.set_footer(text=f"ID da Transação: {transaction['id']}")
+            
+            await interaction.response.send_message(embed=embed)
+            
+        else:
+            await interaction.response.send_message("❌ Erro ao gerar pagamento Pix!", ephemeral=True)
+            
+    except Exception as e:
+        print(f"Erro no comando comprar: {e}")
+        await interaction.response.send_message("❌ Erro ao processar compra!", ephemeral=True)
+
 @bot.tree.command(name="ajuda", description="Exibe a lista de comandos disponíveis")
 async def ajuda_slash(interaction: discord.Interaction):
     """Exibe a lista de comandos disponíveis"""
