@@ -111,34 +111,25 @@ class SetupTicketModal(ui.Modal):
             traceback.print_exc()
             await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
 
-class TicketModal(ui.Modal):
-    """Modal para usuário escolher produto ao criar ticket"""
+class ProductSelectView(ui.View):
+    """View com select menu para escolher produto"""
     
-    def __init__(self, products: List[Dict]):
-        super().__init__(title="Criar Ticket de Compra", timeout=300)
+    def __init__(self, products: List[Dict], select_menu: ui.Select):
+        super().__init__(timeout=300)
         self.products = products
-        self.product_model = ProductModel()
-        
-        # Criar select menu com produtos
-        self.product_select = ui.Select(
-            placeholder="Escolha um produto...",
-            min_values=1,
-            max_values=1,
-            options=[
-                discord.SelectOption(
-                    label=product['name'],
-                    description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:100]}",
-                    value=str(product['id'])
-                )
-                for product in products
-            ]
-        )
-        self.add_item(self.product_select)
+        self.add_item(select_menu)
     
-    async def on_submit(self, interaction: discord.Interaction):
-        """Processa a criação do ticket quando o modal é submetido"""
+    async def on_timeout(self):
+        """Quando o timeout expira"""
+        for item in self.children:
+            item.disabled = True
+        await self.message.edit(view=self)
+    
+    @ui.select(placeholder="Escolha um produto...")
+    async def select_product(self, interaction: discord.Interaction, select: ui.Select):
+        """Callback do select menu"""
         try:
-            selected_product_id = int(self.product_select.values[0])
+            selected_product_id = int(select.values[0])
             selected_product = next(
                 (p for p in self.products if p['id'] == selected_product_id), 
                 None
@@ -162,7 +153,7 @@ class TicketModal(ui.Modal):
                 await interaction.response.send_message(f"❌ {message}", ephemeral=True)
                 
         except Exception as e:
-            print(f"Erro ao processar modal de ticket: {e}")
+            print(f"Erro ao processar seleção de produto: {e}")
             await interaction.response.send_message("❌ Erro ao criar ticket. Tente novamente.", ephemeral=True)
 
 class TicketButton(ui.Button):
@@ -206,9 +197,31 @@ class TicketButton(ui.Button):
                 )
                 return
             
-            # Criar e enviar modal
-            modal = TicketModal(products)
-            await interaction.response.send_modal(modal)
+            # Criar select menu com produtos
+            select_menu = ui.Select(
+                placeholder="Escolha um produto...",
+                min_values=1,
+                max_values=1,
+                options=[
+                    discord.SelectOption(
+                        label=product['name'],
+                        description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:100]}",
+                        value=str(product['id'])
+                    )
+                    for product in products
+                ]
+            )
+            
+            # Criar view com select menu
+            view = ProductSelectView(products, select_menu)
+            
+            embed = discord.Embed(
+                title="🛍️ Escolha seu Produto",
+                description="Selecione o produto que deseja comprar:",
+                color=0x0099ff
+            )
+            
+            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
             
         except Exception as e:
             print(f"❌ Erro no callback do botão de ticket: {e}")
