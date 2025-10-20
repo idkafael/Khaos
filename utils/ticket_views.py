@@ -119,18 +119,31 @@ class ProductSelectView(ui.View):
         self.products = products
         
         # Criar select menu diretamente aqui
+        print(f"🔧 Debug: Criando select menu com {len(products)} produtos")
+        
+        # Verificar se há produtos
+        if not products:
+            print("❌ Debug: Nenhum produto para criar select menu")
+            return
+            
+        # Criar opções do select
+        options = []
+        for i, product in enumerate(products):
+            option = discord.SelectOption(
+                label=product['name'],
+                description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:50]}",
+                value=str(product['id'])
+            )
+            options.append(option)
+            print(f"🔧 Debug: Opção {i+1}: {product['name']} - {product['id']}")
+        
+        print(f"🔧 Debug: Total de opções criadas: {len(options)}")
+        
         select_menu = ui.Select(
             placeholder="Escolha um produto...",
             min_values=1,
             max_values=1,
-            options=[
-                discord.SelectOption(
-                    label=product['name'],
-                    description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:50]}",
-                    value=str(product['id'])
-                )
-                for product in products
-            ]
+            options=options
         )
         self.add_item(select_menu)
     
