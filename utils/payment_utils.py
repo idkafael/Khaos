@@ -54,6 +54,8 @@ class PaymentUtils:
             # Fazer requisição para a API PushinPay
             url = f"{self.base_url}/api/pix/cashIn"
             print(f"🔧 Debug: URL da requisição: {url}")
+            print(f"🔧 Debug: Método: POST")
+            print(f"🔧 Debug: JSON data: {payment_data}")
             
             response = requests.post(
                 url,
