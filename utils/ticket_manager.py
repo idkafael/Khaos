@@ -150,6 +150,7 @@ class TicketManager:
             print(f"🔄 Gerando pagamento automático para {user.name} - {product['name']}")
             
             # Criar transação no banco
+            from models.transaction_model import TransactionModel
             transaction_model = TransactionModel()
             transaction = await transaction_model.create_transaction(
                 user_id=user.id,
