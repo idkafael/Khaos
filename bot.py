@@ -340,49 +340,49 @@ async def load_sample_products():
         {
             "name": "Minecraft Premium",
             "description": "Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.",
-            "price": 45.00,
+            "price": 10.00,
             "category": "Jogos Digitais"
         },
         {
             "name": "Spotify Premium",
             "description": "Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.",
-            "price": 25.00,
+            "price": 10.00,
             "category": "Streaming"
         },
         {
             "name": "Netflix Premium",
             "description": "Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.",
-            "price": 35.00,
+            "price": 10.00,
             "category": "Streaming"
         },
         {
             "name": "Discord Nitro",
             "description": "Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.",
-            "price": 20.00,
+            "price": 10.00,
             "category": "Gaming"
         },
         {
             "name": "Adobe Creative Cloud",
             "description": "Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.",
-            "price": 80.00,
+            "price": 10.00,
             "category": "Software"
         },
         {
             "name": "Office 365",
             "description": "Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.",
-            "price": 60.00,
+            "price": 10.00,
             "category": "Software"
         },
         {
             "name": "Steam Wallet",
             "description": "Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.",
-            "price": 50.00,
+            "price": 10.00,
             "category": "Gaming"
         },
         {
             "name": "YouTube Premium",
             "description": "YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.",
-            "price": 30.00,
+            "price": 10.00,
             "category": "Streaming"
         }
     ]
