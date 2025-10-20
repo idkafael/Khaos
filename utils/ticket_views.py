@@ -211,8 +211,8 @@ class TicketButton(ui.Button):
             print(f"🔧 Debug: SUPABASE_KEY: {Config.SUPABASE_KEY[:20]}...")
             
             # Verificar se usuário já tem ticket ativo
-            from bot import active_tickets
-            if interaction.user.id in active_tickets:
+            import bot
+            if interaction.user.id in bot.active_tickets:
                 await interaction.response.send_message(
                     "❌ Você já possui um ticket ativo. Use o canal do seu ticket para continuar.",
                     ephemeral=True

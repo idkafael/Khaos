@@ -15,8 +15,8 @@ class TicketManager:
         """Cria um novo ticket (canal privado) para o usuário"""
         try:
             # Verificar se usuário já tem ticket ativo
-            from bot import active_tickets
-            if user.id in active_tickets:
+            import bot
+            if user.id in bot.active_tickets:
                 return False, "Você já possui um ticket ativo."
             
             # Encontrar categoria de tickets (se configurada)
@@ -52,7 +52,7 @@ class TicketManager:
             )
             
             # Armazenar informações do ticket
-            active_tickets[user.id] = {
+            bot.active_tickets[user.id] = {
                 'channel_id': ticket_channel.id,
                 'user_id': user.id,
                 'product_id': product['id'],
@@ -76,20 +76,28 @@ class TicketManager:
     async def close_ticket(self, channel: discord.TextChannel, admin: discord.Member) -> Tuple[bool, str]:
         """Fecha um ticket (remove do active_tickets)"""
         try:
-            from bot import active_tickets
+            import bot
+            
+            print(f"🔧 Debug: Tentando fechar ticket no canal {channel.name} (ID: {channel.id})")
+            print(f"🔧 Debug: Active tickets atual: {len(bot.active_tickets)} tickets")
+            print(f"🔧 Debug: Tickets ativos: {list(bot.active_tickets.keys())}")
             
             # Encontrar ticket pelo canal
             ticket_user_id = None
-            for user_id, ticket_data in active_tickets.items():
+            for user_id, ticket_data in bot.active_tickets.items():
+                print(f"🔧 Debug: Verificando ticket do usuário {user_id} - Canal ID: {ticket_data['channel_id']}")
                 if ticket_data['channel_id'] == channel.id:
                     ticket_user_id = user_id
+                    print(f"🔧 Debug: Ticket encontrado! Usuário: {ticket_user_id}")
                     break
             
             if not ticket_user_id:
+                print(f"❌ Debug: Ticket não encontrado para o canal {channel.id}")
                 return False, "Ticket não encontrado ou já foi fechado."
             
             # Remover do active_tickets
-            ticket_data = active_tickets.pop(ticket_user_id, None)
+            ticket_data = bot.active_tickets.pop(ticket_user_id, None)
+            print(f"✅ Debug: Ticket removido do active_tickets. Usuário: {ticket_user_id}")
             
             # Log do fechamento
             await self._log_ticket_closure(channel.guild, ticket_user_id, admin, ticket_data)
