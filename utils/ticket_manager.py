@@ -245,16 +245,30 @@ class TicketManager:
         
         embed.set_footer(text="Use /status para verificar o progresso do pagamento")
         
-        # Enviar QR Code se disponível
-        if payment_data.get('qr_code'):
+        # Enviar QR Code como imagem se disponível
+        if payment_data.get('qr_code_base64'):
             try:
-                await channel.send(embed=embed)
-                await channel.send(f"📱 **QR Code:**\n```\n{payment_data['qr_code']}\n```")
+                import base64
+                import io
+                
+                # Converter base64 para bytes
+                qr_base64 = payment_data['qr_code_base64']
+                if qr_base64.startswith('data:image'):
+                    qr_base64 = qr_base64.split(',')[1]
+                
+                qr_bytes = base64.b64decode(qr_base64)
+                qr_file = discord.File(io.BytesIO(qr_bytes), filename="qrcode.png")
+                
+                await channel.send(embed=embed, file=qr_file)
+                print("✅ QR Code enviado como imagem!")
+                
             except Exception as e:
-                print(f"Erro ao enviar QR Code: {e}")
+                print(f"Erro ao enviar QR Code como imagem: {e}")
                 await channel.send(embed=embed)
+                await channel.send(f"📱 **QR Code:**\n```\n{payment_data.get('qr_code', 'N/A')}\n```")
         else:
             await channel.send(embed=embed)
+            await channel.send(f"📱 **QR Code:**\n```\n{payment_data.get('qr_code', 'N/A')}\n```")
     
     async def _log_ticket_creation(self, guild: discord.Guild, user: discord.Member, product: dict, channel: discord.TextChannel):
         """Log da criação do ticket"""
