@@ -61,6 +61,10 @@ class TicketManager:
                 'created_at': datetime.now()
             }
             
+            print(f"✅ Debug: Ticket adicionado ao active_tickets!")
+            print(f"🔧 Debug: Usuário: {user.id}, Canal: {ticket_channel.id}")
+            print(f"🔧 Debug: Total de tickets ativos: {len(bot.active_tickets)}")
+            
             # Enviar mensagem de boas-vindas
             await self._send_welcome_message(ticket_channel, user, product)
             
@@ -175,7 +179,23 @@ class TicketManager:
                 # Enviar pagamento no canal
                 await self._send_payment_message(channel, user, product, payment_data)
             else:
-                await channel.send("❌ Erro ao gerar pagamento Pix. Tente novamente.")
+                # Se falhar, enviar instruções para usar /comprar
+                embed = discord.Embed(
+                    title="⚠️ Pagamento Automático Falhou",
+                    description="O pagamento automático falhou, mas você pode tentar novamente usando o comando `/comprar`.",
+                    color=0xffa500
+                )
+                embed.add_field(
+                    name="🔧 Como Continuar",
+                    value=f"Use o comando: `/comprar {product['name']}`",
+                    inline=False
+                )
+                embed.add_field(
+                    name="💡 Dica",
+                    value="O comando `/comprar` funciona apenas neste canal de ticket.",
+                    inline=False
+                )
+                await channel.send(embed=embed)
                 
         except Exception as e:
             print(f"Erro ao gerar pagamento automático: {e}")
