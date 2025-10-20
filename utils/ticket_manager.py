@@ -101,8 +101,10 @@ class TicketManager:
             return False, f"Erro ao fechar ticket: {str(e)}"
     
     async def _send_welcome_message(self, channel: discord.TextChannel, user: discord.Member, product: dict):
-        """Envia mensagem de boas-vindas no canal do ticket"""
+        """Envia mensagem de boas-vindas no canal do ticket e gera pagamento automaticamente"""
         from utils.ticket_views import TicketChannelView
+        from utils.payment_utils import PaymentUtils
+        from models.transaction_model import TransactionModel
         
         embed = discord.Embed(
             title="🎫 Ticket de Compra Criado!",
@@ -117,21 +119,103 @@ class TicketManager:
         )
         
         embed.add_field(
-            name="📋 Próximos Passos",
-            value="1. Use `/comprar` para gerar o pagamento Pix\n2. Use `/status` para verificar o progresso\n3. Use `/ajuda` para ver todos os comandos",
+            name="🚀 Processo Automatizado",
+            value="✅ Produto selecionado\n🔄 Gerando pagamento Pix...\n⏳ Aguarde alguns segundos",
+            inline=False
+        )
+        
+        embed.set_footer(text="Pagamento sendo gerado automaticamente...")
+        
+        view = TicketChannelView()
+        await channel.send(embed=embed, view=view)
+        
+        # Gerar pagamento automaticamente
+        try:
+            print(f"🔄 Gerando pagamento automático para {user.name} - {product['name']}")
+            
+            # Criar transação no banco
+            transaction_model = TransactionModel()
+            transaction = await transaction_model.create_transaction(
+                user_id=user.id,
+                product_id=product['id'],
+                amount=product['price'],
+                status='pending'
+            )
+            
+            if not transaction:
+                await channel.send("❌ Erro ao criar transação. Tente novamente.")
+                return
+            
+            # Gerar pagamento Pix
+            payment_utils = PaymentUtils()
+            payment_data = await payment_utils.create_pix_payment(
+                amount=product['price'],
+                description=f"Compra: {product['name']}",
+                email=f"{user.name.lower().replace(' ', '')}@khaos.com"  # Email automático
+            )
+            
+            if payment_data:
+                # Atualizar transação com dados do pagamento
+                await transaction_model.update_transaction(transaction['id'], {
+                    'payment_id': payment_data.get('id'),
+                    'pix_code': payment_data.get('pix_code'),
+                    'qr_code': payment_data.get('qr_code'),
+                    'email': f"{user.name.lower().replace(' ', '')}@khaos.com"
+                })
+                
+                # Enviar pagamento no canal
+                await self._send_payment_message(channel, user, product, payment_data)
+            else:
+                await channel.send("❌ Erro ao gerar pagamento Pix. Tente novamente.")
+                
+        except Exception as e:
+            print(f"Erro ao gerar pagamento automático: {e}")
+            await channel.send("❌ Erro ao gerar pagamento. Use `/comprar` para tentar novamente.")
+    
+    async def _send_payment_message(self, channel: discord.TextChannel, user: discord.Member, product: dict, payment_data: dict):
+        """Envia mensagem com dados do pagamento Pix"""
+        embed = discord.Embed(
+            title="💳 Pagamento Pix Gerado!",
+            description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
+            color=0x00ff00
+        )
+        
+        embed.add_field(
+            name="📱 QR Code",
+            value="Escaneie o QR Code abaixo com seu app de pagamento:",
             inline=False
         )
         
         embed.add_field(
-            name="💳 Informações de Pagamento",
-            value="• Pagamento via Pix (QR Code + Código)\n• Entrega automática após confirmação\n• Suporte 24/7 disponível",
+            name="🔢 Código Pix",
+            value=f"```{payment_data.get('pix_code', 'N/A')}```",
             inline=False
         )
         
-        embed.set_footer(text="Digite /ajuda para ver todos os comandos disponíveis")
+        embed.add_field(
+            name="⏰ Validade",
+            value="⏱️ **30 minutos** para efetuar o pagamento",
+            inline=False
+        )
         
-        view = TicketChannelView()
-        await channel.send(embed=embed, view=view)
+        embed.add_field(
+            name="🚀 Entrega",
+            value="✅ **Automática** após confirmação do pagamento\n📧 Produto será entregue neste canal",
+            inline=False
+        )
+        
+        embed.set_footer(text="Use /status para verificar o progresso do pagamento")
+        
+        # Enviar QR Code se disponível
+        if payment_data.get('qr_code'):
+            try:
+                await channel.send(embed=embed)
+                await channel.send(f"📱 **QR Code:**\n```\n{payment_data['qr_code']}\n```")
+            except Exception as e:
+                print(f"Erro ao enviar QR Code: {e}")
+                await channel.send(embed=embed)
+        else:
+            await channel.send(embed=embed)
     
     async def _log_ticket_creation(self, guild: discord.Guild, user: discord.Member, product: dict, channel: discord.TextChannel):
         """Log da criação do ticket"""
