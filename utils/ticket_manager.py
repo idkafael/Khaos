@@ -226,8 +226,8 @@ class TicketManager:
         )
         
         embed.add_field(
-            name="🔢 Código Pix",
-            value=f"```{payment_data.get('pix_code', 'N/A')}```",
+            name="🔢 Código Pix (Copiar e Colar)",
+            value=f"```{payment_data.get('qr_code', 'N/A')}```",
             inline=False
         )
         
@@ -250,6 +250,10 @@ class TicketManager:
             try:
                 import base64
                 import io
+                
+                # Debug: Verificar QR Code
+                print(f"🔧 Debug: QR Code base64 disponível: {len(payment_data['qr_code_base64'])} caracteres")
+                print(f"🔧 Debug: QR Code data: {payment_data.get('qr_code', 'N/A')[:50]}...")
                 
                 # Converter base64 para bytes
                 qr_base64 = payment_data['qr_code_base64']
