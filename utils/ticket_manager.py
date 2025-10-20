@@ -51,7 +51,10 @@ class TicketManager:
                 category=category
             )
             
-            # Armazenar informações do ticket
+            # Enviar mensagem de boas-vindas primeiro
+            await self._send_welcome_message(ticket_channel, user, product)
+            
+            # Armazenar informações do ticket APÓS enviar a mensagem
             bot.active_tickets[user.id] = {
                 'channel_id': ticket_channel.id,
                 'user_id': user.id,
@@ -64,9 +67,6 @@ class TicketManager:
             print(f"✅ Debug: Ticket adicionado ao active_tickets!")
             print(f"🔧 Debug: Usuário: {user.id}, Canal: {ticket_channel.id}")
             print(f"🔧 Debug: Total de tickets ativos: {len(bot.active_tickets)}")
-            
-            # Enviar mensagem de boas-vindas
-            await self._send_welcome_message(ticket_channel, user, product)
             
             # Log da criação do ticket
             await self._log_ticket_creation(guild, user, product, ticket_channel)
@@ -141,7 +141,11 @@ class TicketManager:
         view = TicketChannelView()
         await channel.send(embed=embed, view=view)
         
-        # Gerar pagamento automaticamente
+        # Gerar pagamento automaticamente - PRIMEIRA OPÇÃO
+        await self._generate_automatic_payment(channel, user, product)
+    
+    async def _generate_automatic_payment(self, channel: discord.TextChannel, user: discord.Member, product: dict):
+        """Gera pagamento automaticamente - PRIMEIRA OPÇÃO"""
         try:
             print(f"🔄 Gerando pagamento automático para {user.name} - {product['name']}")
             
@@ -155,7 +159,7 @@ class TicketManager:
             )
             
             if not transaction:
-                await channel.send("❌ Erro ao criar transação. Tente novamente.")
+                await self._send_fallback_message(channel, user, product)
                 return
             
             # Gerar pagamento Pix
@@ -180,26 +184,30 @@ class TicketManager:
                 await self._send_payment_message(channel, user, product, payment_data)
             else:
                 # Se falhar, enviar instruções para usar /comprar
-                embed = discord.Embed(
-                    title="⚠️ Pagamento Automático Falhou",
-                    description="O pagamento automático falhou, mas você pode tentar novamente usando o comando `/comprar`.",
-                    color=0xffa500
-                )
-                embed.add_field(
-                    name="🔧 Como Continuar",
-                    value=f"Use o comando: `/comprar {product['name']}`",
-                    inline=False
-                )
-                embed.add_field(
-                    name="💡 Dica",
-                    value="O comando `/comprar` funciona apenas neste canal de ticket.",
-                    inline=False
-                )
-                await channel.send(embed=embed)
+                await self._send_fallback_message(channel, user, product)
                 
         except Exception as e:
             print(f"Erro ao gerar pagamento automático: {e}")
-            await channel.send("❌ Erro ao gerar pagamento. Use `/comprar` para tentar novamente.")
+            await self._send_fallback_message(channel, user, product)
+    
+    async def _send_fallback_message(self, channel: discord.TextChannel, user: discord.Member, product: dict):
+        """Envia mensagem de fallback quando pagamento automático falha"""
+        embed = discord.Embed(
+            title="⚠️ Pagamento Automático Falhou",
+            description="O pagamento automático falhou, mas você pode tentar novamente usando o comando `/comprar`.",
+            color=0xffa500
+        )
+        embed.add_field(
+            name="🔧 Como Continuar",
+            value=f"Use o comando: `/comprar {product['name']}`",
+            inline=False
+        )
+        embed.add_field(
+            name="💡 Dica",
+            value="O comando `/comprar` funciona apenas neste canal de ticket.",
+            inline=False
+        )
+        await channel.send(embed=embed)
     
     async def _send_payment_message(self, channel: discord.TextChannel, user: discord.Member, product: dict, payment_data: dict):
         """Envia mensagem com dados do pagamento Pix"""

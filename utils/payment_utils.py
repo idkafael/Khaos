@@ -19,6 +19,12 @@ class PaymentUtils:
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
+        
+        # Debug: Verificar configuração
+        print(f"🔧 Debug PaymentUtils: API Key carregada: {self.pushinpay_api_key[:10]}...")
+        print(f"🔧 Debug PaymentUtils: Sandbox mode: {self.use_sandbox}")
+        print(f"🔧 Debug PaymentUtils: Base URL: {self.base_url}")
+        print(f"🔧 Debug PaymentUtils: Headers: {self.headers}")
     
     async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str) -> Optional[Dict]:
         """Cria um pagamento via Pix usando a API PushinPay"""
