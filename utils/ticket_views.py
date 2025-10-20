@@ -111,6 +111,48 @@ class SetupTicketModal(ui.Modal):
             traceback.print_exc()
             await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
 
+class ProductSelect(ui.Select):
+    """Select menu personalizado para escolher produto"""
+    
+    def __init__(self, products: List[Dict], options: List[discord.SelectOption]):
+        super().__init__(
+            placeholder="Escolha um produto...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+        self.products = products
+    
+    async def callback(self, interaction: discord.Interaction):
+        """Callback do select menu"""
+        try:
+            selected_product_id = int(self.values[0])
+            selected_product = next(
+                (p for p in self.products if p['id'] == selected_product_id), 
+                None
+            )
+            
+            if not selected_product:
+                await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
+                return
+            
+            # Criar ticket usando TicketManager
+            ticket_manager = TicketManager()
+            success, message = await ticket_manager.create_ticket(
+                interaction.user, 
+                interaction.guild, 
+                selected_product
+            )
+            
+            if success:
+                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                
+        except Exception as e:
+            print(f"Erro ao processar seleção de produto: {e}")
+            await interaction.response.send_message("❌ Erro ao criar ticket. Tente novamente.", ephemeral=True)
+
 class ProductSelectView(ui.View):
     """View com select menu para escolher produto"""
     
@@ -139,12 +181,7 @@ class ProductSelectView(ui.View):
         
         print(f"🔧 Debug: Total de opções criadas: {len(options)}")
         
-        select_menu = ui.Select(
-            placeholder="Escolha um produto...",
-            min_values=1,
-            max_values=1,
-            options=options
-        )
+        select_menu = ProductSelect(products, options)
         self.add_item(select_menu)
     
     async def on_timeout(self):
@@ -152,37 +189,6 @@ class ProductSelectView(ui.View):
         for item in self.children:
             item.disabled = True
         await self.message.edit(view=self)
-    
-    @ui.select(placeholder="Escolha um produto...")
-    async def select_product(self, interaction: discord.Interaction, select: ui.Select):
-        """Callback do select menu"""
-        try:
-            selected_product_id = int(select.values[0])
-            selected_product = next(
-                (p for p in self.products if p['id'] == selected_product_id), 
-                None
-            )
-            
-            if not selected_product:
-                await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
-                return
-            
-            # Criar ticket usando TicketManager
-            ticket_manager = TicketManager()
-            success, message = await ticket_manager.create_ticket(
-                interaction.user, 
-                interaction.guild, 
-                selected_product
-            )
-            
-            if success:
-                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
-            else:
-                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
-                
-        except Exception as e:
-            print(f"Erro ao processar seleção de produto: {e}")
-            await interaction.response.send_message("❌ Erro ao criar ticket. Tente novamente.", ephemeral=True)
 
 class TicketButton(ui.Button):
     """Botão para criar ticket que abre o modal"""
