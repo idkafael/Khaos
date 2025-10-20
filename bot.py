@@ -128,32 +128,56 @@ async def produtos_slash(interaction: discord.Interaction):
             await interaction.response.send_message(embed=embed)
             return
         
+        # Criar embed principal
         embed = discord.Embed(
-            title="🛍️ Produtos Disponíveis",
-            description="Escolha um produto para comprar:",
-            color=0x0099ff
-        )
-        
-        for product in products:
-            embed.add_field(
-                name=f"🛒 {product['name']}",
-                value=f"**Preço:** R$ {product['price']:.2f}\n**Descrição:** {product['description']}",
-                inline=False
-            )
-        
-        embed.set_footer(text="Crie um ticket para comprar um produto")
-        
-        side_embed = discord.Embed(
-            description="🛍️ Produtos disponíveis:",
+            title="🛍️ Loja Digital Khaos",
+            description="**Produtos digitais premium com entrega instantânea!**\n\n💎 **Pagamento via Pix** • 🚀 **Entrega automática** • 🛡️ **Garantia total**",
             color=0x8B5CF6
         )
         
-        await interaction.response.send_message(embeds=[embed, side_embed])
+        # Agrupar produtos por categoria
+        categories = {}
+        for product in products:
+            category = product.get('category', 'Outros')
+            if category not in categories:
+                categories[category] = []
+            categories[category].append(product)
+        
+        # Adicionar produtos por categoria
+        for category, category_products in categories.items():
+            category_emoji = {
+                "Jogos Digitais": "🎮",
+                "Streaming": "📺", 
+                "Gaming": "🎯",
+                "Software": "💻",
+                "Outros": "📦"
+            }.get(category, "📦")
+            
+            products_text = ""
+            for product in category_products:
+                products_text += f"**{product['name']}** - R$ {product['price']:.2f}\n"
+                products_text += f"*{product['description'][:80]}...*\n\n"
+            
+            embed.add_field(
+                name=f"{category_emoji} {category}",
+                value=products_text.strip(),
+                inline=False
+            )
+        
+        embed.add_field(
+            name="🛒 Como Comprar",
+            value="1️⃣ Use `/setup_ticket` para criar botão de compra\n2️⃣ Clique em \"Criar Ticket de Compra\"\n3️⃣ Escolha seu produto no modal\n4️⃣ Use `/comprar` no canal privado",
+            inline=False
+        )
+        
+        embed.set_footer(text=f"📊 {len(products)} produtos disponíveis • Powered by Khaos")
+        
+        await interaction.response.send_message(embed=embed)
         
     except Exception as e:
-        print(f"Erro ao carregar produtos: {e}")
+        print(f"Erro no comando /produtos: {e}")
         embed = discord.Embed(
-            description="❌ Erro ao carregar produtos. Tente novamente.",
+            description="❌ Erro ao carregar produtos. Tente novamente em alguns instantes.",
             color=0x8B5CF6
         )
         await interaction.response.send_message(embed=embed)
@@ -305,34 +329,52 @@ async def load_sample_products():
     if not products:
         sample_products = [
             {
-                "name": "Contas Instagram",
-                "description": "Contas Instagram verificadas com seguidores reais. Perfeitas para marketing digital e crescimento orgânico.",
+                "name": "Minecraft Premium",
+                "description": "Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.",
+                "price": 45.00,
+                "category": "Jogos Digitais"
+            },
+            {
+                "name": "Spotify Premium",
+                "description": "Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.",
                 "price": 25.00,
-                "category": "Contas Sociais"
+                "category": "Streaming"
             },
             {
-                "name": "Contas TikTok",
-                "description": "Contas TikTok ativas com vídeos virais. Ideal para influenciadores e criadores de conteúdo.",
-                "price": 30.00,
-                "category": "Contas Sociais"
+                "name": "Netflix Premium",
+                "description": "Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.",
+                "price": 35.00,
+                "category": "Streaming"
             },
             {
-                "name": "Contas Discord",
-                "description": "Contas Discord premium com Nitro ativo. Perfeitas para gamers e comunidades.",
-                "price": 15.00,
-                "category": "Contas Sociais"
-            },
-            {
-                "name": "Contas Reddit",
-                "description": "Contas Reddit com karma alto e histórico limpo. Ideais para marketing e engajamento.",
+                "name": "Discord Nitro",
+                "description": "Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.",
                 "price": 20.00,
-                "category": "Contas Sociais"
+                "category": "Gaming"
             },
             {
-                "name": "Contas Telegram",
-                "description": "Contas Telegram premium com recursos avançados. Perfeitas para comunicação e negócios.",
-                "price": 18.00,
-                "category": "Contas Sociais"
+                "name": "Adobe Creative Cloud",
+                "description": "Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.",
+                "price": 80.00,
+                "category": "Software"
+            },
+            {
+                "name": "Office 365",
+                "description": "Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.",
+                "price": 60.00,
+                "category": "Software"
+            },
+            {
+                "name": "Steam Wallet",
+                "description": "Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.",
+                "price": 50.00,
+                "category": "Gaming"
+            },
+            {
+                "name": "YouTube Premium",
+                "description": "YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.",
+                "price": 30.00,
+                "category": "Streaming"
             }
         ]
         

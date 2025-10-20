@@ -117,9 +117,14 @@ CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_a
 
 -- Produtos de exemplo
 INSERT INTO products (name, description, price, category) VALUES
-('Camiseta Estilo 2025', 'Camiseta unissex com estampa futurista, disponível nas cores preta, branca e cinza.', 49.90, 'Roupas'),
-('Caneca Personalizada', 'Caneca de cerâmica com design personalizado. Ideal para presentear ou para o seu escritório.', 29.90, 'Acessórios'),
-('Fone de Ouvido Bluetooth', 'Fone de ouvido sem fio com cancelamento de ruído. Perfeito para quem busca qualidade de som e conforto.', 199.00, 'Eletrônicos')
+('Minecraft Premium', 'Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.', 45.00, 'Jogos Digitais'),
+('Spotify Premium', 'Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.', 25.00, 'Streaming'),
+('Netflix Premium', 'Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.', 35.00, 'Streaming'),
+('Discord Nitro', 'Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.', 20.00, 'Gaming'),
+('Adobe Creative Cloud', 'Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.', 80.00, 'Software'),
+('Office 365', 'Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.', 60.00, 'Software'),
+('Steam Wallet', 'Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.', 50.00, 'Gaming'),
+('YouTube Premium', 'YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.', 30.00, 'Streaming')
 ON CONFLICT DO NOTHING;
 ```
 
@@ -273,16 +278,35 @@ pm2 startup
 
 ## 📊 Produtos de Exemplo
 
-O bot vem com 3 produtos de exemplo pré-configurados:
+O bot vem com 8 produtos digitais pré-configurados:
 
-1. **Camiseta Estilo 2025** - R$ 49,90
-   - Camiseta unissex com estampa futurista, disponível nas cores preta, branca e cinza
+### 🎮 Jogos Digitais
+1. **Minecraft Premium** - R$ 45,00
+   - Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.
 
-2. **Caneca Personalizada** - R$ 29,90
-   - Caneca de cerâmica com design personalizado. Ideal para presentear ou para o seu escritório
+### 📺 Streaming
+2. **Spotify Premium** - R$ 25,00
+   - Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.
 
-3. **Fone de Ouvido Bluetooth** - R$ 199,00
-   - Fone de ouvido sem fio com cancelamento de ruído. Perfeito para quem busca qualidade de som e conforto
+3. **Netflix Premium** - R$ 35,00
+   - Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.
+
+4. **YouTube Premium** - R$ 30,00
+   - YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.
+
+### 🎯 Gaming
+5. **Discord Nitro** - R$ 20,00
+   - Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.
+
+6. **Steam Wallet** - R$ 50,00
+   - Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.
+
+### 💻 Software
+7. **Adobe Creative Cloud** - R$ 80,00
+   - Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.
+
+8. **Office 365** - R$ 60,00
+   - Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.
 
 ## 🔄 Fluxo do Bot
 
