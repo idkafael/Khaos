@@ -278,6 +278,62 @@ pm2 startup
 
 **🚨 DEPLOY OBRIGATÓRIO**: SEMPRE use a **Shard Cloud** para deploy. NUNCA use Vercel, Railway ou outras plataformas. A Shard Cloud é a plataforma oficial e recomendada para este projeto.
 
+## 🚀 Como Fazer Deploy na Shard Cloud
+
+### **Passo a Passo Completo:**
+
+#### **1. Preparação do Código (Git)**
+```bash
+# Fazer mudanças no código
+git add .
+git commit -m "Descrição das mudanças"
+git push origin main
+```
+
+#### **2. Deploy na Shard Cloud**
+1. **Acesse**: https://shardcloud.app
+2. **Faça login** com sua conta
+3. **"New Project"** → Conecte GitHub
+4. **Selecione**: `idkafael/Khaos`
+5. **Configure variáveis de ambiente**:
+   ```
+   DISCORD_TOKEN=842c8e29352ebd03e85b29f8c1c4ed6ee2e981194ad0236c153e3bb234c3848f
+   DISCORD_APPLICATION_ID=784058182515425310
+   SUPABASE_URL=https://sxsaxcqliuiolktypwkf.supabase.co
+   SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4c2F4Y3FsaXVpb2xrdHlwd2tmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA4NTQwNDksImV4cCI6MjA3NjQzMDA0OX0.Qc-DINC-FC9oPbI4BBpxbtF9OmTMUN8ecC1gDSTatbY
+   PUSHINPAY_API_KEY=50790|dakuggRtFoHjIZb2XpYYbDoa2exlT5NPspJayboI40bfb10f
+   PUSHINPAY_SANDBOX=true
+   ```
+6. **Deploy automático** será iniciado
+
+#### **3. Deploy Automático (Após Configuração Inicial)**
+Após a configuração inicial, os deploys são automáticos:
+```bash
+# Qualquer commit + push triggera deploy automático
+git commit --allow-empty -m "🚀 Deploy de teste"
+git push origin main
+```
+
+### **📋 Checklist de Deploy:**
+- ✅ Código commitado e enviado para GitHub
+- ✅ Variáveis de ambiente configuradas na Shard Cloud
+- ✅ Projeto conectado ao repositório GitHub
+- ✅ Deploy automático funcionando
+- ✅ Bot online e respondendo
+
+### **🔧 Comandos Úteis:**
+```bash
+# Deploy forçado (commit vazio)
+git commit --allow-empty -m "🚀 Deploy forçado"
+git push origin main
+
+# Verificar status do repositório
+git status
+git log --oneline -5
+```
+
+**IMPORTANTE**: O deploy é sempre automático após push para GitHub. Não é necessário fazer nada manual na Shard Cloud após a configuração inicial.
+
 ## 📊 Produtos de Exemplo
 
 O bot vem com 8 produtos digitais pré-configurados:
