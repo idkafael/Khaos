@@ -164,6 +164,7 @@ class TicketManager:
                 return
             
             # Gerar pagamento Pix
+            from utils.payment_utils import PaymentUtils
             payment_utils = PaymentUtils()
             payment_data = await payment_utils.create_pix_payment(
                 amount=product['price'],
