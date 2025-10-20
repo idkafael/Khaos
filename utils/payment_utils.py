@@ -44,7 +44,6 @@ class PaymentUtils:
             # Dados do pagamento para PushinPay
             payment_data = {
                 "value": amount_cents,
-                "webhook_url": f"{Config.WEBHOOK_BASE_URL}/webhook/pushinpay" if hasattr(Config, 'WEBHOOK_BASE_URL') and Config.WEBHOOK_BASE_URL else None,
                 "split_rules": []
             }
             
