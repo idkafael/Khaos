@@ -326,60 +326,72 @@ async def on_command_error(ctx, error):
 async def load_sample_products():
     """Carrega produtos de exemplo no banco de dados"""
     products = await product_model.get_all_products()
-    if not products:
-        sample_products = [
-            {
-                "name": "Minecraft Premium",
-                "description": "Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.",
-                "price": 45.00,
-                "category": "Jogos Digitais"
-            },
-            {
-                "name": "Spotify Premium",
-                "description": "Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.",
-                "price": 25.00,
-                "category": "Streaming"
-            },
-            {
-                "name": "Netflix Premium",
-                "description": "Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.",
-                "price": 35.00,
-                "category": "Streaming"
-            },
-            {
-                "name": "Discord Nitro",
-                "description": "Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.",
-                "price": 20.00,
-                "category": "Gaming"
-            },
-            {
-                "name": "Adobe Creative Cloud",
-                "description": "Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.",
-                "price": 80.00,
-                "category": "Software"
-            },
-            {
-                "name": "Office 365",
-                "description": "Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.",
-                "price": 60.00,
-                "category": "Software"
-            },
-            {
-                "name": "Steam Wallet",
-                "description": "Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.",
-                "price": 50.00,
-                "category": "Gaming"
-            },
-            {
-                "name": "YouTube Premium",
-                "description": "YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.",
-                "price": 30.00,
-                "category": "Streaming"
-            }
-        ]
-        
-        for product in sample_products:
-            await product_model.create_product(product)
+    
+    # Se existem produtos antigos, vamos substituí-los pelos novos
+    if products:
+        print("🔄 Produtos antigos encontrados. Substituindo pelos novos produtos digitais...")
+        # Limpar produtos antigos
+        for product in products:
+            await product_model.delete_product(product['id'])
+        print("✅ Produtos antigos removidos")
+    
+    # Carregar novos produtos digitais
+    sample_products = [
+        {
+            "name": "Minecraft Premium",
+            "description": "Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.",
+            "price": 45.00,
+            "category": "Jogos Digitais"
+        },
+        {
+            "name": "Spotify Premium",
+            "description": "Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.",
+            "price": 25.00,
+            "category": "Streaming"
+        },
+        {
+            "name": "Netflix Premium",
+            "description": "Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.",
+            "price": 35.00,
+            "category": "Streaming"
+        },
+        {
+            "name": "Discord Nitro",
+            "description": "Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.",
+            "price": 20.00,
+            "category": "Gaming"
+        },
+        {
+            "name": "Adobe Creative Cloud",
+            "description": "Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.",
+            "price": 80.00,
+            "category": "Software"
+        },
+        {
+            "name": "Office 365",
+            "description": "Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.",
+            "price": 60.00,
+            "category": "Software"
+        },
+        {
+            "name": "Steam Wallet",
+            "description": "Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.",
+            "price": 50.00,
+            "category": "Gaming"
+        },
+        {
+            "name": "YouTube Premium",
+            "description": "YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.",
+            "price": 30.00,
+            "category": "Streaming"
+        }
+    ]
+    
+    print("📦 Carregando novos produtos digitais...")
+    for product in sample_products:
+        await product_model.create_product(product)
+    
+    print(f"✅ {len(sample_products)} produtos digitais carregados com sucesso!")
 
 
 @bot.command(name='products')
