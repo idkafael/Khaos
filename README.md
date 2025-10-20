@@ -423,6 +423,65 @@ O bot gera logs detalhados em:
 
 Níveis de log configuráveis via variável `LOG_LEVEL`.
 
+## 🗄️ Estrutura do Banco de Dados
+
+### Tabela: product_inventory
+
+Esta tabela gerencia o estoque de produtos digitais (códigos, keys, contas, etc).
+
+```sql
+CREATE TABLE product_inventory (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'available' CHECK (status IN ('available', 'reserved', 'sold', 'expired')),
+  sold_to_user_id BIGINT,
+  reserved_at TIMESTAMP,
+  sold_at TIMESTAMP,
+  transaction_id INTEGER REFERENCES transactions(id),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX idx_product_inventory_product_id ON product_inventory(product_id);
+CREATE INDEX idx_product_inventory_status ON product_inventory(status);
+CREATE INDEX idx_product_inventory_transaction_id ON product_inventory(transaction_id);
+```
+
+### Campos Adicionais na Tabela transactions
+
+Adicione estes campos à tabela `transactions` existente:
+
+```sql
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS inventory_id INTEGER REFERENCES product_inventory(id);
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMP;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS delivery_channel_id BIGINT;
+```
+
+### Fluxo de Estoque
+
+1. **Disponível** (`available`): Item pronto para venda
+2. **Reservado** (`reserved`): Item reservado durante pagamento (até 10min)
+3. **Vendido** (`sold`): Item entregue ao cliente
+4. **Expirado** (`expired`): Reserva expirou, volta para disponível
+
+### Como Adicionar Produtos ao Estoque
+
+Use o comando `/adicionar_estoque` no Discord (requer permissão de admin):
+
+1. Execute `/adicionar_estoque`
+2. Selecione o produto
+3. Cole os códigos/keys (um por linha)
+4. Confirme
+
+Exemplo de códigos:
+```
+MINECRAFT-XXXX-YYYY-ZZZZ
+NETFLIX-EMAIL:SENHA
+SPOTIFY-KEY-12345
+```
+
 ## 🤝 Contribuição
 
 1. Fork o projeto

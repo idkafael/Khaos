@@ -1,0 +1,277 @@
+import discord
+from models.transaction_model import TransactionModel
+from models.product_model import ProductModel
+from models.inventory_model import InventoryModel
+from typing import Optional
+from datetime import datetime
+
+class DeliveryManager:
+    """Gerencia a entrega automática de produtos digitais"""
+    
+    def __init__(self, bot):
+        self.bot = bot
+        self.transaction_model = TransactionModel()
+        self.product_model = ProductModel()
+        self.inventory_model = InventoryModel()
+    
+    async def process_payment_confirmation(self, transaction_id: int, payment_id: str = None) -> bool:
+        """
+        Processa confirmação de pagamento e entrega o produto
+        
+        Args:
+            transaction_id: ID da transação
+            payment_id: ID do pagamento na PushinPay (opcional)
+        
+        Returns:
+            True se entrega foi bem sucedida, False caso contrário
+        """
+        try:
+            print(f"📦 Processando entrega para transação #{transaction_id}")
+            
+            # 1. Buscar transação
+            transaction = await self.transaction_model.get_transaction(transaction_id)
+            if not transaction:
+                print(f"❌ Transação #{transaction_id} não encontrada")
+                return False
+            
+            # 2. Verificar se já foi entregue
+            if transaction.get('status') == 'completed':
+                print(f"⚠️ Transação #{transaction_id} já foi entregue anteriormente")
+                return False
+            
+            # 3. Buscar produto
+            product = await self.product_model.get_product_by_id(transaction['product_id'])
+            if not product:
+                print(f"❌ Produto #{transaction['product_id']} não encontrado")
+                return False
+            
+            # 4. Buscar item do estoque (se já foi reservado)
+            inventory_item = await self.inventory_model.get_inventory_by_transaction(transaction_id)
+            
+            # 5. Se não foi reservado ainda, tentar reservar agora
+            if not inventory_item:
+                inventory_item = await self.inventory_model.get_available_stock(transaction['product_id'])
+                
+                if not inventory_item:
+                    # Sem estoque disponível
+                    await self._handle_out_of_stock(transaction, product)
+                    return False
+                
+                # Reservar o item
+                reserved = await self.inventory_model.reserve_stock(
+                    inventory_item['id'],
+                    transaction['user_id'],
+                    transaction_id
+                )
+                
+                if not reserved:
+                    print(f"❌ Falha ao reservar estoque para transação #{transaction_id}")
+                    return False
+            
+            # 6. Marcar estoque como vendido
+            sold = await self.inventory_model.mark_as_sold(inventory_item['id'])
+            if not sold:
+                print(f"⚠️ Falha ao marcar estoque como vendido (transação #{transaction_id})")
+            
+            # 7. Enviar produto para o usuário
+            delivery_success = await self._deliver_product(transaction, product, inventory_item)
+            
+            if not delivery_success:
+                print(f"❌ Falha ao entregar produto para transação #{transaction_id}")
+                return False
+            
+            # 8. Atualizar transação como completada
+            update_data = {
+                'status': 'completed',
+                'delivered_at': datetime.now().isoformat(),
+                'inventory_id': inventory_item['id']
+            }
+            
+            if payment_id:
+                update_data['payment_id'] = payment_id
+            
+            await self.transaction_model.update_transaction(transaction_id, update_data)
+            
+            # 9. Notificar admin
+            await self._notify_admin_delivery_success(transaction, product)
+            
+            # 10. Fechar ticket após 5 minutos
+            await self._schedule_ticket_close(transaction)
+            
+            print(f"✅ Produto entregue com sucesso para transação #{transaction_id}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro ao processar entrega: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    async def _deliver_product(self, transaction: dict, product: dict, inventory_item: dict) -> bool:
+        """Envia o produto para o canal do ticket"""
+        try:
+            # Buscar canal da entrega
+            channel_id = transaction.get('delivery_channel_id')
+            if not channel_id:
+                print(f"⚠️ Canal de entrega não encontrado para transação #{transaction['id']}")
+                return False
+            
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                print(f"❌ Canal {channel_id} não encontrado")
+                return False
+            
+            # Buscar usuário
+            user = self.bot.get_user(transaction['user_id'])
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(transaction['user_id'])
+                except:
+                    print(f"❌ Usuário {transaction['user_id']} não encontrado")
+                    return False
+            
+            # Criar embed de entrega
+            embed = discord.Embed(
+                title="✅ Produto Entregue!",
+                description=f"Seu pagamento foi confirmado e o produto foi entregue.",
+                color=0x00ff00,
+                timestamp=datetime.now()
+            )
+            
+            embed.add_field(
+                name="📦 Produto",
+                value=f"**{product['name']}**",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="💰 Valor Pago",
+                value=f"R$ {transaction['amount']:.2f}",
+                inline=True
+            )
+            
+            embed.add_field(
+                name="📅 Data da Compra",
+                value=f"<t:{int(datetime.now().timestamp())}:F>",
+                inline=True
+            )
+            
+            embed.add_field(
+                name="🔑 Seu Produto",
+                value=f"```\n{inventory_item['content']}\n```",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="⚠️ Importante",
+                value="• Guarde essas informações em local seguro\n• Não compartilhe com terceiros\n• Este canal será fechado em 5 minutos",
+                inline=False
+            )
+            
+            embed.set_footer(text="Obrigado pela sua compra! 💙")
+            
+            # Enviar no canal do ticket
+            await channel.send(f"{user.mention}", embed=embed)
+            
+            # Tentar enviar também por DM
+            try:
+                dm_embed = discord.Embed(
+                    title="✅ Cópia do Seu Produto",
+                    description=f"Aqui está uma cópia do produto adquirido:",
+                    color=0x00ff00
+                )
+                dm_embed.add_field(name="📦 Produto", value=product['name'], inline=False)
+                dm_embed.add_field(name="🔑 Conteúdo", value=f"```\n{inventory_item['content']}\n```", inline=False)
+                await user.send(embed=dm_embed)
+                print(f"✉️ Cópia enviada por DM para {user.name}")
+            except:
+                print(f"⚠️ Não foi possível enviar DM para {user.name}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Erro ao entregar produto: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    async def _handle_out_of_stock(self, transaction: dict, product: dict):
+        """Trata caso de estoque esgotado"""
+        try:
+            print(f"⚠️ ESTOQUE ESGOTADO: {product['name']} (ID: {product['id']})")
+            
+            # Atualizar transação
+            await self.transaction_model.update_transaction(
+                transaction['id'],
+                {'status': 'out_of_stock'}
+            )
+            
+            # Notificar admin
+            await self._notify_admin_out_of_stock(transaction, product)
+            
+            # Notificar cliente
+            channel = self.bot.get_channel(transaction.get('delivery_channel_id'))
+            if channel:
+                embed = discord.Embed(
+                    title="⚠️ Estoque Temporariamente Esgotado",
+                    description=f"O produto **{product['name']}** está temporariamente sem estoque.",
+                    color=0xffa500
+                )
+                embed.add_field(
+                    name="💰 Seu Pagamento",
+                    value="Seu pagamento foi confirmado e será processado assim que repormos o estoque.",
+                    inline=False
+                )
+                embed.add_field(
+                    name="⏱️ Prazo",
+                    value="Você receberá o produto em até 24 horas.\nSe preferir, pode solicitar reembolso.",
+                    inline=False
+                )
+                await channel.send(embed=embed)
+            
+        except Exception as e:
+            print(f"Erro ao tratar estoque esgotado: {e}")
+    
+    async def _notify_admin_delivery_success(self, transaction: dict, product: dict):
+        """Notifica admin sobre entrega bem sucedida"""
+        try:
+            # Buscar canal de logs (você pode adicionar isso no config)
+            # Por enquanto, apenas log no console
+            print(f"📊 ENTREGA CONFIRMADA: {product['name']} para usuário {transaction['user_id']}")
+        except Exception as e:
+            print(f"Erro ao notificar admin: {e}")
+    
+    async def _notify_admin_out_of_stock(self, transaction: dict, product: dict):
+        """Notifica admin sobre estoque esgotado"""
+        try:
+            print(f"🚨 ALERTA: Estoque esgotado de {product['name']} - Transação #{transaction['id']} aguardando")
+        except Exception as e:
+            print(f"Erro ao notificar admin: {e}")
+    
+    async def _schedule_ticket_close(self, transaction: dict):
+        """Agenda fechamento do ticket após 5 minutos"""
+        try:
+            import asyncio
+            
+            # Aguardar 5 minutos
+            await asyncio.sleep(300)
+            
+            # Buscar canal e fechar
+            channel_id = transaction.get('delivery_channel_id')
+            if channel_id:
+                channel = self.bot.get_channel(channel_id)
+                if channel:
+                    embed = discord.Embed(
+                        title="🔒 Ticket Fechado",
+                        description="Este ticket foi fechado automaticamente após a entrega do produto.",
+                        color=0x808080
+                    )
+                    await channel.send(embed=embed)
+                    
+                    # Aguardar 10 segundos e deletar canal
+                    await asyncio.sleep(10)
+                    await channel.delete(reason="Entrega concluída - Ticket fechado automaticamente")
+                    print(f"🔒 Ticket fechado: {channel.name}")
+        except Exception as e:
+            print(f"Erro ao fechar ticket: {e}")
+

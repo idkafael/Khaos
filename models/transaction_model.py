@@ -30,6 +30,9 @@ class TransactionModel:
                 'amount': amount,
                 'status': status,
                 'created_at': datetime.now().isoformat(),
+                'inventory_id': kwargs.get('inventory_id'),
+                'delivered_at': kwargs.get('delivered_at'),
+                'delivery_channel_id': kwargs.get('delivery_channel_id'),
                 **kwargs
             }
             
@@ -46,6 +49,15 @@ class TransactionModel:
             return result.data[0] if result.data else None
         except Exception as e:
             print(f"Erro ao buscar transação: {e}")
+            return None
+    
+    async def get_transaction_by_payment_id(self, payment_id: str) -> Optional[Dict]:
+        """Busca uma transação por payment_id"""
+        try:
+            result = self.supabase.table(self.table_name).select('*').eq('payment_id', payment_id).execute()
+            return result.data[0] if result.data else None
+        except Exception as e:
+            print(f"Erro ao buscar transação por payment_id: {e}")
             return None
     
     async def get_user_transactions(self, user_id: int) -> List[Dict]:

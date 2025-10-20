@@ -72,6 +72,145 @@ async def setup_ticket_slash(interaction: discord.Interaction):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="status", description="Ver status do seu pagamento")
+async def status_slash(interaction: discord.Interaction):
+    """Comando para ver status do pagamento"""
+    try:
+        # Verificar se está em canal de ticket
+        if not interaction.channel.name.startswith('ticket-'):
+            await interaction.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
+            return
+        
+        # Buscar transação do usuário neste canal
+        transaction_model = TransactionModel()
+        transactions = await transaction_model.get_user_transactions(interaction.user.id)
+        
+        # Filtrar pela transação deste canal
+        current_transaction = None
+        for trans in transactions:
+            if trans.get('delivery_channel_id') == interaction.channel.id:
+                current_transaction = trans
+                break
+        
+        if not current_transaction:
+            await interaction.response.send_message("❌ Nenhuma transação encontrada neste canal.", ephemeral=True)
+            return
+        
+        # Buscar produto
+        product_model = ProductModel()
+        product = await product_model.get_product_by_id(current_transaction['product_id'])
+        
+        status = current_transaction.get('status', 'pending')
+        
+        # Criar embed baseado no status
+        if status == 'pending':
+            # Pagamento pendente
+            embed = discord.Embed(
+                title="⏳ Pagamento Pendente",
+                description=f"Aguardando pagamento do produto **{product['name']}**",
+                color=0xffa500
+            )
+            
+            # Calcular tempo restante
+            from datetime import datetime
+            created_at = datetime.fromisoformat(current_transaction['created_at'].replace('Z', '+00:00'))
+            now = datetime.now()
+            age_minutes = (now - created_at.replace(tzinfo=None)).total_seconds() / 60
+            remaining = max(0, 30 - int(age_minutes))
+            
+            embed.add_field(
+                name="⏱️ Tempo Restante",
+                value=f"{remaining} minutos",
+                inline=True
+            )
+            embed.add_field(
+                name="💰 Valor",
+                value=f"R$ {current_transaction['amount']:.2f}",
+                inline=True
+            )
+            
+            # Mostrar QR Code se disponível
+            if current_transaction.get('qr_code'):
+                embed.add_field(
+                    name="🔢 Código Pix",
+                    value=f"```{current_transaction['qr_code'][:100]}...```",
+                    inline=False
+                )
+                
+                # Gerar QR Code novamente
+                import qrcode
+                import io
+                qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+                qr.add_data(current_transaction['qr_code'])
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                img_bytes = io.BytesIO()
+                img.save(img_bytes, format='PNG')
+                img_bytes.seek(0)
+                qr_file = discord.File(img_bytes, filename="qrcode.png")
+                
+                await interaction.response.send_message(embed=embed, file=qr_file, ephemeral=True)
+            else:
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                
+        elif status == 'completed':
+            # Pagamento confirmado e produto entregue
+            embed = discord.Embed(
+                title="✅ Produto Entregue",
+                description=f"Seu pagamento foi confirmado e o produto foi entregue.",
+                color=0x00ff00
+            )
+            embed.add_field(
+                name="📦 Produto",
+                value=product['name'],
+                inline=True
+            )
+            embed.add_field(
+                name="💰 Valor Pago",
+                value=f"R$ {current_transaction['amount']:.2f}",
+                inline=True
+            )
+            
+            # Buscar item do estoque para reenviar
+            from models.inventory_model import InventoryModel
+            inventory_model = InventoryModel()
+            inventory_item = await inventory_model.get_inventory_by_transaction(current_transaction['id'])
+            
+            if inventory_item:
+                embed.add_field(
+                    name="🔑 Seu Produto",
+                    value=f"```{inventory_item['content']}```",
+                    inline=False
+                )
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+        elif status == 'expired':
+            embed = discord.Embed(
+                title="⏰ Pagamento Expirado",
+                description=f"O prazo para pagamento expirou.",
+                color=0xff0000
+            )
+            embed.add_field(
+                name="💡 Quer tentar novamente?",
+                value="Clique no botão 'Criar Ticket' para gerar um novo pagamento.",
+                inline=False
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            embed = discord.Embed(
+                title="📊 Status do Pagamento",
+                description=f"Status: **{status}**",
+                color=0x3498db
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+    except Exception as e:
+        print(f"Erro no comando status: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao buscar status do pagamento.", ephemeral=True)
+
 @bot.tree.command(name="comprar", description="Comprar produto (use no canal do ticket)")
 async def comprar_slash(interaction: discord.Interaction, produto: str):
     """Comando para comprar produto no canal do ticket"""
@@ -389,11 +528,57 @@ async def on_ready():
     # Carregar produtos de exemplo se não existirem
     await load_sample_products()
     
+    # Inicializar inventory model
+    from models.inventory_model import InventoryModel
+    inventory_model = InventoryModel()
+    await inventory_model.initialize()
+    
+    # Iniciar webhook server
+    try:
+        from utils.webhook_handler import WebhookHandler
+        webhook_port = int(os.getenv('WEBHOOK_PORT', '8080'))
+        bot.webhook_handler = WebhookHandler(bot, port=webhook_port)
+        asyncio.create_task(bot.webhook_handler.start())
+    except Exception as e:
+        print(f"⚠️ Erro ao iniciar webhook server: {e}")
+    
+    # Iniciar payment checker (polling)
+    try:
+        from utils.payment_checker import PaymentChecker
+        bot.payment_checker = PaymentChecker(bot)
+        asyncio.create_task(bot.payment_checker.start_checking())
+    except Exception as e:
+        print(f"⚠️ Erro ao iniciar payment checker: {e}")
+    
+    # Iniciar task para liberar reservas expiradas
+    from discord.ext import tasks
+    
+    @tasks.loop(minutes=5)
+    async def release_expired_reservations():
+        """Libera reservas de estoque expiradas a cada 5 minutos"""
+        try:
+            released = await inventory_model.release_expired_reservations()
+            if released > 0:
+                print(f"🔓 {released} reservas expiradas foram liberadas")
+        except Exception as e:
+            print(f"❌ Erro ao liberar reservas: {e}")
+    
+    release_expired_reservations.start()
+    
+    # Carregar comandos de admin
+    try:
+        from commands.admin_commands import setup_admin_commands
+        await setup_admin_commands(bot)
+    except Exception as e:
+        print(f"⚠️ Erro ao carregar comandos de admin: {e}")
+        import traceback
+        traceback.print_exc()
+    
     # Adicionar view persistente para tickets
     bot.add_view(TicketView())
     bot.add_view(TicketChannelView())
     
-    print("✅ Bot inicializado com sistema de tickets!")
+    print("✅ Bot inicializado com sistema de tickets e entrega automática!")
 
 @bot.event
 async def on_command_error(ctx, error):
