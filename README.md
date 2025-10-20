@@ -276,6 +276,8 @@ pm2 startup
 
 **IMPORTANTE**: NUNCA crie arquivos de guia separados. Sempre inclua instruções diretas no README para não esquecer.
 
+**🚨 DEPLOY OBRIGATÓRIO**: SEMPRE use a **Shard Cloud** para deploy. NUNCA use Vercel, Railway ou outras plataformas. A Shard Cloud é a plataforma oficial e recomendada para este projeto.
+
 ## 📊 Produtos de Exemplo
 
 O bot vem com 8 produtos digitais pré-configurados:
