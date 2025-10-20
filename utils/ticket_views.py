@@ -114,9 +114,24 @@ class SetupTicketModal(ui.Modal):
 class ProductSelectView(ui.View):
     """View com select menu para escolher produto"""
     
-    def __init__(self, products: List[Dict], select_menu: ui.Select):
+    def __init__(self, products: List[Dict]):
         super().__init__(timeout=300)
         self.products = products
+        
+        # Criar select menu diretamente aqui
+        select_menu = ui.Select(
+            placeholder="Escolha um produto...",
+            min_values=1,
+            max_values=1,
+            options=[
+                discord.SelectOption(
+                    label=product['name'],
+                    description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:50]}",
+                    value=str(product['id'])
+                )
+                for product in products
+            ]
+        )
         self.add_item(select_menu)
     
     async def on_timeout(self):
@@ -197,23 +212,8 @@ class TicketButton(ui.Button):
                 )
                 return
             
-            # Criar select menu com produtos
-            select_menu = ui.Select(
-                placeholder="Escolha um produto...",
-                min_values=1,
-                max_values=1,
-                options=[
-                    discord.SelectOption(
-                        label=product['name'],
-                        description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:100]}",
-                        value=str(product['id'])
-                    )
-                    for product in products
-                ]
-            )
-            
             # Criar view com select menu
-            view = ProductSelectView(products, select_menu)
+            view = ProductSelectView(products)
             
             embed = discord.Embed(
                 title="🛍️ Escolha seu Produto",
