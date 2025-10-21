@@ -52,12 +52,13 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
   - Seguir instruções na seção "Deploy na Shard Cloud" abaixo
 
 ### **Novidades Recentes** 🆕
-- ✅ **Sistema de Suporte Customizado** - `/setup_suporte` melhorado (21/10/2025)
-  - Até 5 botões personalizados com emojis únicos
-  - Cada botão com nome e descrição próprios
-  - Categoria do ticket exibida no canal e mensagens
-  - Formato simples: `EMOJI|Nome|Descrição` (um por linha)
-  - Exemplo: `❤️|Parcerias|Para interessados em colaborar`
+- ✅ **Sistema de Suporte com Select Menu** - `/setup_suporte` reformulado (21/10/2025)
+  - Interface ultra profissional com **UM botão + dropdown menu**
+  - Suporta até **25 categorias** diferentes (vs 5 botões antes)
+  - Usuário clica no botão → Abre menu → Seleciona categoria
+  - Botão principal customizável (Nome | Emoji)
+  - UI muito mais limpa e organizada
+  - Formato das opções: `EMOJI|Nome|Descrição` (um por linha)
 
 - ✅ **Sistema de Cupons** - Sistema completo implementado (21/10/2025)
   - Cupons com desconto percentual
@@ -283,19 +284,28 @@ Usuário → Paga → Bot detecta → Entrega automática
 
 ## 🆘 Sistema de Suporte Customizado
 
-O comando `/setup_suporte` permite criar um painel de atendimento personalizado com **até 5 botões diferentes**, cada um com seu próprio emoji, nome e descrição!
+O comando `/setup_suporte` permite criar um painel de atendimento super profissional com **um botão + menu dropdown** contendo até **25 opções diferentes**!
+
+### Como Funciona:
+
+1. **Admin executa** `/setup_suporte`
+2. **Bot cria** uma mensagem com UM botão
+3. **Usuário clica** no botão
+4. **Abre um menu dropdown** com todas as opções de atendimento
+5. **Usuário seleciona** a categoria (ex: Parcerias, Dúvidas, etc)
+6. **Ticket é criado** com a categoria escolhida!
 
 ### Como Configurar:
 
 1. **Execute o comando** `/setup_suporte` no canal desejado
 2. **Preencha o modal** com as informações:
-   - **Título**: Nome da mensagem (ex: "Selecione uma opção")
-   - **Descrição**: Texto opcional abaixo do título
-   - **Botões**: Um por linha no formato `EMOJI|Nome|Descrição`
-   - **Imagem**: URL opcional para imagem no embed
-   - **Cor**: Código hexadecimal (ex: #5865F2)
+   - **Título**: Nome da mensagem embed (ex: "Central de Atendimento")
+   - **Descrição**: Texto explicativo abaixo do título
+   - **Opções Menu**: Categorias do dropdown no formato `EMOJI|Nome|Descrição`
+   - **Nome do Botão | Emoji**: Customização do botão principal (ex: "Abrir Ticket | 🎫")
+   - **Cor**: Código hexadecimal do embed (ex: #5865F2)
 
-### Formato dos Botões:
+### Formato das Opções:
 ```
 EMOJI|Nome|Descrição
 ```
@@ -308,21 +318,29 @@ EMOJI|Nome|Descrição
 🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.
 ```
 
-### O que acontece:
-- ✅ Cada botão cria um ticket com a **categoria específica**
-- ✅ O nome do canal inclui a categoria (ex: `parcerias-usuario-1021`)
-- ✅ A mensagem de boas-vindas mostra o tipo de ticket aberto
-- ✅ Apenas **um ticket ativo** por usuário (qualquer tipo)
+### Formato do Botão:
+```
+Nome | Emoji
+```
+Exemplo: `Abrir Ticket | 🎫` ou `Suporte | 💬`
 
-### Personalização:
-- **Emojis**: Use qualquer emoji do Discord ou Unicode
-- **Nomes curtos**: Máximo de 80 caracteres por botão
-- **Descrições**: Até 1000 caracteres no total
-- **Cores**: Use códigos hex como `#ff6b6b`, `#5865F2`, `0x00ff00`
+### O que acontece:
+- ✅ **Interface limpa**: Apenas UM botão na mensagem
+- ✅ **Menu dropdown**: Ao clicar, abre menu com todas as opções
+- ✅ **Categorizado**: Cada opção cria um ticket com categoria específica
+- ✅ **Nome do canal**: Inclui a categoria (ex: `parcerias-usuario-1021`)
+- ✅ **Mensagem personalizada**: Boas-vindas com emoji e nome da categoria
+- ✅ **Limite**: Apenas um ticket ativo por usuário (qualquer tipo)
+
+### Vantagens do Select Menu:
+- 🎯 **UI Profissional**: Interface muito mais limpa que múltiplos botões
+- 📊 **Escalável**: Até 25 opções diferentes (vs 5 botões máximo)
+- 🎨 **Organizado**: Todas as opções em um único menu
+- ⚡ **Rápido**: Usuário encontra a opção facilmente
 
 ### Diferença entre `/setup_ticket` e `/setup_suporte`:
 - **`/setup_ticket`**: Para vendas - usuário escolhe produto e pode comprar
-- **`/setup_suporte`**: Para atendimento - tickets sem venda, só suporte
+- **`/setup_suporte`**: Para atendimento - menu de categorias, tickets sem venda
 
 ## 🏗️ Estrutura do Projeto
 
