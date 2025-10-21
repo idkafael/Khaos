@@ -2,6 +2,83 @@
 
 Bot moderno de vendas no Discord com sistema de tickets automatizado, interface com botões e modals, comandos slash, e integração completa com **Supabase** e **PushinPay** para processamento de pagamentos via Pix.
 
+---
+
+## ✅ STATUS DE CONFIGURAÇÃO ATUAL
+
+### **Configurações Básicas - CONCLUÍDAS** ✅
+- ✅ **Arquivo `.env` criado** com todas as credenciais
+  - Discord Token: `842c8e29352ebd03e85b29f8c1c4ed6ee2e981194ad0236c153e3bb234c3848f`
+  - Application ID: `784058182515425310`
+  - Supabase URL: `https://sxsaxcqliuiolktypwkf.supabase.co`
+  - PushinPay API Key: `50790|dakuggRtFoHjIZb2XpYYbDoa2exlT5NPspJayboI40bfb10f`
+  - Sandbox Mode: `true`
+
+- ✅ **Supabase Configurado** 
+  - 3 tabelas criadas: `products`, `transactions`, `product_inventory`
+  - Produtos cadastrados no banco de dados
+  - Índices de performance aplicados
+
+- ✅ **Bot Online e Funcionando**
+  - Bot está rodando localmente
+  - Pronto para receber comandos
+
+### **Próximas Etapas - PENDENTES** ⏳
+- ⏳ **Convidar Bot para Servidor**
+  - Link: `https://discord.com/api/oauth2/authorize?client_id=784058182515425310&permissions=277025770576&scope=bot%20applications.commands`
+
+- ⏳ **Configurar Sistema de Tickets no Discord**
+  - Usar comando `/setup_ticket` no servidor
+  - Configurar IDs opcionais no `.env`:
+    - `TICKET_CATEGORY_ID` - Categoria para criar tickets
+    - `ADMIN_ROLE_ID` - Cargo de administrador
+    - `TICKET_LOGS_CHANNEL_ID` - Canal de logs
+
+- ⏳ **Executar SQL de Cupons no Supabase**
+  - Execute o arquivo `database_coupon_setup.sql` no SQL Editor
+  - Isso criará as tabelas: `coupons` e `coupon_usage`
+  - Atualizará a tabela `transactions` com campos de cupom
+
+- ⏳ **Criar Cupons de Teste**
+  - Use `/criar_cupom` no Discord para criar cupons
+  - Exemplo: PRIMEIRACOMPRA (15% off, um por usuário)
+
+- ⏳ **Adicionar Estoque de Produtos**
+  - Usar `/adicionar_estoque` para adicionar códigos/keys
+  - Adicionar produtos para: Minecraft, Spotify, Netflix, Discord Nitro, etc.
+
+- ⏳ **Deploy em Produção (Opcional)**
+  - Usar Shard Cloud para manter bot 24/7 online
+  - Seguir instruções na seção "Deploy na Shard Cloud" abaixo
+
+### **Novidades Recentes** 🆕
+- ✅ **Sistema de Cupons** - Sistema completo implementado (21/10/2025)
+  - Cupons com desconto percentual
+  - Limite de uso e restrição por usuário
+  - Split de pagamento para parcerias
+  - Estatísticas e rastreamento completo
+  - Comandos: `/criar_cupom`, `/listar_cupons`, `/cupom_stats`, `/deletar_cupom`
+
+### **Comandos Principais para Lembrar:**
+```bash
+# Iniciar o bot
+python bot.py
+
+# Comandos no Discord (Admin)
+/setup_ticket          # Configurar sistema de tickets
+/adicionar_estoque     # Adicionar códigos/keys
+/produtos              # Ver lista de produtos
+/close_ticket          # Fechar ticket manualmente
+
+# Comandos no Discord (Usuário)
+/produtos              # Ver produtos disponíveis
+/comprar               # Comprar produto (dentro do ticket)
+/status                # Ver status do pagamento
+/ajuda                 # Ver lista completa de comandos
+```
+
+---
+
 ## 🚀 Funcionalidades
 
 ### 🎫 Sistema de Tickets
@@ -480,6 +557,227 @@ Exemplo de códigos:
 MINECRAFT-XXXX-YYYY-ZZZZ
 NETFLIX-EMAIL:SENHA
 SPOTIFY-KEY-12345
+```
+
+## 🎟️ Sistema de Cupons de Desconto
+
+Sistema completo de cupons com descontos percentuais, limites de uso, split de pagamento e estatísticas detalhadas.
+
+### Funcionalidades
+
+- ✅ **Descontos Percentuais** - De 1% até 100%
+- ✅ **Limite de Usos** - Controle total ou ilimitado
+- ✅ **Um Uso por Usuário** - Evita abuso de cupons
+- ✅ **Split de Pagamento** - Integrado com PushinPay para parcerias
+- ✅ **Data de Expiração** - Cupons com validade
+- ✅ **Estatísticas Completas** - Rastreamento de uso e revenue
+- ✅ **Aplicação Automática** - Cupom aplicado ao criar ticket
+
+### Estrutura do Banco de Dados
+
+Execute o arquivo `database_coupon_setup.sql` no Supabase SQL Editor ou execute manualmente:
+
+```sql
+-- Tabela de cupons
+CREATE TABLE coupons (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    discount_percent DECIMAL(5,2) NOT NULL,
+    max_uses INTEGER DEFAULT NULL,
+    uses_count INTEGER DEFAULT 0,
+    one_per_user BOOLEAN DEFAULT false,
+    split_enabled BOOLEAN DEFAULT false,
+    split_recipient_id VARCHAR(255),
+    split_percent DECIMAL(5,2),
+    expires_at TIMESTAMP,
+    active BOOLEAN DEFAULT true,
+    created_by BIGINT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Tabela de uso de cupons
+CREATE TABLE coupon_usage (
+    id SERIAL PRIMARY KEY,
+    coupon_id INTEGER REFERENCES coupons(id),
+    user_id BIGINT NOT NULL,
+    transaction_id INTEGER REFERENCES transactions(id),
+    discount_amount DECIMAL(10,2),
+    used_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Atualizar tabela transactions
+ALTER TABLE transactions 
+ADD COLUMN IF NOT EXISTS coupon_id INTEGER REFERENCES coupons(id),
+ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS final_amount DECIMAL(10,2);
+
+-- Função para incrementar contador
+CREATE OR REPLACE FUNCTION increment_coupon_uses(coupon_id INTEGER)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE coupons 
+    SET uses_count = uses_count + 1,
+        updated_at = NOW()
+    WHERE id = coupon_id;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### Comandos Administrativos
+
+#### `/criar_cupom`
+Cria um novo cupom via modal interativo.
+
+**Campos:**
+- Código do cupom (uppercase automático)
+- Desconto % (1-100)
+- Limite de usos (0 = ilimitado)
+- Um uso por usuário (sim/não)
+- Data de expiração (DD/MM/YYYY, opcional)
+
+**Exemplo:**
+```
+/criar_cupom
+> Código: PRIMEIRACOMPRA
+> Desconto: 15
+> Limite: 0
+> Um por usuário: sim
+> Expiração: 31/12/2025
+```
+
+#### `/listar_cupons`
+Lista todos os cupons ativos com informações resumidas.
+
+**Exibe:**
+- Código do cupom
+- Percentual de desconto
+- Usos atuais / limite
+- Restrição por usuário
+- Data de expiração
+
+#### `/cupom_stats [codigo]`
+Estatísticas detalhadas de um cupom específico.
+
+**Mostra:**
+- Total de usos
+- Desconto total aplicado
+- Últimos usuários que usaram
+- Limite e status
+- Data de expiração
+
+**Exemplo:**
+```
+/cupom_stats CAOS
+```
+
+#### `/deletar_cupom [codigo]`
+Desativa um cupom (não deleta do banco, apenas marca como inativo).
+
+**Exemplo:**
+```
+/deletar_cupom VIP10
+```
+
+### Como Usar (Para Clientes)
+
+1. Ao criar ticket, aparece modal para escolher produto
+2. Após escolher produto, aparece campo opcional para cupom
+3. Digite o código do cupom (ex: PRIMEIRACOMPRA)
+4. Cupom é validado automaticamente
+5. Desconto é aplicado no pagamento Pix
+
+**Validações Automáticas:**
+- ✅ Cupom existe e está ativo
+- ✅ Não expirou
+- ✅ Não atingiu limite de usos
+- ✅ Usuário não usou antes (se configurado)
+
+### Split de Pagamento (Parcerias)
+
+Cupons podem ter split configurado para parcerias:
+
+**Exemplo de Uso:**
+```
+Cupom: PARCEIRO30
+Desconto: 30%
+Split: 70% você / 30% parceiro
+```
+
+Quando cliente usa este cupom:
+- Recebe 30% de desconto
+- Do valor pago, 30% vai para o parceiro
+- Split é processado automaticamente pela PushinPay
+
+**Configurar Split:**
+Edite o cupom no banco de dados:
+```sql
+UPDATE coupons SET
+    split_enabled = true,
+    split_recipient_id = 'recipient_id_pushinpay',
+    split_percent = 30
+WHERE code = 'PARCEIRO30';
+```
+
+### Estatísticas e Rastreamento
+
+Todos os usos de cupons são rastreados:
+
+```sql
+-- Ver todos os usos de um cupom
+SELECT cu.*, t.amount, t.final_amount
+FROM coupon_usage cu
+JOIN transactions t ON t.id = cu.transaction_id
+WHERE cu.coupon_id = (SELECT id FROM coupons WHERE code = 'CAOS');
+
+-- Revenue total com descontos
+SELECT 
+    c.code,
+    COUNT(cu.id) as total_uses,
+    SUM(cu.discount_amount) as total_discount,
+    SUM(t.final_amount) as total_revenue
+FROM coupons c
+LEFT JOIN coupon_usage cu ON cu.coupon_id = c.id
+LEFT JOIN transactions t ON t.id = cu.transaction_id
+WHERE t.status = 'approved'
+GROUP BY c.code;
+```
+
+### Exemplos de Cupons
+
+```sql
+-- Cupom de primeira compra (15% off, um por usuário)
+INSERT INTO coupons (code, discount_percent, one_per_user) 
+VALUES ('PRIMEIRACOMPRA', 15, true);
+
+-- Cupom de parceria (30% off, split 30% para parceiro)
+INSERT INTO coupons (code, discount_percent, split_enabled, split_recipient_id, split_percent) 
+VALUES ('PARCEIRO30', 30, true, 'rec_abc123', 30);
+
+-- Cupom limitado (10% off, máximo 100 usos)
+INSERT INTO coupons (code, discount_percent, max_uses) 
+VALUES ('PROMO10', 10, 100);
+
+-- Cupom com expiração
+INSERT INTO coupons (code, discount_percent, expires_at) 
+VALUES ('NATAL25', 25, '2025-12-31 23:59:59');
+```
+
+### Fluxo Completo
+
+```
+1. Cliente clica "Criar Ticket"
+2. Escolhe produto no select menu
+3. Modal pede cupom (opcional)
+4. Cliente digita "PRIMEIRACOMPRA"
+5. Ticket criado com cupom vinculado
+6. Ao usar /comprar:
+   - Cupom validado
+   - Desconto calculado (15%)
+   - Pix gerado com valor final
+   - Uso registrado
+   - Split processado (se configurado)
+7. Estatísticas atualizadas automaticamente
 ```
 
 ## 🤝 Contribuição

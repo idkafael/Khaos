@@ -26,8 +26,16 @@ class PaymentUtils:
         print(f"🚀 PRODUÇÃO PaymentUtils: Base URL: {self.base_url}")
         print(f"🚀 PRODUÇÃO PaymentUtils: Headers: {self.headers}")
     
-    async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str) -> Optional[Dict]:
-        """Cria um pagamento via Pix usando a API PushinPay"""
+    async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str, split_config: Optional[Dict] = None) -> Optional[Dict]:
+        """Cria um pagamento via Pix usando a API PushinPay
+        
+        Args:
+            amount: Valor do pagamento
+            description: Descrição do pagamento
+            customer_email: Email do cliente
+            customer_name: Nome do cliente
+            split_config: Configuração de split (opcional) - dict com 'recipient_id' e 'percent'
+        """
         try:
             print(f"🔧 Debug: Iniciando pagamento - Valor: {amount}, Email: {customer_email}")
             print(f"🔧 Debug: API Key: {self.pushinpay_api_key[:10]}...")
@@ -41,10 +49,26 @@ class PaymentUtils:
                 print("❌ Valor mínimo é R$ 0,50 (50 centavos)")
                 return None
             
+            # Preparar regras de split se configurado
+            split_rules = []
+            if split_config and split_config.get('recipient_id') and split_config.get('percent'):
+                recipient_id = split_config['recipient_id']
+                split_percent = float(split_config['percent'])
+                split_amount = int(amount_cents * (split_percent / 100))
+                
+                split_rules.append({
+                    "recipient_id": recipient_id,
+                    "amount": split_amount,
+                    "liable": True,  # Responsável por chargebacks
+                    "charge_processing_fee": False
+                })
+                
+                print(f"🔧 Debug: Split configurado - Destinatário: {recipient_id}, Percentual: {split_percent}%, Valor: {split_amount} centavos")
+            
             # Dados do pagamento para PushinPay
             payment_data = {
                 "value": amount_cents,
-                "split_rules": []
+                "split_rules": split_rules
             }
             
             print(f"🔧 Debug: Dados do pagamento: {payment_data}")

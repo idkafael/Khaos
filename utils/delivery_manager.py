@@ -144,11 +144,25 @@ class DeliveryManager:
                 inline=False
             )
             
-            embed.add_field(
-                name="💰 Valor Pago",
-                value=f"R$ {transaction['amount']:.2f}",
-                inline=True
-            )
+            # Mostrar valores com desconto se houver cupom
+            if transaction.get('discount_amount') and transaction['discount_amount'] > 0:
+                valor_original = transaction.get('amount', 0)
+                desconto = transaction.get('discount_amount', 0)
+                valor_final = transaction.get('final_amount', valor_original)
+                
+                valor_text = f"~~R$ {valor_original:.2f}~~ → **R$ {valor_final:.2f}**\n🎟️ Desconto: R$ {desconto:.2f}"
+                embed.add_field(
+                    name="💰 Valor Pago",
+                    value=valor_text,
+                    inline=True
+                )
+            else:
+                valor_pago = transaction.get('final_amount', transaction.get('amount', 0))
+                embed.add_field(
+                    name="💰 Valor Pago",
+                    value=f"R$ {valor_pago:.2f}",
+                    inline=True
+                )
             
             embed.add_field(
                 name="📅 Data da Compra",

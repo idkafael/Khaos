@@ -72,6 +72,85 @@ async def setup_ticket_slash(interaction: discord.Interaction):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="setup_msg", description="[ADMIN] Criar mensagem embed personalizada")
+@discord.app_commands.default_permissions(administrator=True)
+async def setup_msg_slash(interaction: discord.Interaction):
+    """Comando admin para criar mensagem embed via modal"""
+    try:
+        print(f"Comando setup_msg executado por {interaction.user.name}")
+        
+        from utils.ticket_views import SetupMessageModal
+        print("SetupMessageModal importado com sucesso!")
+        
+        modal = SetupMessageModal()
+        print("Modal criado com sucesso!")
+        
+        await interaction.response.send_modal(modal)
+        print("Modal enviado com sucesso!")
+        
+    except ImportError as e:
+        print(f"Erro de importação: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro de importação no sistema de mensagens.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        print(f"Erro no comando setup_msg: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro ao criar mensagem embed.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.command(name="clear", aliases=["limpar", "apagar"])
+@commands.has_permissions(manage_messages=True)
+async def clear_messages(ctx, amount: int = 10):
+    """Comando para apagar mensagens do chat
+    
+    Uso: !clear [número]
+    Exemplo: !clear 50
+    """
+    try:
+        # Validar o número de mensagens
+        if amount < 1:
+            await ctx.send("❌ O número deve ser maior que 0!", delete_after=5)
+            return
+        
+        # Apagar mensagens (incluindo o comando)
+        # Nota: Discord só permite apagar mensagens com menos de 14 dias em massa
+        deleted = await ctx.channel.purge(limit=amount + 1)
+        
+        # Enviar mensagem de confirmação (que será apagada após 5 segundos)
+        confirm_msg = await ctx.send(
+            f"🗑️ {len(deleted) - 1} mensagens foram apagadas por {ctx.author.mention}",
+            delete_after=5
+        )
+        
+        print(f"✅ {ctx.author.name} apagou {len(deleted) - 1} mensagens em #{ctx.channel.name}")
+        
+    except discord.Forbidden:
+        await ctx.send("❌ Não tenho permissão para apagar mensagens neste canal!", delete_after=5)
+    except discord.HTTPException as e:
+        await ctx.send(f"❌ Erro ao apagar mensagens: {e}", delete_after=5)
+    except Exception as e:
+        print(f"Erro no comando !clear: {e}")
+        await ctx.send("❌ Ocorreu um erro ao apagar as mensagens.", delete_after=5)
+
+@clear_messages.error
+async def clear_error(ctx, error):
+    """Handler de erros do comando clear"""
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.send("❌ Você não tem permissão para usar este comando! (Necessário: Gerenciar Mensagens)", delete_after=5)
+    elif isinstance(error, commands.BadArgument):
+        await ctx.send("❌ Uso correto: `!clear [número]` - Exemplo: `!clear 50`", delete_after=5)
+    else:
+        print(f"Erro no comando clear: {error}")
+
 @bot.tree.command(name="status", description="Ver status do seu pagamento")
 async def status_slash(interaction: discord.Interaction):
     """Comando para ver status do pagamento"""
@@ -228,12 +307,56 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
             await interaction.response.send_message(f"❌ Produto '{produto}' não encontrado!", ephemeral=True)
             return
         
+        # Buscar cupom do ticket (se houver)
+        coupon_code = None
+        coupon_data = None
+        discount_amount = 0
+        final_amount = product['price']
+        split_config = None
+        
+        # Verificar se tem cupom no ticket
+        ticket_data = active_tickets.get(interaction.user.id)
+        if ticket_data and ticket_data.get('coupon_code'):
+            coupon_code = ticket_data['coupon_code']
+            
+            # Validar cupom
+            from models.coupon_model import CouponModel
+            coupon_model = CouponModel()
+            is_valid, message, coupon_data = await coupon_model.validate_coupon(
+                coupon_code,
+                interaction.user.id,
+                product['price']
+            )
+            
+            if is_valid and coupon_data:
+                discount_amount = coupon_data['calculated_discount']
+                final_amount = coupon_data['calculated_final_amount']
+                
+                # Verificar se tem split configurado
+                if coupon_data.get('split_enabled') and coupon_data.get('split_recipient_id'):
+                    split_config = {
+                        'recipient_id': coupon_data['split_recipient_id'],
+                        'percent': float(coupon_data['split_percent'])
+                    }
+                
+                # Enviar mensagem informando desconto
+                await interaction.channel.send(
+                    f"🎉 Cupom **{coupon_code}** aplicado! Desconto de {coupon_data['discount_percent']}% = R$ {discount_amount:.2f}"
+                )
+            else:
+                # Cupom inválido - informar e continuar sem desconto
+                await interaction.channel.send(f"⚠️ {message} - Continuando sem desconto.")
+                coupon_data = None
+        
         # Criar transação
         transaction_model = TransactionModel()
         transaction = await transaction_model.create_transaction(
             user_id=interaction.user.id,
             product_id=product['id'],
             amount=product['price'],
+            discount_amount=discount_amount,
+            final_amount=final_amount,
+            coupon_id=coupon_data['id'] if coupon_data else None,
             status='pending'
         )
         
@@ -241,13 +364,14 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
             await interaction.response.send_message("❌ Erro ao criar transação!", ephemeral=True)
             return
         
-        # Gerar pagamento Pix
+        # Gerar pagamento Pix com valor final
         payment_utils = PaymentUtils()
         payment_data = await payment_utils.create_pix_payment(
-            amount=product['price'],
+            amount=final_amount,  # Valor com desconto
             description=f"Compra: {product['name']}",
             customer_email=f"{interaction.user.name.lower().replace(' ', '')}@khaos.com",
-            customer_name=interaction.user.display_name
+            customer_name=interaction.user.display_name,
+            split_config=split_config  # Passar split se houver
         )
         
         if payment_data:
@@ -259,12 +383,37 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
                 'email': f"{interaction.user.name.lower().replace(' ', '')}@khaos.com"
             })
             
+            # Registrar uso do cupom
+            if coupon_data:
+                from models.coupon_model import CouponModel
+                coupon_model = CouponModel()
+                await coupon_model.use_coupon(
+                    coupon_data['id'],
+                    interaction.user.id,
+                    transaction['id'],
+                    discount_amount
+                )
+            
             # Enviar pagamento
             embed = discord.Embed(
                 title="💳 Pagamento Pix Gerado!",
-                description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
+                description=f"**Produto:** {product['name']}",
                 color=0x00ff00
             )
+            
+            # Mostrar valores com desconto se houver
+            if discount_amount > 0:
+                embed.add_field(
+                    name="💰 Valores",
+                    value=f"~~R$ {product['price']:.2f}~~ → **R$ {final_amount:.2f}**\n🎟️ Desconto: R$ {discount_amount:.2f}",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="💰 Valor",
+                    value=f"R$ {final_amount:.2f}",
+                    inline=False
+                )
             
             embed.add_field(
                 name="📱 QR Code",
@@ -293,6 +442,8 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
             
     except Exception as e:
         print(f"Erro no comando comprar: {e}")
+        import traceback
+        traceback.print_exc()
         await interaction.response.send_message("❌ Erro ao processar compra!", ephemeral=True)
 
 @bot.tree.command(name="ajuda", description="Exibe a lista de comandos disponíveis")
@@ -318,7 +469,13 @@ async def ajuda_slash(interaction: discord.Interaction):
     
     embed.add_field(
         name="» Comandos Admin",
-        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets\n`/close_ticket` :: 🔒 Fechar ticket manualmente",
+        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets\n`/setup_msg` :: 📝 Criar mensagem embed\n`/close_ticket` :: 🔒 Fechar ticket manualmente\n`!clear [número]` :: 🗑️ Apagar mensagens do chat",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="» Comandos de Cupons (Admin)",
+        value="`/criar_cupom` :: 🎟️ Criar novo cupom\n`/listar_cupons` :: 📋 Ver todos cupons\n`/cupom_stats` :: 📊 Estatísticas de cupom\n`/deletar_cupom` :: ❌ Desativar cupom",
         inline=False
     )
     
@@ -336,6 +493,177 @@ async def ajuda_slash(interaction: discord.Interaction):
     )
     
     await interaction.response.send_message(embeds=[embed, side_embed])
+
+# ========================================
+# COMANDOS DE CUPONS (ADMIN)
+# ========================================
+
+@bot.tree.command(name="criar_cupom", description="[ADMIN] Criar novo cupom de desconto")
+@discord.app_commands.default_permissions(administrator=True)
+async def criar_cupom_slash(interaction: discord.Interaction):
+    """Comando admin para criar cupom via modal"""
+    try:
+        from utils.ticket_views import CreateCouponModal
+        
+        modal = CreateCouponModal()
+        await interaction.response.send_modal(modal)
+        
+    except Exception as e:
+        print(f"Erro no comando criar_cupom: {e}")
+        await interaction.response.send_message("❌ Erro ao abrir modal de cupom.", ephemeral=True)
+
+@bot.tree.command(name="listar_cupons", description="[ADMIN] Listar todos os cupons")
+@discord.app_commands.default_permissions(administrator=True)
+async def listar_cupons_slash(interaction: discord.Interaction):
+    """Lista todos os cupons ativos"""
+    try:
+        from models.coupon_model import CouponModel
+        
+        coupon_model = CouponModel()
+        coupons = await coupon_model.get_all_coupons(active_only=True)
+        
+        if not coupons:
+            await interaction.response.send_message("📋 Nenhum cupom cadastrado.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="🎟️ Cupons Cadastrados",
+            description=f"Total: {len(coupons)} cupons ativos",
+            color=0x8B5CF6
+        )
+        
+        for coupon in coupons[:10]:  # Mostrar no máximo 10
+            uses_info = f"{coupon.get('uses_count', 0)}"
+            if coupon.get('max_uses'):
+                uses_info += f"/{coupon['max_uses']}"
+            else:
+                uses_info += " (ilimitado)"
+            
+            value = f"**Desconto:** {coupon['discount_percent']}%\n"
+            value += f"**Usos:** {uses_info}\n"
+            value += f"**Um por usuário:** {'Sim' if coupon.get('one_per_user') else 'Não'}"
+            
+            if coupon.get('expires_at'):
+                from datetime import datetime
+                expires = datetime.fromisoformat(coupon['expires_at'].replace('Z', '+00:00'))
+                value += f"\n**Expira:** {expires.strftime('%d/%m/%Y')}"
+            
+            embed.add_field(
+                name=f"🎫 {coupon['code']}",
+                value=value,
+                inline=True
+            )
+        
+        if len(coupons) > 10:
+            embed.set_footer(text=f"Mostrando 10 de {len(coupons)} cupons")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando listar_cupons: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao listar cupons.", ephemeral=True)
+
+@bot.tree.command(name="cupom_stats", description="[ADMIN] Ver estatísticas de um cupom")
+@discord.app_commands.default_permissions(administrator=True)
+async def cupom_stats_slash(interaction: discord.Interaction, codigo: str):
+    """Mostra estatísticas de uso de um cupom"""
+    try:
+        from models.coupon_model import CouponModel
+        
+        coupon_model = CouponModel()
+        stats = await coupon_model.get_coupon_stats(codigo)
+        
+        if not stats:
+            await interaction.response.send_message(f"❌ Cupom '{codigo}' não encontrado.", ephemeral=True)
+            return
+        
+        coupon = stats['coupon']
+        
+        embed = discord.Embed(
+            title=f"📊 Estatísticas: {coupon['code']}",
+            description=f"Desconto de {coupon['discount_percent']}%",
+            color=0x00ff00
+        )
+        
+        # Informações gerais
+        embed.add_field(
+            name="📈 Uso Total",
+            value=str(stats['total_uses']),
+            inline=True
+        )
+        
+        embed.add_field(
+            name="💰 Desconto Total Aplicado",
+            value=f"R$ {stats['total_discount']:.2f}",
+            inline=True
+        )
+        
+        limit_info = str(coupon.get('max_uses')) if coupon.get('max_uses') else "Ilimitado"
+        embed.add_field(
+            name="🎯 Limite",
+            value=limit_info,
+            inline=True
+        )
+        
+        # Usuários recentes
+        if stats['recent_users']:
+            users_text = "\n".join([f"<@{user_id}>" for user_id in stats['recent_users'][:5]])
+            embed.add_field(
+                name="👥 Últimos Usuários",
+                value=users_text,
+                inline=False
+            )
+        
+        # Informações adicionais
+        extra_info = f"**Um por usuário:** {'Sim' if coupon.get('one_per_user') else 'Não'}\n"
+        extra_info += f"**Status:** {'Ativo' if coupon.get('active') else 'Inativo'}"
+        
+        if coupon.get('expires_at'):
+            from datetime import datetime
+            expires = datetime.fromisoformat(coupon['expires_at'].replace('Z', '+00:00'))
+            extra_info += f"\n**Expira:** {expires.strftime('%d/%m/%Y')}"
+        
+        embed.add_field(
+            name="ℹ️ Informações",
+            value=extra_info,
+            inline=False
+        )
+        
+        embed.set_footer(text=f"Criado por: {coupon.get('created_by', 'N/A')}")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando cupom_stats: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao buscar estatísticas.", ephemeral=True)
+
+@bot.tree.command(name="deletar_cupom", description="[ADMIN] Desativar um cupom")
+@discord.app_commands.default_permissions(administrator=True)
+async def deletar_cupom_slash(interaction: discord.Interaction, codigo: str):
+    """Desativa um cupom"""
+    try:
+        from models.coupon_model import CouponModel
+        
+        coupon_model = CouponModel()
+        success, message = await coupon_model.delete_cupom(codigo)
+        
+        if success:
+            embed = discord.Embed(
+                title="✅ Cupom Desativado",
+                description=message,
+                color=0x00ff00
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+        else:
+            await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando deletar_cupom: {e}")
+        await interaction.response.send_message("❌ Erro ao deletar cupom.", ephemeral=True)
 
 @bot.tree.command(name="produtos", description="Ver produtos disponíveis")
 async def produtos_slash(interaction: discord.Interaction):

@@ -11,7 +11,7 @@ class TicketManager:
         self.admin_role_id = getattr(Config, 'ADMIN_ROLE_ID', None)
         self.logs_channel_id = getattr(Config, 'TICKET_LOGS_CHANNEL_ID', None)
     
-    async def create_ticket(self, user: discord.Member, guild: discord.Guild, product: dict) -> Tuple[bool, str]:
+    async def create_ticket(self, user: discord.Member, guild: discord.Guild, product: dict, coupon_code: str = None) -> Tuple[bool, str]:
         """Cria um novo ticket (canal privado) para o usuário"""
         try:
             # Verificar se usuário já tem ticket ativo
@@ -60,6 +60,7 @@ class TicketManager:
                 'user_id': user.id,
                 'product_id': product['id'],
                 'product_name': product['name'],
+                'coupon_code': coupon_code,  # Armazenar cupom
                 'status': 'active',
                 'created_at': datetime.now()
             }

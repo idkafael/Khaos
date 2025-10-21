@@ -5,6 +5,109 @@ from models.product_model import ProductModel
 from utils.ticket_manager import TicketManager
 import asyncio
 
+class SetupMessageModal(ui.Modal):
+    """Modal para criar mensagens embed personalizadas sem botões"""
+    
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(title="Criar Mensagem Embed", timeout=300)
+        self.add_item(ui.TextInput(
+            label="Título", 
+            placeholder="Ex: Bem-vindo ao Servidor!", 
+            default="",
+            max_length=256,
+            required=False
+        ))
+        self.add_item(ui.TextInput(
+            label="Descrição", 
+            placeholder="Escreva o conteúdo principal da mensagem...", 
+            default="",
+            style=discord.TextStyle.long,
+            max_length=4000,
+            required=True
+        ))
+        self.add_item(ui.TextInput(
+            label="URL da Imagem", 
+            placeholder="Cole o link da imagem (opcional)", 
+            default="",
+            required=False,
+            max_length=500
+        ))
+        self.add_item(ui.TextInput(
+            label="Cor do Embed (Hex)", 
+            placeholder="Ex: #0099ff ou 0x0099ff", 
+            default="#0099ff",
+            max_length=10
+        ))
+        self.add_item(ui.TextInput(
+            label="Rodapé (Footer)", 
+            placeholder="Texto no rodapé (opcional)", 
+            default="",
+            required=False,
+            max_length=100
+        ))
+
+    async def on_submit(self, interaction: discord.Interaction):
+        """Processa a criação da mensagem embed"""
+        try:
+            print(f"Modal de mensagem submetido por {interaction.user.name}")
+            titulo = self.children[0].value.strip()
+            descricao = self.children[1].value.strip()
+            url_imagem = self.children[2].value.strip()
+            cor_hex = self.children[3].value.strip()
+            rodape = self.children[4].value.strip()
+            
+            print(f"Valores: titulo={titulo}, descricao={descricao[:50]}..., cor={cor_hex}")
+            
+            # Converter cor hex para int
+            try:
+                cor_hex = cor_hex.strip().lower()
+                
+                if cor_hex.startswith('#'):
+                    cor_hex = cor_hex[1:]
+                elif cor_hex.startswith('0x'):
+                    cor_hex = cor_hex[2:]
+                
+                if len(cor_hex) == 3:
+                    cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
+                
+                cor_int = int(cor_hex, 16)
+                print(f"Cor convertida: {cor_int} (0x{cor_hex})")
+            except (ValueError, IndexError) as e:
+                print(f"Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
+                cor_int = 0x0099ff
+            
+            # Criar embed
+            embed = discord.Embed(
+                description=descricao,
+                color=cor_int
+            )
+            
+            # Adicionar título se fornecido
+            if titulo:
+                embed.title = titulo
+            
+            # Adicionar imagem se fornecida
+            if url_imagem and url_imagem.startswith(('http://', 'https://')):
+                try:
+                    embed.set_image(url=url_imagem)
+                    print(f"Imagem adicionada: {url_imagem}")
+                except Exception as e:
+                    print(f"Erro ao adicionar imagem: {e}")
+            
+            # Adicionar rodapé se fornecido
+            if rodape:
+                embed.set_footer(text=rodape)
+            
+            # Enviar mensagem embed (sem view/botões)
+            await interaction.response.send_message(embed=embed)
+            print("Mensagem embed criada com sucesso")
+            
+        except Exception as e:
+            print(f"Erro ao criar mensagem embed: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message("❌ Erro ao criar mensagem embed.", ephemeral=True)
+
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
     
@@ -111,6 +214,47 @@ class SetupTicketModal(ui.Modal):
             traceback.print_exc()
             await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
 
+class CouponInputModal(ui.Modal):
+    """Modal para coletar código de cupom (opcional)"""
+    
+    def __init__(self, user, guild, product):
+        super().__init__(title="Cupom de Desconto (Opcional)", timeout=180)
+        self.user = user
+        self.guild = guild
+        self.product = product
+        
+        self.add_item(ui.TextInput(
+            label="Código do Cupom",
+            placeholder="Digite o código do cupom ou deixe em branco",
+            required=False,
+            max_length=50
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        """Processa o cupom e cria o ticket"""
+        try:
+            coupon_code = self.children[0].value.strip() if self.children[0].value else None
+            
+            # Criar ticket com cupom
+            ticket_manager = TicketManager()
+            success, message = await ticket_manager.create_ticket(
+                self.user,
+                self.guild,
+                self.product,
+                coupon_code=coupon_code
+            )
+            
+            if success:
+                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                
+        except Exception as e:
+            print(f"Erro ao processar cupom: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message("❌ Erro ao criar ticket.", ephemeral=True)
+
 class ProductSelect(ui.Select):
     """Select menu personalizado para escolher produto"""
     
@@ -124,7 +268,7 @@ class ProductSelect(ui.Select):
         self.products = products
     
     async def callback(self, interaction: discord.Interaction):
-        """Callback do select menu"""
+        """Callback do select menu - abre modal para cupom"""
         try:
             selected_product_id = int(self.values[0])
             selected_product = next(
@@ -136,33 +280,17 @@ class ProductSelect(ui.Select):
                 await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
                 return
             
-            # Criar ticket usando TicketManager
-            ticket_manager = TicketManager()
-            success, message = await ticket_manager.create_ticket(
-                interaction.user, 
-                interaction.guild, 
-                selected_product
-            )
-            
-            if success:
-                try:
-                    await interaction.response.send_message(f"✅ {message}", ephemeral=True)
-                except discord.errors.NotFound:
-                    # Interação já foi respondida, não fazer nada
-                    pass
-            else:
-                try:
-                    await interaction.response.send_message(f"❌ {message}", ephemeral=True)
-                except discord.errors.NotFound:
-                    # Interação já foi respondida, não fazer nada
-                    pass
+            # Abrir modal para coletar cupom
+            modal = CouponInputModal(interaction.user, interaction.guild, selected_product)
+            await interaction.response.send_modal(modal)
                 
         except Exception as e:
             print(f"Erro ao processar seleção de produto: {e}")
+            import traceback
+            traceback.print_exc()
             try:
                 await interaction.response.send_message("❌ Erro ao criar ticket. Tente novamente.", ephemeral=True)
             except discord.errors.NotFound:
-                # Interação já foi respondida, não fazer nada
                 pass
 
 class ProductSelectView(ui.View):
@@ -321,6 +449,111 @@ class CloseTicketButton(ui.Button):
                 "❌ Erro ao fechar ticket. Tente novamente.",
                 ephemeral=True
             )
+
+class CreateCouponModal(ui.Modal):
+    """Modal para criar cupom"""
+    
+    def __init__(self):
+        super().__init__(title="Criar Novo Cupom", timeout=300)
+        
+        self.add_item(ui.TextInput(
+            label="Código do Cupom",
+            placeholder="Ex: PRIMEIRACOMPRA",
+            max_length=50,
+            required=True
+        ))
+        
+        self.add_item(ui.TextInput(
+            label="Desconto (%)",
+            placeholder="Ex: 10 para 10%",
+            max_length=5,
+            required=True
+        ))
+        
+        self.add_item(ui.TextInput(
+            label="Limite de Usos (0 = ilimitado)",
+            placeholder="Ex: 100",
+            default="0",
+            max_length=10,
+            required=False
+        ))
+        
+        self.add_item(ui.TextInput(
+            label="Um uso por usuário? (sim/nao)",
+            placeholder="sim ou nao",
+            default="nao",
+            max_length=3,
+            required=False
+        ))
+        
+        self.add_item(ui.TextInput(
+            label="Data Expiração (DD/MM/YYYY ou vazio)",
+            placeholder="31/12/2025",
+            required=False,
+            max_length=10
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        """Processa criação do cupom"""
+        try:
+            from models.coupon_model import CouponModel
+            from datetime import datetime
+            
+            code = self.children[0].value.upper().strip()
+            discount = float(self.children[1].value.strip())
+            max_uses = int(self.children[2].value.strip()) if self.children[2].value.strip() and self.children[2].value.strip() != "0" else None
+            one_per_user = self.children[3].value.strip().lower() == "sim"
+            expires_str = self.children[4].value.strip()
+            
+            # Validar desconto
+            if discount < 1 or discount > 100:
+                await interaction.response.send_message("❌ Desconto deve estar entre 1% e 100%!", ephemeral=True)
+                return
+            
+            # Processar data de expiração
+            expires_at = None
+            if expires_str:
+                try:
+                    expires_at = datetime.strptime(expires_str, "%d/%m/%Y").isoformat()
+                except:
+                    await interaction.response.send_message("❌ Data inválida! Use formato DD/MM/YYYY", ephemeral=True)
+                    return
+            
+            # Criar cupom
+            coupon_data = {
+                'code': code,
+                'discount_percent': discount,
+                'max_uses': max_uses,
+                'one_per_user': one_per_user,
+                'expires_at': expires_at,
+                'created_by': interaction.user.id,
+                'active': True
+            }
+            
+            coupon_model = CouponModel()
+            success, message = await coupon_model.create_coupon(coupon_data)
+            
+            if success:
+                embed = discord.Embed(
+                    title="✅ Cupom Criado!",
+                    description=f"Cupom **{code}** criado com sucesso!",
+                    color=0x00ff00
+                )
+                embed.add_field(name="Desconto", value=f"{discount}%", inline=True)
+                embed.add_field(name="Limite", value=str(max_uses) if max_uses else "Ilimitado", inline=True)
+                embed.add_field(name="Um por usuário", value="Sim" if one_per_user else "Não", inline=True)
+                
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                
+        except ValueError:
+            await interaction.response.send_message("❌ Valores inválidos! Verifique desconto e limite.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao criar cupom: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message("❌ Erro ao criar cupom.", ephemeral=True)
 
 class TicketChannelView(ui.View):
     """View para canais de ticket com botão de fechar"""

@@ -150,3 +150,25 @@ class TransactionModel:
         except Exception as e:
             print(f"Erro ao buscar estatísticas: {e}")
             return {}
+    
+    async def get_transactions_by_coupon(self, coupon_id: int) -> List[Dict]:
+        """Busca todas as transações que usaram um cupom específico
+        
+        Args:
+            coupon_id: ID do cupom
+            
+        Returns:
+            Lista de transações
+        """
+        try:
+            result = self.supabase.table(self.table_name)\
+                .select('*')\
+                .eq('coupon_id', coupon_id)\
+                .order('created_at', desc=True)\
+                .execute()
+            
+            return result.data if result.data else []
+            
+        except Exception as e:
+            print(f"Erro ao buscar transações por cupom: {e}")
+            return []
