@@ -78,7 +78,7 @@ class TicketManager:
             print(f"Erro ao criar ticket: {e}")
             return False, f"Erro ao criar ticket: {str(e)}"
     
-    async def create_support_ticket(self, user: discord.Member, guild: discord.Guild) -> Tuple[bool, str]:
+    async def create_support_ticket(self, user: discord.Member, guild: discord.Guild, categoria: str = "Suporte") -> Tuple[bool, str]:
         """Cria um ticket de suporte (sem produto)"""
         try:
             # Verificar se usuário já tem ticket ativo
@@ -108,9 +108,10 @@ class TicketManager:
                         manage_messages=True
                     )
             
-            # Criar canal de suporte
+            # Criar canal de suporte com categoria no nome
             timestamp = datetime.now().strftime("%m%d%H%M")
-            channel_name = f"suporte-{user.name.lower().replace(' ', '-')}-{timestamp}"
+            categoria_slug = categoria.lower().replace(' ', '-').replace('ã', 'a').replace('é', 'e').replace('í', 'i').replace('ó', 'o').replace('ú', 'u')
+            channel_name = f"{categoria_slug}-{user.name.lower().replace(' ', '-')}-{timestamp}"
             
             ticket_channel = await guild.create_text_channel(
                 channel_name,
@@ -119,20 +120,21 @@ class TicketManager:
             )
             
             # Enviar mensagem de boas-vindas
-            await self._send_support_welcome_message(ticket_channel, user)
+            await self._send_support_welcome_message(ticket_channel, user, categoria)
             
             # Armazenar informações do ticket
             bot.active_tickets[user.id] = {
                 'channel_id': ticket_channel.id,
                 'user_id': user.id,
                 'type': 'support',  # Tipo: suporte
+                'categoria': categoria,  # Categoria do ticket
                 'status': 'active',
                 'created_at': datetime.now()
             }
             
-            print(f"✅ Ticket de suporte criado: {channel_name}")
+            print(f"✅ Ticket de suporte criado: {channel_name} (Categoria: {categoria})")
             
-            return True, f"Ticket de suporte criado! Acesse {ticket_channel.mention}"
+            return True, f"Ticket de {categoria} criado! Acesse {ticket_channel.mention}"
             
         except Exception as e:
             print(f"Erro ao criar ticket de suporte: {e}")
@@ -140,20 +142,32 @@ class TicketManager:
             traceback.print_exc()
             return False, f"Erro ao criar ticket de suporte: {str(e)}"
     
-    async def _send_support_welcome_message(self, channel: discord.TextChannel, user: discord.Member):
+    async def _send_support_welcome_message(self, channel: discord.TextChannel, user: discord.Member, categoria: str = "Suporte"):
         """Envia mensagem de boas-vindas no canal de suporte"""
         from utils.ticket_views import TicketChannelView
         
+        # Emojis por categoria
+        emoji_map = {
+            'parcerias': '🤝',
+            'duvidas': '💡',
+            'denuncias': '✅',
+            'sorteios': '🎁',
+            'suporte': '🆘'
+        }
+        
+        categoria_lower = categoria.lower().replace('ú', 'u').replace('í', 'i').replace('ê', 'e')
+        emoji = emoji_map.get(categoria_lower, '🆘')
+        
         embed = discord.Embed(
-            title="🆘 Ticket de Suporte Criado!",
-            description=f"Olá {user.mention}! Bem-vindo ao nosso sistema de suporte.",
-            color=0xff6b6b
+            title=f"{emoji} Ticket de {categoria} Criado!",
+            description=f"Olá {user.mention}! Bem-vindo ao seu ticket de **{categoria}**.",
+            color=0x5865F2
         )
         
         embed.add_field(
             name="📝 Deixe sua Mensagem",
             value="Descreva detalhadamente seu problema ou dúvida abaixo.\n\n"
-                  "**Nossa equipe de suporte irá responder em breve!**",
+                  "**Deixe sua mensagem previamente para que quando um suporte veja possamos solucionar!**",
             inline=False
         )
         

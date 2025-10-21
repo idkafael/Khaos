@@ -556,40 +556,42 @@ class CreateCouponModal(ui.Modal):
             await interaction.response.send_message("❌ Erro ao criar cupom.", ephemeral=True)
 
 class SetupSupportModal(ui.Modal):
-    """Modal para configurar o sistema de tickets de suporte"""
+    """Modal para configurar o sistema de tickets de suporte com múltiplos botões"""
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(title="Configurar Tickets de Suporte", timeout=300)
         self.add_item(ui.TextInput(
             label="Título da Mensagem", 
-            placeholder="Ex: Precisa de Ajuda?", 
-            default="🆘 Precisa de Ajuda?",
+            placeholder="Ex: Selecione uma opção", 
+            default="📋 Selecione uma opção",
             max_length=100
         ))
         self.add_item(ui.TextInput(
-            label="Descrição", 
-            placeholder="Ex: Clique no botão abaixo para abrir um ticket de suporte", 
-            default="Clique no botão abaixo para abrir um ticket de suporte. Nossa equipe responderá o mais breve possível!",
-            style=discord.TextStyle.long,
+            label="Descrição da Mensagem", 
+            placeholder="Ex: Escolha abaixo o tipo de atendimento que precisa", 
+            default="",
+            required=False,
             max_length=1000
         ))
         self.add_item(ui.TextInput(
-            label="Nome do Botão", 
-            placeholder="Ex: Abrir Ticket de Suporte", 
-            default="Abrir Ticket de Suporte",
-            max_length=80
+            label="Botões (um por linha: EMOJI|Nome|Desc)", 
+            placeholder="❤️|Parcerias|Para interessados em colaborar\n💡|Dúvidas|Caso tenha dúvidas", 
+            default="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
+            style=discord.TextStyle.long,
+            max_length=1000,
+            required=True
         ))
         self.add_item(ui.TextInput(
-            label="URL da Imagem", 
-            placeholder="Cole o link da imagem (opcional)", 
+            label="URL da Imagem (opcional)", 
+            placeholder="Cole o link da imagem", 
             default="",
             required=False,
             max_length=500
         ))
         self.add_item(ui.TextInput(
             label="Cor do Embed (Hex)", 
-            placeholder="Ex: #ff6b6b ou 0xff6b6b", 
-            default="#ff6b6b",
+            placeholder="Ex: #5865F2", 
+            default="#5865F2",
             max_length=10
         ))
 
@@ -597,11 +599,49 @@ class SetupSupportModal(ui.Modal):
         """Processa a configuração do sistema de tickets de suporte"""
         try:
             print(f"Modal de suporte submetido por {interaction.user.name}")
-            titulo = self.children[0].value
-            descricao = self.children[1].value
-            nome_botao = self.children[2].value
+            titulo = self.children[0].value.strip()
+            descricao = self.children[1].value.strip()
+            botoes_text = self.children[2].value.strip()
             url_imagem = self.children[3].value.strip()
             cor_hex = self.children[4].value.strip()
+            
+            # Processar botões
+            botoes_config = []
+            linhas = botoes_text.split('\n')
+            
+            for linha in linhas:
+                linha = linha.strip()
+                if not linha:
+                    continue
+                
+                # Formato: EMOJI|Nome|Descrição
+                partes = linha.split('|')
+                if len(partes) >= 3:
+                    emoji = partes[0].strip()
+                    nome = partes[1].strip()
+                    desc = partes[2].strip()
+                    botoes_config.append({
+                        'emoji': emoji,
+                        'nome': nome,
+                        'descricao': desc
+                    })
+                elif len(partes) == 2:
+                    # Formato sem descrição: EMOJI|Nome
+                    emoji = partes[0].strip()
+                    nome = partes[1].strip()
+                    botoes_config.append({
+                        'emoji': emoji,
+                        'nome': nome,
+                        'descricao': f"Abrir ticket de {nome.lower()}"
+                    })
+            
+            if not botoes_config:
+                await interaction.response.send_message("❌ Nenhum botão válido configurado! Use o formato: EMOJI|Nome|Descrição", ephemeral=True)
+                return
+            
+            if len(botoes_config) > 5:
+                await interaction.response.send_message("❌ Máximo de 5 botões permitidos!", ephemeral=True)
+                return
             
             # Converter cor hex para int
             try:
@@ -619,14 +659,24 @@ class SetupSupportModal(ui.Modal):
                 print(f"Cor convertida: {cor_int} (0x{cor_hex})")
             except (ValueError, IndexError) as e:
                 print(f"Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
-                cor_int = 0xff6b6b  # Vermelho padrão
+                cor_int = 0x5865F2  # Azul Discord padrão
             
             # Criar embed
             embed = discord.Embed(
                 title=titulo,
-                description=descricao,
                 color=cor_int
             )
+            
+            if descricao:
+                embed.description = descricao
+            
+            # Adicionar cada botão como field
+            for btn in botoes_config:
+                embed.add_field(
+                    name=f"{btn['emoji']} {btn['nome']}",
+                    value=btn['descricao'],
+                    inline=False
+                )
             
             # Adicionar imagem se fornecida
             if url_imagem and url_imagem.startswith(('http://', 'https://')):
@@ -636,18 +686,11 @@ class SetupSupportModal(ui.Modal):
                 except Exception as e:
                     print(f"Erro ao adicionar imagem: {e}")
             
-            embed.add_field(
-                name="📋 Como Funciona?",
-                value="1. Clique no botão abaixo\n2. Um canal privado será criado para você\n3. Descreva seu problema ou dúvida\n4. Aguarde o atendimento da equipe",
-                inline=False
-            )
-            embed.set_footer(text="Suporte 24/7 • Responderemos em breve")
-            
-            # Criar view com botão de suporte
-            view = SupportTicketView(nome_botao)
+            # Criar view com múltiplos botões
+            view = MultiSupportTicketView(botoes_config)
             
             await interaction.response.send_message(embed=embed, view=view)
-            print("Modal de suporte processado com sucesso")
+            print(f"Modal de suporte processado com sucesso - {len(botoes_config)} botões criados")
             
         except Exception as e:
             print(f"Erro ao configurar sistema de suporte: {e}")
@@ -655,8 +698,55 @@ class SetupSupportModal(ui.Modal):
             traceback.print_exc()
             await interaction.response.send_message("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
 
+class CustomSupportTicketButton(ui.Button):
+    """Botão customizado para criar ticket de suporte com categoria específica"""
+    
+    def __init__(self, emoji: str, nome: str, categoria: str):
+        super().__init__(
+            label=nome,
+            style=discord.ButtonStyle.secondary,
+            emoji=emoji,
+            custom_id=f"support_ticket_{nome.lower().replace(' ', '_')}"
+        )
+        self.categoria = categoria
+        self.nome_ticket = nome
+    
+    async def callback(self, interaction: discord.Interaction):
+        """Callback do botão - cria ticket de suporte com categoria"""
+        try:
+            # Verificar se usuário já tem ticket ativo
+            import bot
+            if interaction.user.id in bot.active_tickets:
+                await interaction.response.send_message(
+                    "❌ Você já possui um ticket ativo. Use o canal do seu ticket para continuar.",
+                    ephemeral=True
+                )
+                return
+            
+            # Criar ticket de suporte com categoria
+            ticket_manager = TicketManager()
+            success, message = await ticket_manager.create_support_ticket(
+                interaction.user,
+                interaction.guild,
+                categoria=self.categoria
+            )
+            
+            if success:
+                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                
+        except Exception as e:
+            print(f"❌ Erro no callback do botão de suporte: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(
+                "❌ Erro ao criar ticket de suporte. Tente novamente.",
+                ephemeral=True
+            )
+
 class SupportTicketButton(ui.Button):
-    """Botão para criar ticket de suporte"""
+    """Botão para criar ticket de suporte (versão simples)"""
     
     def __init__(self, nome_botao="Abrir Ticket de Suporte"):
         super().__init__(
@@ -698,6 +788,21 @@ class SupportTicketButton(ui.Button):
                 "❌ Erro ao criar ticket de suporte. Tente novamente.",
                 ephemeral=True
             )
+
+class MultiSupportTicketView(ui.View):
+    """View com múltiplos botões customizados de suporte"""
+    
+    def __init__(self, botoes_config: list):
+        super().__init__(timeout=None)
+        
+        # Adicionar cada botão configurado
+        for config in botoes_config:
+            botao = CustomSupportTicketButton(
+                emoji=config['emoji'],
+                nome=config['nome'],
+                categoria=config['nome']
+            )
+            self.add_item(botao)
 
 class SupportTicketView(ui.View):
     """View persistente com botão de criar ticket de suporte"""
