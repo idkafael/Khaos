@@ -52,6 +52,13 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
   - Seguir instruções na seção "Deploy na Shard Cloud" abaixo
 
 ### **Novidades Recentes** 🆕
+- ✅ **Sistema de Suporte Customizado** - `/setup_suporte` melhorado (21/10/2025)
+  - Até 5 botões personalizados com emojis únicos
+  - Cada botão com nome e descrição próprios
+  - Categoria do ticket exibida no canal e mensagens
+  - Formato simples: `EMOJI|Nome|Descrição` (um por linha)
+  - Exemplo: `❤️|Parcerias|Para interessados em colaborar`
+
 - ✅ **Sistema de Cupons** - Sistema completo implementado (21/10/2025)
   - Cupons com desconto percentual
   - Limite de uso e restrição por usuário
@@ -65,7 +72,8 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 python bot.py
 
 # Comandos no Discord (Admin)
-/setup_ticket          # Configurar sistema de tickets
+/setup_ticket          # Configurar sistema de tickets de compra
+/setup_suporte         # Configurar sistema de tickets de suporte (múltiplos botões)
 /adicionar_estoque     # Adicionar códigos/keys
 /produtos              # Ver lista de produtos
 /close_ticket          # Fechar ticket manualmente
@@ -240,7 +248,8 @@ TICKET_LOGS_CHANNEL_ID=1234567890123456789  # ID do canal para logs
 - `/produtos` - Ver produtos disponíveis
 - `/comprar` - Comprar produto (no canal do ticket)
 - `/status` - Verificar status do pagamento
-- `/setup_ticket` - [ADMIN] Enviar mensagem de tickets
+- `/setup_ticket` - [ADMIN] Enviar mensagem de tickets de compra
+- `/setup_suporte` - [ADMIN] Enviar mensagem de tickets de suporte customizados
 - `/close_ticket` - [ADMIN] Fechar ticket manualmente
 
 ### 🔧 Comandos Legacy (!)
@@ -271,6 +280,49 @@ Usuário → Escolhe produto → Canal privado criado
 Usuário → /comprar → Pagamento Pix gerado
 Usuário → Paga → Bot detecta → Entrega automática
 ```
+
+## 🆘 Sistema de Suporte Customizado
+
+O comando `/setup_suporte` permite criar um painel de atendimento personalizado com **até 5 botões diferentes**, cada um com seu próprio emoji, nome e descrição!
+
+### Como Configurar:
+
+1. **Execute o comando** `/setup_suporte` no canal desejado
+2. **Preencha o modal** com as informações:
+   - **Título**: Nome da mensagem (ex: "Selecione uma opção")
+   - **Descrição**: Texto opcional abaixo do título
+   - **Botões**: Um por linha no formato `EMOJI|Nome|Descrição`
+   - **Imagem**: URL opcional para imagem no embed
+   - **Cor**: Código hexadecimal (ex: #5865F2)
+
+### Formato dos Botões:
+```
+EMOJI|Nome|Descrição
+```
+
+### Exemplo Completo:
+```
+❤️|Parcerias|Para os interessados em colaborar conosco.
+💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.
+✅|Denúncias|Realize denúncias através desse ticket.
+🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.
+```
+
+### O que acontece:
+- ✅ Cada botão cria um ticket com a **categoria específica**
+- ✅ O nome do canal inclui a categoria (ex: `parcerias-usuario-1021`)
+- ✅ A mensagem de boas-vindas mostra o tipo de ticket aberto
+- ✅ Apenas **um ticket ativo** por usuário (qualquer tipo)
+
+### Personalização:
+- **Emojis**: Use qualquer emoji do Discord ou Unicode
+- **Nomes curtos**: Máximo de 80 caracteres por botão
+- **Descrições**: Até 1000 caracteres no total
+- **Cores**: Use códigos hex como `#ff6b6b`, `#5865F2`, `0x00ff00`
+
+### Diferença entre `/setup_ticket` e `/setup_suporte`:
+- **`/setup_ticket`**: Para vendas - usuário escolhe produto e pode comprar
+- **`/setup_suporte`**: Para atendimento - tickets sem venda, só suporte
 
 ## 🏗️ Estrutura do Projeto
 
