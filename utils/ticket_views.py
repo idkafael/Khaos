@@ -556,37 +556,35 @@ class CreateCouponModal(ui.Modal):
             await interaction.response.send_message("❌ Erro ao criar cupom.", ephemeral=True)
 
 class SetupSupportModal(ui.Modal):
-    """Modal para configurar o sistema de tickets de suporte com múltiplos botões"""
+    """Modal para configurar o sistema de tickets de suporte com select menu"""
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(title="Configurar Tickets de Suporte", timeout=300)
         self.add_item(ui.TextInput(
             label="Título da Mensagem", 
-            placeholder="Ex: Selecione uma opção", 
-            default="📋 Selecione uma opção",
+            placeholder="Ex: Central de Atendimento", 
+            default="🎫 Central de Atendimento",
             max_length=100
         ))
         self.add_item(ui.TextInput(
             label="Descrição da Mensagem", 
-            placeholder="Ex: Escolha abaixo o tipo de atendimento que precisa", 
-            default="",
-            required=False,
+            placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
+            default="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
             max_length=1000
         ))
         self.add_item(ui.TextInput(
-            label="Botões (um por linha: EMOJI|Nome|Desc)", 
-            placeholder="❤️|Parcerias|Para interessados em colaborar\n💡|Dúvidas|Caso tenha dúvidas", 
+            label="Opções Menu (EMOJI|Nome|Descrição)", 
+            placeholder="Uma por linha", 
             default="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
             style=discord.TextStyle.long,
             max_length=1000,
             required=True
         ))
         self.add_item(ui.TextInput(
-            label="URL da Imagem (opcional)", 
-            placeholder="Cole o link da imagem", 
-            default="",
-            required=False,
-            max_length=500
+            label="Nome do Botão | Emoji (opcional)", 
+            placeholder="Ex: Abrir Ticket | 🎫", 
+            default="Abrir Ticket | 🎫",
+            max_length=100
         ))
         self.add_item(ui.TextInput(
             label="Cor do Embed (Hex)", 
@@ -601,13 +599,25 @@ class SetupSupportModal(ui.Modal):
             print(f"Modal de suporte submetido por {interaction.user.name}")
             titulo = self.children[0].value.strip()
             descricao = self.children[1].value.strip()
-            botoes_text = self.children[2].value.strip()
-            url_imagem = self.children[3].value.strip()
+            opcoes_text = self.children[2].value.strip()
+            botao_config = self.children[3].value.strip()
             cor_hex = self.children[4].value.strip()
             
-            # Processar botões
-            botoes_config = []
-            linhas = botoes_text.split('\n')
+            # Processar configuração do botão (Nome | Emoji)
+            label_botao = "Abrir Ticket"
+            emoji_botao = "🎫"
+            
+            if botao_config and '|' in botao_config:
+                partes_botao = botao_config.split('|')
+                if len(partes_botao) >= 2:
+                    label_botao = partes_botao[0].strip()
+                    emoji_botao = partes_botao[1].strip()
+            elif botao_config:
+                label_botao = botao_config.strip()
+            
+            # Processar opções do menu
+            opcoes_config = []
+            linhas = opcoes_text.split('\n')
             
             for linha in linhas:
                 linha = linha.strip()
@@ -620,7 +630,7 @@ class SetupSupportModal(ui.Modal):
                     emoji = partes[0].strip()
                     nome = partes[1].strip()
                     desc = partes[2].strip()
-                    botoes_config.append({
+                    opcoes_config.append({
                         'emoji': emoji,
                         'nome': nome,
                         'descricao': desc
@@ -629,18 +639,18 @@ class SetupSupportModal(ui.Modal):
                     # Formato sem descrição: EMOJI|Nome
                     emoji = partes[0].strip()
                     nome = partes[1].strip()
-                    botoes_config.append({
+                    opcoes_config.append({
                         'emoji': emoji,
                         'nome': nome,
                         'descricao': f"Abrir ticket de {nome.lower()}"
                     })
             
-            if not botoes_config:
-                await interaction.response.send_message("❌ Nenhum botão válido configurado! Use o formato: EMOJI|Nome|Descrição", ephemeral=True)
+            if not opcoes_config:
+                await interaction.response.send_message("❌ Nenhuma opção válida configurada! Use o formato: EMOJI|Nome|Descrição", ephemeral=True)
                 return
             
-            if len(botoes_config) > 5:
-                await interaction.response.send_message("❌ Máximo de 5 botões permitidos!", ephemeral=True)
+            if len(opcoes_config) > 25:
+                await interaction.response.send_message("❌ Máximo de 25 opções permitidas no select menu!", ephemeral=True)
                 return
             
             # Converter cor hex para int
@@ -664,33 +674,23 @@ class SetupSupportModal(ui.Modal):
             # Criar embed
             embed = discord.Embed(
                 title=titulo,
+                description=descricao if descricao else None,
                 color=cor_int
             )
             
-            if descricao:
-                embed.description = descricao
-            
-            # Adicionar cada botão como field
-            for btn in botoes_config:
+            # Adicionar cada opção como field
+            for opt in opcoes_config:
                 embed.add_field(
-                    name=f"{btn['emoji']} {btn['nome']}",
-                    value=btn['descricao'],
+                    name=f"{opt['emoji']} {opt['nome']}",
+                    value=opt['descricao'],
                     inline=False
                 )
             
-            # Adicionar imagem se fornecida
-            if url_imagem and url_imagem.startswith(('http://', 'https://')):
-                try:
-                    embed.set_image(url=url_imagem)
-                    print(f"Imagem adicionada: {url_imagem}")
-                except Exception as e:
-                    print(f"Erro ao adicionar imagem: {e}")
-            
-            # Criar view com múltiplos botões
-            view = MultiSupportTicketView(botoes_config)
+            # Criar view com botão que abre select menu
+            view = MultiSupportTicketView(opcoes_config, label_botao, emoji_botao)
             
             await interaction.response.send_message(embed=embed, view=view)
-            print(f"Modal de suporte processado com sucesso - {len(botoes_config)} botões criados")
+            print(f"Modal de suporte processado com sucesso - {len(opcoes_config)} opções criadas")
             
         except Exception as e:
             print(f"Erro ao configurar sistema de suporte: {e}")
@@ -789,20 +789,109 @@ class SupportTicketButton(ui.Button):
                 ephemeral=True
             )
 
-class MultiSupportTicketView(ui.View):
-    """View com múltiplos botões customizados de suporte"""
+class SupportCategorySelect(ui.Select):
+    """Select menu para escolher categoria de suporte"""
     
-    def __init__(self, botoes_config: list):
+    def __init__(self, categorias: list):
+        # Criar opções do select menu
+        options = []
+        for cat in categorias:
+            options.append(discord.SelectOption(
+                label=cat['nome'],
+                description=cat['descricao'][:100],  # Discord limita a 100 chars
+                emoji=cat['emoji']
+            ))
+        
+        super().__init__(
+            placeholder="Selecione o tipo de atendimento...",
+            min_values=1,
+            max_values=1,
+            options=options,
+            custom_id="support_category_select"
+        )
+        self.categorias = categorias
+    
+    async def callback(self, interaction: discord.Interaction):
+        """Callback quando usuário seleciona uma categoria"""
+        try:
+            # Pegar categoria selecionada
+            categoria_nome = self.values[0]
+            
+            # Verificar se usuário já tem ticket ativo
+            import bot
+            if interaction.user.id in bot.active_tickets:
+                await interaction.response.send_message(
+                    "❌ Você já possui um ticket ativo. Use o canal do seu ticket para continuar.",
+                    ephemeral=True
+                )
+                return
+            
+            # Criar ticket com categoria
+            ticket_manager = TicketManager()
+            success, message = await ticket_manager.create_support_ticket(
+                interaction.user,
+                interaction.guild,
+                categoria=categoria_nome
+            )
+            
+            if success:
+                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+            else:
+                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                
+        except Exception as e:
+            print(f"❌ Erro no select de categoria: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(
+                "❌ Erro ao criar ticket. Tente novamente.",
+                ephemeral=True
+            )
+
+class SupportSelectButton(ui.Button):
+    """Botão que abre o select menu de categorias"""
+    
+    def __init__(self, label: str, emoji: str, categorias: list):
+        super().__init__(
+            label=label,
+            style=discord.ButtonStyle.primary,
+            emoji=emoji,
+            custom_id="open_support_select"
+        )
+        self.categorias = categorias
+    
+    async def callback(self, interaction: discord.Interaction):
+        """Abre o select menu de categorias"""
+        try:
+            # Criar view temporária com select menu
+            view = ui.View(timeout=60)
+            select = SupportCategorySelect(self.categorias)
+            view.add_item(select)
+            
+            await interaction.response.send_message(
+                "📋 **Selecione o tipo de atendimento:**",
+                view=view,
+                ephemeral=True
+            )
+            
+        except Exception as e:
+            print(f"❌ Erro ao abrir select: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(
+                "❌ Erro ao abrir menu. Tente novamente.",
+                ephemeral=True
+            )
+
+class MultiSupportTicketView(ui.View):
+    """View com botão que abre select menu de categorias"""
+    
+    def __init__(self, botoes_config: list, label_botao: str = "Abrir Ticket", emoji_botao: str = "🎫"):
         super().__init__(timeout=None)
         
-        # Adicionar cada botão configurado
-        for config in botoes_config:
-            botao = CustomSupportTicketButton(
-                emoji=config['emoji'],
-                nome=config['nome'],
-                categoria=config['nome']
-            )
-            self.add_item(botao)
+        # Adicionar botão único que abre select menu
+        botao = SupportSelectButton(label_botao, emoji_botao, botoes_config)
+        self.add_item(botao)
 
 class SupportTicketView(ui.View):
     """View persistente com botão de criar ticket de suporte"""
