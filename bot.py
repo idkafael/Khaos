@@ -107,6 +107,41 @@ async def setup_msg_slash(interaction: discord.Interaction):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="setup_suporte", description="[ADMIN] Configurar sistema de tickets de suporte")
+@discord.app_commands.default_permissions(administrator=True)
+async def setup_suporte_slash(interaction: discord.Interaction):
+    """Comando admin para configurar sistema de tickets de suporte via modal"""
+    try:
+        print(f"Comando setup_suporte executado por {interaction.user.name}")
+        
+        from utils.ticket_views import SetupSupportModal
+        print("SetupSupportModal importado com sucesso!")
+        
+        modal = SetupSupportModal()
+        print("Modal de suporte criado com sucesso!")
+        
+        await interaction.response.send_modal(modal)
+        print("Modal de suporte enviado com sucesso!")
+        
+    except ImportError as e:
+        print(f"Erro de importação: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro de importação no sistema de suporte.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        print(f"Erro no comando setup_suporte: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro ao configurar sistema de suporte.",
+            color=0x8B5CF6
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 @bot.command(name="clear", aliases=["limpar", "apagar"])
 @commands.has_permissions(manage_messages=True)
 async def clear_messages(ctx, amount: int = 10):
@@ -469,7 +504,7 @@ async def ajuda_slash(interaction: discord.Interaction):
     
     embed.add_field(
         name="» Comandos Admin",
-        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets\n`/setup_msg` :: 📝 Criar mensagem embed\n`/close_ticket` :: 🔒 Fechar ticket manualmente\n`!clear [número]` :: 🗑️ Apagar mensagens do chat",
+        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets (vendas)\n`/setup_suporte` :: 🆘 Enviar mensagem de suporte\n`/setup_msg` :: 📝 Criar mensagem embed\n`/close_ticket` :: 🔒 Fechar ticket manualmente\n`!clear [número]` :: 🗑️ Apagar mensagens do chat",
         inline=False
     )
     
