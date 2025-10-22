@@ -228,23 +228,42 @@ class TicketManager:
         
         embed = discord.Embed(
             title="🎫 Ticket de Compra Criado!",
-            description=f"Olá {user.mention}! Bem-vindo ao nosso sistema de vendas.",
+            description=f"Olá {user.mention}! Bem-vindo ao seu ticket de compra.",
             color=0x00ff00
         )
         
+        # Destacar o produto selecionado
         embed.add_field(
             name="🛍️ Produto Selecionado",
-            value=f"**{product['name']}**\nR$ {product['price']:.2f}",
+            value=f"╭─ **{product['name']}**\n"
+                  f"├─ 💰 **Valor:** R$ {product['price']:.2f}\n"
+                  f"├─ 📝 {product.get('description', 'Produto digital')}\n"
+                  f"╰─ 📦 {product.get('category', 'Digital')}",
             inline=False
         )
         
         embed.add_field(
             name="🚀 Processo Automatizado",
-            value="✅ Produto selecionado\n🔄 Gerando pagamento Pix...\n⏳ Aguarde alguns segundos",
+            value="```diff\n"
+                  "+ Produto selecionado\n"
+                  "+ Ticket criado\n"
+                  "~ Gerando pagamento Pix...\n"
+                  "```",
             inline=False
         )
         
-        embed.set_footer(text="Pagamento sendo gerado automaticamente...")
+        embed.add_field(
+            name="⏳ Próximos Passos",
+            value="1️⃣ Aguarde a geração do QR Code\n"
+                  "2️⃣ Pague via Pix\n"
+                  "3️⃣ Receba o produto automaticamente",
+            inline=False
+        )
+        
+        embed.set_footer(
+            text=f"Ticket #{channel.name} • Pagamento sendo gerado...",
+            icon_url=user.display_avatar.url if user.display_avatar else None
+        )
         
         view = TicketChannelView()
         await channel.send(embed=embed, view=view)

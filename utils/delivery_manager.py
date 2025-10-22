@@ -187,19 +187,86 @@ class DeliveryManager:
             # Enviar no canal do ticket
             await channel.send(f"{user.mention}", embed=embed)
             
-            # Tentar enviar também por DM
+            # Enviar também por DM (versão completa)
             try:
                 dm_embed = discord.Embed(
-                    title="✅ Cópia do Seu Produto",
-                    description=f"Aqui está uma cópia do produto adquirido:",
-                    color=0x00ff00
+                    title="🎉 Compra Confirmada!",
+                    description=f"Olá {user.mention}! Seu pagamento foi confirmado com sucesso.",
+                    color=0x00ff00,
+                    timestamp=datetime.now()
                 )
-                dm_embed.add_field(name="📦 Produto", value=product['name'], inline=False)
-                dm_embed.add_field(name="🔑 Conteúdo", value=f"```\n{inventory_item['content']}\n```", inline=False)
+                
+                dm_embed.add_field(
+                    name="📦 Produto Adquirido",
+                    value=f"**{product['name']}**\n{product.get('description', 'Produto digital')}",
+                    inline=False
+                )
+                
+                # Mostrar valores com desconto se houver cupom
+                if transaction.get('discount_amount') and transaction['discount_amount'] > 0:
+                    valor_original = transaction.get('amount', 0)
+                    desconto = transaction.get('discount_amount', 0)
+                    valor_final = transaction.get('final_amount', valor_original)
+                    
+                    valor_text = f"~~R$ {valor_original:.2f}~~ → **R$ {valor_final:.2f}**"
+                    dm_embed.add_field(
+                        name="💰 Valor Pago",
+                        value=valor_text,
+                        inline=True
+                    )
+                    dm_embed.add_field(
+                        name="🎟️ Desconto Aplicado",
+                        value=f"R$ {desconto:.2f}",
+                        inline=True
+                    )
+                else:
+                    valor_pago = transaction.get('final_amount', transaction.get('amount', 0))
+                    dm_embed.add_field(
+                        name="💰 Valor Pago",
+                        value=f"R$ {valor_pago:.2f}",
+                        inline=True
+                    )
+                
+                dm_embed.add_field(
+                    name="📅 Data da Compra",
+                    value=f"<t:{int(datetime.now().timestamp())}:F>",
+                    inline=True
+                )
+                
+                dm_embed.add_field(
+                    name="🔑 Seu Produto",
+                    value=f"```\n{inventory_item['content']}\n```",
+                    inline=False
+                )
+                
+                dm_embed.add_field(
+                    name="⚠️ Importante",
+                    value="• Guarde essas informações em local seguro\n• Não compartilhe com terceiros\n• Este é seu comprovante de compra",
+                    inline=False
+                )
+                
+                dm_embed.set_footer(
+                    text=f"Compra #{transaction['id']} • Obrigado pela preferência! 💙",
+                    icon_url=user.display_avatar.url if user.display_avatar else None
+                )
+                
                 await user.send(embed=dm_embed)
-                print(f"✉️ Cópia enviada por DM para {user.name}")
-            except:
-                print(f"⚠️ Não foi possível enviar DM para {user.name}")
+                print(f"✉️ Produto completo enviado por DM para {user.name}")
+                
+                # Adicionar mensagem no canal informando sobre a DM
+                await channel.send(
+                    f"📬 {user.mention} Uma cópia completa também foi enviada na sua DM!",
+                    delete_after=30
+                )
+                
+            except discord.Forbidden:
+                print(f"⚠️ {user.name} está com DMs desabilitadas")
+                await channel.send(
+                    f"⚠️ {user.mention} Não consegui enviar uma cópia na sua DM. Verifique se suas mensagens diretas estão habilitadas!",
+                    delete_after=60
+                )
+            except Exception as e:
+                print(f"⚠️ Erro ao enviar DM para {user.name}: {e}")
             
             return True
             
