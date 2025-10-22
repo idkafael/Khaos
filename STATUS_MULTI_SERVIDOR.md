@@ -1,6 +1,6 @@
 # 📊 Status da Implementação Multi-Servidor
 
-## ✅ Implementado (40% Completo)
+## ✅ Implementado (70% Completo)
 
 ### 1. Base de Dados ✅
 - ✅ Arquivo `database_multiserver_setup.sql` criado
@@ -36,28 +36,32 @@
   - Função `is_server_admin()`
   - Função `check_guild_active()`
 
-### 4. Documentação ✅
-- ✅ `IMPLEMENTACAO_MULTI_SERVIDOR.md` - Guia completo de implementação
+### 4. Comandos Admin ✅
+- ✅ `commands/admin_multiserver_commands.py` criado
+  - `/admin_criar_produto` - Criar produto
+  - `/admin_criar_vip` - Criar VIP
+  - `/admin_listar_produtos` - Listar produtos
+  - `/admin_deletar_produto` - Deletar produto
+  - `/admin_configurar` - Ver configuração
+  - **Precisa integrar no bot.py**
+
+### 5. Documentação ✅
+- ✅ `IMPLEMENTACAO_MULTI_SERVIDOR.md` - Guia completo
+- ✅ `STATUS_MULTI_SERVIDOR.md` - Status atualizado
+- ✅ `FINALIZACAO_MULTI_SERVIDOR.md` - Guia de finalização
 
 ---
 
-## ⏳ Falta Implementar (60%)
+## ⏳ Falta Implementar (30%)
 
-### 5. Atualizar Models Restantes ⏳
+### 6. Integrar Comandos no bot.py ⏳
 
-**CouponModel** (`models/coupon_model.py`):
-- ⏳ Atualizar métodos restantes com guild_id
-- ⏳ `create_coupon(guild_id, ...)`
-- ⏳ `list_coupons(guild_id)`
-- ⏳ `delete_coupon(coupon_id, guild_id)`
+**IMPORTANTE:** Comandos admin criados, mas precisam ser integrados:
+- ⏳ Copiar comandos de `admin_multiserver_commands.py` para `bot.py`
+- ⏳ Aplicar decorator `@require_server_admin()`
+- ⏳ Sincronizar comandos no startup
 
-**InventoryModel** (`models/inventory_model.py`):
-- ⏳ Adicionar filtro guild_id
-- ⏳ `get_available_items(product_id, guild_id)`
-- ⏳ `reserve_item(product_id, guild_id, user_id)`
-- ⏳ `add_inventory(product_id, guild_id, items)`
-
-### 6. Criar Comandos Admin ⏳
+### 7. Atualizar Comandos Existentes ⏳
 
 Criar arquivo `commands/admin_commands.py`:
 
