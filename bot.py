@@ -2550,34 +2550,40 @@ async def adicionar_estoque(interaction: discord.Interaction):
             return
         
         # Criar Select Menu com produtos
+        class ProductSelect(discord.ui.Select):
+            def __init__(self, products):
+                self.products = products
+                options = [
+                    discord.SelectOption(
+                        label=p['name'][:100],
+                        description=f"R$ {p['price']:.2f} • ID: {p['id']}",
+                        value=str(p['id'])
+                    )
+                    for p in products[:25]  # Discord limita a 25 opções
+                ]
+                super().__init__(placeholder="Escolha um produto...", options=options)
+            
+            async def callback(self, interaction: discord.Interaction):
+                try:
+                    product_id = int(self.values[0])
+                    product = next((p for p in self.products if p['id'] == product_id), None)
+                    
+                    if product:
+                        # Abrir modal para adicionar códigos
+                        modal = AddStockModal(product)
+                        await interaction.response.send_modal(modal)
+                    else:
+                        await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
+                except Exception as e:
+                    print(f"Erro no select callback: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+        
         class ProductSelectView(discord.ui.View):
             def __init__(self, products):
                 super().__init__(timeout=300)
-                self.products = products
-                
-                # Criar select menu
-                select = discord.ui.Select(
-                    placeholder="Escolha um produto...",
-                    options=[
-                        discord.SelectOption(
-                            label=p['name'][:100],
-                            description=f"R$ {p['price']:.2f} • ID: {p['id']}",
-                            value=str(p['id'])
-                        )
-                        for p in products[:25]  # Discord limita a 25 opções
-                    ]
-                )
-                select.callback = self.select_callback
-                self.add_item(select)
-            
-            async def select_callback(self, interaction: discord.Interaction):
-                product_id = int(interaction.data['values'][0])
-                product = next((p for p in self.products if p['id'] == product_id), None)
-                
-                if product:
-                    # Abrir modal para adicionar códigos
-                    modal = AddStockModal(product)
-                    await interaction.response.send_modal(modal)
+                self.add_item(ProductSelect(products))
         
         # Criar embed
         embed = discord.Embed(
