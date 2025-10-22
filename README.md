@@ -93,6 +93,34 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
   - Seguir instruções na seção "Deploy na Shard Cloud" abaixo
 
 ### **Novidades Recentes** 🆕
+
+- ✅ **Sistema Multi-Servidor** - Implementado (22/10/2025)
+  - Cada servidor Discord gerencia **seus próprios produtos** independentemente
+  - VIPs, cupons e estoque isolados por servidor
+  - Comandos admin exclusivos: `/admin_criar_produto`, `/admin_criar_vip`, `/admin_listar_produtos`, `/admin_deletar_produto`
+  - Produtos nunca se misturam entre servidores diferentes
+  - Sistema completamente escalável para múltiplos servidores
+
+- ✅ **Sistema de Estoque Ilimitado** - Implementado (22/10/2025)
+  - Produtos VIP agora têm **estoque infinito** automaticamente
+  - Novos produtos podem ser marcados como `unlimited_stock: True`
+  - Ideal para roles, acessos e produtos digitais sem limite
+  - Entrega automática sem necessidade de gerenciar inventory
+  - Ícone ♾️ identifica produtos ilimitados
+
+- ✅ **Comando `/adicionar_estoque` Reformulado** - Melhorado (22/10/2025)
+  - Agora é um **comando slash** completo
+  - Interface com **Select Menu** para escolher produto
+  - Sistema de mensagens (sem Modal, mais compatível)
+  - Deleta códigos automaticamente por segurança
+  - Filtra apenas produtos que precisam de estoque gerenciado
+
+- ✅ **Pagamento Automático Corrigido** - Bugs resolvidos (22/10/2025)
+  - QR Code agora envia como **imagem PNG** automaticamente
+  - Correção de erros de `guild_id` no ticket_manager
+  - Sistema de verificação a cada 2 minutos funcionando perfeitamente
+  - Entrega instantânea após confirmação do pagamento
+
 - ✅ **Sistema de Suporte com Select Menu** - `/setup_suporte` reformulado (21/10/2025)
   - Interface ultra profissional com **UM botão + dropdown menu**
   - Suporta até **25 categorias** diferentes (vs 5 botões antes)
@@ -113,15 +141,20 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 # Iniciar o bot
 python bot.py
 
-# Comandos no Discord (Admin)
+# Comandos no Discord (Admin) - Multi-Servidor
+/admin_criar_produto     # Criar produto no servidor (atualiza Supabase diretamente)
+/admin_criar_vip         # Criar produto VIP (estoque ilimitado automático)
+/admin_listar_produtos   # Ver todos produtos do servidor
+/admin_deletar_produto   # Deletar múltiplos produtos (ex: 1,2,3)
+/adicionar_estoque       # Adicionar códigos/keys (apenas produtos gerenciados)
+
+# Comandos no Discord (Admin) - Geral
 /setup_ticket          # Configurar sistema de tickets de compra
-/setup_suporte         # Configurar sistema de tickets de suporte (múltiplos botões)
-/adicionar_estoque     # Adicionar códigos/keys
-/produtos              # Ver lista de produtos
+/setup_suporte         # Configurar sistema de tickets de suporte
 /close_ticket          # Fechar ticket manualmente
 
 # Comandos no Discord (Usuário)
-/produtos              # Ver produtos disponíveis
+/produtos              # Ver produtos disponíveis do servidor
 /comprar               # Comprar produto (dentro do ticket)
 /status                # Ver status do pagamento
 /ajuda                 # Ver lista completa de comandos
@@ -241,6 +274,18 @@ BOT_PREFIX=?
 # Isso criará: tabela de assinaturas VIP e triggers
 ```
 
+**PASSO 2.5 - Execute o arquivo `database_multiserver_setup_v2.sql`**
+```bash
+# Abra o arquivo database_multiserver_setup_v2.sql e cole todo conteúdo no SQL Editor
+# Isso criará: guild_config, guild_id nas tabelas, e sistema multi-servidor
+```
+
+**PASSO 2.6 - Execute o arquivo `database_unlimited_stock.sql`**
+```bash
+# Abra o arquivo database_unlimited_stock.sql e cole todo conteúdo no SQL Editor
+# Isso adicionará: campo unlimited_stock para produtos com estoque infinito
+```
+
 **PASSO 3 - DESABILITAR RLS (Row Level Security) - ESSENCIAL!**
 ```sql
 -- Execute este SQL para permitir que o bot acesse as tabelas
@@ -249,6 +294,8 @@ ALTER TABLE transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;
 ALTER TABLE coupon_usage DISABLE ROW LEVEL SECURITY;
 ALTER TABLE vip_subscriptions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE guild_config DISABLE ROW LEVEL SECURITY;
+ALTER TABLE product_inventory DISABLE ROW LEVEL SECURITY;
 ```
 
 **PASSO 4 - Verificar se funcionou**
