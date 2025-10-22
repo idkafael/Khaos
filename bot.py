@@ -1480,7 +1480,8 @@ async def on_ready():
     await transaction_model.initialize()
     
     # Carregar produtos de exemplo se não existirem
-    await load_sample_products()
+    # DESABILITADO - Agora temos multi-servidor com produtos por guild
+    # await load_sample_products()
     
     # Inicializar inventory model
     from models.inventory_model import InventoryModel
@@ -1973,35 +1974,13 @@ async def sync_commands(ctx):
 @commands.has_permissions(administrator=True)
 async def reload_products(ctx):
     """Recarrega os produtos no banco de dados"""
-    try:
-        await ctx.send("🔄 Limpando produtos antigos...")
-        
-        # Limpar produtos existentes
-        products = await product_model.get_all_products()
-        deleted_count = 0
-        for product in products:
-            await product_model.delete_product(product['id'])
-            deleted_count += 1
-        
-        await ctx.send(f"✅ {deleted_count} produtos antigos removidos!")
-        
-        # Carregar novos produtos
-        await ctx.send("🔄 Carregando novos produtos...")
-        await load_sample_products()
-        
-        # Verificar se foram carregados
-        new_products = await product_model.get_all_products()
-        await ctx.send(f"✅ {len(new_products)} novos produtos carregados!")
-        
-        # Listar os novos produtos
-        for product in new_products:
-            await ctx.send(f"📦 **{product['name']}** - R$ {product['price']:.2f}")
-        
-    except Exception as e:
-        print(f"Erro ao recarregar produtos: {e}")
-        import traceback
-        traceback.print_exc()
-        await ctx.send(f"❌ Erro ao recarregar produtos: {e}")
+    await ctx.send("⚠️ **Comando Obsoleto!**\n\n"
+                  "Este comando não funciona mais com o sistema multi-servidor.\n\n"
+                  "**Use os novos comandos:**\n"
+                  "`/admin_criar_produto` - Criar produto\n"
+                  "`/admin_criar_vip` - Criar VIP\n"
+                  "`/admin_listar_produtos` - Ver produtos\n"
+                  "`/admin_deletar_produto` - Deletar produtos")
 
 # Comando para adicionar estoque via prefixo
 @bot.command(name='adicionar_estoque', aliases=['add_stock'])

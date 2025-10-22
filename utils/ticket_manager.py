@@ -279,8 +279,9 @@ class TicketManager:
             # 1. Verificar estoque disponível
             from models.inventory_model import InventoryModel
             inventory_model = InventoryModel()
+            guild_id = channel.guild.id
             
-            stock_counts = await inventory_model.get_stock_count(product['id'])
+            stock_counts = await inventory_model.get_stock_count(product['id'], guild_id)
             if stock_counts['available'] == 0:
                 # Sem estoque disponível
                 embed = discord.Embed(
@@ -297,7 +298,7 @@ class TicketManager:
                 return
             
             # 2. Reservar item do estoque
-            available_stock = await inventory_model.get_available_stock(product['id'])
+            available_stock = await inventory_model.get_available_stock(product['id'], guild_id)
             if not available_stock:
                 await self._send_out_of_stock_message(channel, product)
                 return
