@@ -4,6 +4,38 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 
 ---
 
+## 📑 Índice de Conteúdo
+
+### 🚀 Início Rápido
+- [✅ Status de Configuração](#-status-de-configuração-atual)
+- [🔧 Instalação](#-instalação)
+- [⚙️ Configuração Completa](#️-configuração)
+- [🗄️ Configurar Supabase (PASSO A PASSO)](#2-configurar-supabase---passo-a-passo-completo)
+
+### 💎 Sistemas Principais
+- [🎫 Sistema de Tickets](#-sistema-de-tickets)
+- [💳 Sistema de Pagamento](#-sistema-de-pagamento)
+- [🎟️ Sistema de Cupons de Desconto](#️-sistema-de-cupons-de-desconto)
+- [👑 Sistema VIP - Gerenciamento de Assinaturas](#-sistema-vip---gerenciamento-de-assinaturas)
+
+### 🎯 Guias Práticos
+- [🎯 Como Criar e Gerenciar Produtos VIP](#-como-criar-e-gerenciar-produtos-vip)
+- [📦 Adicionar Estoque de Produtos](#️-estrutura-do-banco-de-dados)
+- [🆘 Sistema de Suporte Customizado](#-sistema-de-suporte-customizado)
+
+### 🚀 Deploy e Produção
+- [📋 Checklist Completo de Deploy](#-checklist-completo-de-deploy)
+- [🚀 Deploy na Shard Cloud](#-como-fazer-deploy-na-shard-cloud)
+- [🔧 Comandos do Bot](#-comandos-do-bot)
+
+### 📊 Referência
+- [🎮 Comandos Disponíveis](#-comandos-do-bot)
+- [📊 Produtos de Exemplo](#-produtos-de-exemplo)
+- [🛡️ Solução de Problemas](#️-segurança)
+- [📄 Licença](#-licença)
+
+---
+
 ## ✅ STATUS DE CONFIGURAÇÃO ATUAL
 
 ### **Configurações Básicas - CONCLUÍDAS** ✅
