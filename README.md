@@ -10,29 +10,38 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 - [✅ Status de Configuração](#-status-de-configuração-atual)
 - [🔧 Instalação](#-instalação)
 - [⚙️ Configuração Completa](#️-configuração)
-- [🗄️ Configurar Supabase (PASSO A PASSO)](#2-configurar-supabase---passo-a-passo-completo)
+- [🗄️ Estrutura do Banco de Dados](#️-estrutura-do-banco-de-dados)
 
 ### 💎 Sistemas Principais
-- [🎫 Sistema de Tickets](#-sistema-de-tickets)
-- [💳 Sistema de Pagamento](#-sistema-de-pagamento)
+- [🎫 Funcionalidades](#-funcionalidades)
 - [🎟️ Sistema de Cupons de Desconto](#️-sistema-de-cupons-de-desconto)
 - [👑 Sistema VIP - Gerenciamento de Assinaturas](#-sistema-vip---gerenciamento-de-assinaturas)
-
-### 🎯 Guias Práticos
-- [🎯 Como Criar e Gerenciar Produtos VIP](#-como-criar-e-gerenciar-produtos-vip)
-- [📦 Adicionar Estoque de Produtos](#️-estrutura-do-banco-de-dados)
 - [🆘 Sistema de Suporte Customizado](#-sistema-de-suporte-customizado)
 
-### 🚀 Deploy e Produção
-- [📋 Checklist Completo de Deploy](#-checklist-completo-de-deploy)
-- [🚀 Deploy na Shard Cloud](#-como-fazer-deploy-na-shard-cloud)
-- [🔧 Comandos do Bot](#-comandos-do-bot)
+### 🎯 Guias Essenciais
+- [🎯 Como Criar e Gerenciar Produtos VIP](#-como-criar-e-gerenciar-produtos-vip)
+- [🎯 Como Usar o Sistema de Tickets](#-como-usar-o-sistema-de-tickets)
+- [🔄 Fluxo do Bot](#-fluxo-do-bot)
+- [🎮 Comandos do Bot](#-comandos-do-bot)
 
-### 📊 Referência
-- [🎮 Comandos Disponíveis](#-comandos-do-bot)
+### 🚀 Deploy e Produção
+- [✅ Checklist Completo de Deploy](#-checklist-completo-de-deploy)
+- [🚀 Como Fazer Deploy na Shard Cloud](#-como-fazer-deploy-na-shard-cloud)
+- [🚀 Executando o Bot](#-executando-o-bot)
+
+### 📚 Referência Técnica
+- [🏗️ Estrutura do Projeto](#️-estrutura-do-projeto)
 - [📊 Produtos de Exemplo](#-produtos-de-exemplo)
-- [🛡️ Solução de Problemas](#️-segurança)
+- [🛡️ Segurança](#️-segurança)
+- [🐛 Solução de Problemas](#-solução-de-problemas)
+- [📝 Logs](#-logs)
+- [🛠️ Tecnologias](#️-tecnologias)
+
+### 📄 Informações
+- [🤝 Contribuição](#-contribuição)
 - [📄 Licença](#-licença)
+- [📞 Suporte](#-suporte)
+- [🔮 Roadmap](#-roadmap)
 
 ---
 
