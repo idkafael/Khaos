@@ -13,6 +13,7 @@ class VipManager:
         
         # Configurações de cores para cada role VIP
         self.role_colors = {
+            'KHAOS': discord.Color.from_rgb(138, 43, 226),          # Roxo (Blue Violet)
             'VIP Bronze': discord.Color.from_rgb(205, 127, 50),    # Bronze
             'VIP Prata': discord.Color.from_rgb(192, 192, 192),     # Prata
             'VIP Ouro': discord.Color.from_rgb(255, 215, 0),        # Ouro
