@@ -2210,6 +2210,203 @@ async def setup_ticket_with_image(ctx, *, args=""):
         traceback.print_exc()
         await ctx.send("❌ Erro ao configurar sistema de tickets.")
 
+# ========================================
+# COMANDOS ADMIN MULTI-SERVIDOR
+# ========================================
+
+@bot.tree.command(name="admin_criar_produto", description="[ADMIN] Criar um produto no servidor")
+@discord.app_commands.default_permissions(administrator=True)
+@discord.app_commands.describe(
+    nome="Nome do produto",
+    preco="Preço em R$",
+    descricao="Descrição do produto",
+    categoria="Categoria (produto, vip, etc)"
+)
+async def admin_criar_produto(
+    interaction: discord.Interaction,
+    nome: str,
+    preco: float,
+    descricao: str,
+    categoria: str = "produto"
+):
+    """Criar produto que atualiza diretamente no Supabase"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        product_data = {
+            'name': nome,
+            'price': preco,
+            'description': descricao,
+            'category': categoria
+        }
+        
+        product = await product_model.create_product(interaction.guild_id, product_data)
+        
+        if product:
+            embed = discord.Embed(
+                title="✅ Produto Criado no Supabase",
+                description=f"Produto **{nome}** criado com sucesso!",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="ID", value=product['id'], inline=True)
+            embed.add_field(name="Preço", value=f"R$ {preco:.2f}", inline=True)
+            embed.add_field(name="Categoria", value=categoria, inline=True)
+            
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
+            
+    except Exception as e:
+        print(f"Erro ao criar produto: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="admin_deletar_produto", description="[ADMIN] Deletar um produto do servidor")
+@discord.app_commands.default_permissions(administrator=True)
+@discord.app_commands.describe(product_id="ID do produto a deletar")
+async def admin_deletar_produto(interaction: discord.Interaction, product_id: int):
+    """Deletar produto do Supabase"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        # Buscar produto para confirmar
+        product = await product_model.get_product_by_id(product_id, interaction.guild_id)
+        
+        if not product:
+            await interaction.followup.send("❌ Produto não encontrado neste servidor.", ephemeral=True)
+            return
+        
+        # Deletar do Supabase
+        success = await product_model.delete_product(product_id, interaction.guild_id)
+        
+        if success:
+            embed = discord.Embed(
+                title="✅ Produto Deletado do Supabase",
+                description=f"Produto **{product['name']}** (ID: {product_id}) deletado com sucesso!",
+                color=discord.Color.green()
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Erro ao deletar produto.", ephemeral=True)
+            
+    except Exception as e:
+        print(f"Erro ao deletar produto: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="admin_listar_produtos", description="[ADMIN] Listar todos os produtos do servidor")
+@discord.app_commands.default_permissions(administrator=True)
+async def admin_listar_produtos(interaction: discord.Interaction):
+    """Listar produtos do Supabase"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        products = await product_model.get_products_by_guild(interaction.guild_id)
+        
+        if not products:
+            await interaction.followup.send("📦 Nenhum produto cadastrado neste servidor no Supabase.", ephemeral=True)
+            return
+        
+        # Separar por categoria
+        vips = [p for p in products if p.get('category') == 'vip']
+        normais = [p for p in products if p.get('category') != 'vip']
+        
+        embed = discord.Embed(
+            title=f"📦 Produtos do Servidor ({len(products)} total)",
+            description="Produtos cadastrados no Supabase",
+            color=discord.Color.blue()
+        )
+        
+        if normais:
+            produtos_text = "\n".join([
+                f"**ID {p['id']}** - {p['name']} - R$ {p['price']:.2f}"
+                for p in normais[:10]
+            ])
+            embed.add_field(
+                name=f"🛍️ Produtos Normais ({len(normais)})",
+                value=produtos_text or "Nenhum",
+                inline=False
+            )
+        
+        if vips:
+            vips_text = "\n".join([
+                f"**ID {p['id']}** - {p['name']} - R$ {p['price']:.2f}"
+                for p in vips[:10]
+            ])
+            embed.add_field(
+                name=f"👑 Produtos VIP ({len(vips)})",
+                value=vips_text or "Nenhum",
+                inline=False
+            )
+        
+        if len(products) > 20:
+            embed.set_footer(text=f"Mostrando 20 de {len(products)} produtos")
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro ao listar produtos: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="admin_criar_vip", description="[ADMIN] Criar produto VIP no servidor")
+@discord.app_commands.default_permissions(administrator=True)
+@discord.app_commands.describe(
+    nome="Nome do produto VIP (ex: VIP Gold - 30 Dias)",
+    preco="Preço em R$",
+    role_name="Nome da role Discord (ex: VIP Gold)",
+    descricao="Descrição do produto VIP",
+    duracao_dias="Duração em dias (0 para vitalício)"
+)
+async def admin_criar_vip(
+    interaction: discord.Interaction,
+    nome: str,
+    preco: float,
+    role_name: str,
+    descricao: str,
+    duracao_dias: int = 0
+):
+    """Criar produto VIP no Supabase"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        # Configuração VIP
+        vip_config = {
+            "role_name": role_name,
+            "duration_days": duracao_dias if duracao_dias > 0 else None
+        }
+        
+        product_data = {
+            'name': nome,
+            'price': preco,
+            'description': descricao,
+            'category': 'vip',
+            'vip_config': vip_config
+        }
+        
+        product = await product_model.create_product(interaction.guild_id, product_data)
+        
+        if product:
+            duracao_text = f"{duracao_dias} dias" if duracao_dias > 0 else "Vitalício"
+            
+            embed = discord.Embed(
+                title="✅ Produto VIP Criado no Supabase",
+                description=f"VIP **{nome}** criado com sucesso!",
+                color=discord.Color.gold()
+            )
+            embed.add_field(name="ID", value=product['id'], inline=True)
+            embed.add_field(name="Preço", value=f"R$ {preco:.2f}", inline=True)
+            embed.add_field(name="Role", value=role_name, inline=True)
+            embed.add_field(name="Duração", value=duracao_text, inline=True)
+            
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
+            
+    except Exception as e:
+        print(f"Erro ao criar VIP: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
 # Executar o bot
 if __name__ == "__main__":
     try:
