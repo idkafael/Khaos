@@ -19,11 +19,12 @@ class InventoryModel:
             print(f"❌ Erro ao conectar com tabela de estoque: {e}")
             print("💡 Execute o SQL de criação da tabela product_inventory no Supabase")
     
-    async def add_stock(self, product_id: int, content: str) -> Optional[Dict]:
+    async def add_stock(self, product_id: int, guild_id: int, content: str) -> Optional[Dict]:
         """Adiciona um item ao estoque"""
         try:
             stock_data = {
                 'product_id': product_id,
+                'guild_id': guild_id,
                 'content': content,
                 'status': 'available',
                 'created_at': datetime.now().isoformat()
@@ -35,12 +36,13 @@ class InventoryModel:
             print(f"Erro ao adicionar estoque: {e}")
             return None
     
-    async def add_bulk_stock(self, product_id: int, contents: List[str]) -> int:
+    async def add_bulk_stock(self, product_id: int, guild_id: int, contents: List[str]) -> int:
         """Adiciona múltiplos itens ao estoque de uma vez"""
         try:
             stock_items = [
                 {
                     'product_id': product_id,
+                    'guild_id': guild_id,
                     'content': content.strip(),
                     'status': 'available',
                     'created_at': datetime.now().isoformat()
@@ -57,10 +59,17 @@ class InventoryModel:
             print(f"Erro ao adicionar estoque em massa: {e}")
             return 0
     
-    async def get_available_stock(self, product_id: int) -> Optional[Dict]:
+    async def get_available_stock(self, product_id: int, guild_id: int) -> Optional[Dict]:
         """Retorna o primeiro item disponível do estoque"""
         try:
-            result = self.supabase.table(self.table_name).select('*').eq('product_id', product_id).eq('status', 'available').order('created_at').limit(1).execute()
+            result = self.supabase.table(self.table_name)\
+                .select('*')\
+                .eq('product_id', product_id)\
+                .eq('guild_id', guild_id)\
+                .eq('status', 'available')\
+                .order('created_at')\
+                .limit(1)\
+                .execute()
             return result.data[0] if result.data else None
         except Exception as e:
             print(f"Erro ao buscar estoque disponível: {e}")

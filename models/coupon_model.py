@@ -128,10 +128,11 @@ class CouponModel:
             traceback.print_exc()
             return False
     
-    async def create_coupon(self, data: Dict) -> Tuple[bool, str]:
+    async def create_coupon(self, guild_id: int, data: Dict) -> Tuple[bool, str]:
         """Cria um novo cupom
         
         Args:
+            guild_id: ID do servidor Discord
             data: Dados do cupom (code, discount_percent, etc)
             
         Returns:
@@ -140,11 +141,12 @@ class CouponModel:
         try:
             # Normalizar código
             data['code'] = data['code'].upper().strip()
+            data['guild_id'] = guild_id
             
-            # Verificar se código já existe
-            existing = await self.get_coupon_by_code(data['code'])
+            # Verificar se código já existe no servidor
+            existing = await self.get_coupon_by_code(data['code'], guild_id)
             if existing:
-                return False, "Já existe um cupom com este código."
+                return False, "Já existe um cupom com este código neste servidor."
             
             # Inserir cupom
             self.supabase.table('coupons').insert(data).execute()
@@ -157,11 +159,12 @@ class CouponModel:
             traceback.print_exc()
             return False, "Erro ao criar cupom."
     
-    async def update_coupon(self, coupon_id: int, data: Dict) -> Tuple[bool, str]:
-        """Atualiza um cupom existente
+    async def update_coupon(self, coupon_id: int, guild_id: int, data: Dict) -> Tuple[bool, str]:
+        """Atualiza um cupom existente (apenas se pertencer ao servidor)
         
         Args:
             coupon_id: ID do cupom
+            guild_id: ID do servidor Discord
             data: Dados a atualizar
             
         Returns:
@@ -170,7 +173,11 @@ class CouponModel:
         try:
             data['updated_at'] = datetime.now().isoformat()
             
-            self.supabase.table('coupons').update(data).eq('id', coupon_id).execute()
+            self.supabase.table('coupons')\
+                .update(data)\
+                .eq('id', coupon_id)\
+                .eq('guild_id', guild_id)\
+                .execute()
             
             return True, "Cupom atualizado com sucesso!"
             
@@ -178,11 +185,12 @@ class CouponModel:
             print(f"Erro ao atualizar cupom: {e}")
             return False, "Erro ao atualizar cupom."
     
-    async def delete_coupon(self, code: str) -> Tuple[bool, str]:
+    async def delete_coupon(self, code: str, guild_id: int) -> Tuple[bool, str]:
         """Desativa um cupom (não deleta do banco)
         
         Args:
             code: Código do cupom
+            guild_id: ID do servidor Discord
             
         Returns:
             (sucesso: bool, mensagem: str)
@@ -190,7 +198,11 @@ class CouponModel:
         try:
             code = code.upper().strip()
             
-            self.supabase.table('coupons').update({'active': False}).eq('code', code).execute()
+            self.supabase.table('coupons')\
+                .update({'active': False})\
+                .eq('code', code)\
+                .eq('guild_id', guild_id)\
+                .execute()
             
             return True, f"Cupom {code} desativado com sucesso!"
             
@@ -198,17 +210,20 @@ class CouponModel:
             print(f"Erro ao deletar cupom: {e}")
             return False, "Erro ao deletar cupom."
     
-    async def get_all_coupons(self, active_only: bool = True) -> List[Dict]:
-        """Lista todos os cupons
+    async def get_all_coupons(self, guild_id: int, active_only: bool = True) -> List[Dict]:
+        """Lista todos os cupons de um servidor
         
         Args:
+            guild_id: ID do servidor Discord
             active_only: Se True, retorna apenas cupons ativos
             
         Returns:
             Lista de cupons
         """
         try:
-            query = self.supabase.table('coupons').select('*')
+            query = self.supabase.table('coupons')\
+                .select('*')\
+                .eq('guild_id', guild_id)
             
             if active_only:
                 query = query.eq('active', True)
@@ -221,11 +236,12 @@ class CouponModel:
             print(f"Erro ao listar cupons: {e}")
             return []
     
-    async def get_coupon_stats(self, code: str) -> Optional[Dict]:
+    async def get_coupon_stats(self, code: str, guild_id: int) -> Optional[Dict]:
         """Retorna estatísticas de uso de um cupom
         
         Args:
             code: Código do cupom
+            guild_id: ID do servidor Discord
             
         Returns:
             Estatísticas do cupom ou None
@@ -234,7 +250,7 @@ class CouponModel:
             code = code.upper().strip()
             
             # Buscar cupom
-            coupon = await self.get_coupon_by_code(code)
+            coupon = await self.get_coupon_by_code(code, guild_id)
             if not coupon:
                 return None
             
