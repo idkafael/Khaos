@@ -2261,36 +2261,79 @@ async def admin_criar_produto(
         await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="admin_deletar_produto", description="[ADMIN] Deletar um produto do servidor")
+@bot.tree.command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
 @discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(product_id="ID do produto a deletar")
-async def admin_deletar_produto(interaction: discord.Interaction, product_id: int):
-    """Deletar produto do Supabase"""
+@discord.app_commands.describe(product_ids="IDs dos produtos separados por vírgula (ex: 1,2,3)")
+async def admin_deletar_produto(interaction: discord.Interaction, product_ids: str):
+    """Deletar um ou mais produtos do Supabase"""
     try:
         await interaction.response.defer(ephemeral=True)
         
-        # Buscar produto para confirmar
-        product = await product_model.get_product_by_id(product_id, interaction.guild_id)
+        # Parse dos IDs (aceita vírgula ou espaço)
+        ids_str = product_ids.replace(',', ' ').split()
         
-        if not product:
-            await interaction.followup.send("❌ Produto não encontrado neste servidor.", ephemeral=True)
+        try:
+            ids = [int(id_str.strip()) for id_str in ids_str if id_str.strip().isdigit()]
+        except ValueError:
+            await interaction.followup.send("❌ IDs inválidos. Use números separados por vírgula (ex: 1,2,3)", ephemeral=True)
             return
         
-        # Deletar do Supabase
-        success = await product_model.delete_product(product_id, interaction.guild_id)
+        if not ids:
+            await interaction.followup.send("❌ Nenhum ID válido fornecido.", ephemeral=True)
+            return
         
-        if success:
-            embed = discord.Embed(
-                title="✅ Produto Deletado do Supabase",
-                description=f"Produto **{product['name']}** (ID: {product_id}) deletado com sucesso!",
-                color=discord.Color.green()
+        # Deletar cada produto
+        deleted = []
+        not_found = []
+        errors = []
+        
+        for product_id in ids:
+            # Buscar produto para confirmar
+            product = await product_model.get_product_by_id(product_id, interaction.guild_id)
+            
+            if not product:
+                not_found.append(product_id)
+                continue
+            
+            # Deletar do Supabase
+            success = await product_model.delete_product(product_id, interaction.guild_id)
+            
+            if success:
+                deleted.append(f"**{product['name']}** (ID: {product_id})")
+            else:
+                errors.append(product_id)
+        
+        # Criar embed de resultado
+        embed = discord.Embed(
+            title="🗑️ Resultado da Exclusão",
+            color=discord.Color.green() if deleted else discord.Color.red()
+        )
+        
+        if deleted:
+            embed.add_field(
+                name=f"✅ Deletados ({len(deleted)})",
+                value="\n".join(deleted),
+                inline=False
             )
-            await interaction.followup.send(embed=embed, ephemeral=True)
-        else:
-            await interaction.followup.send("❌ Erro ao deletar produto.", ephemeral=True)
+        
+        if not_found:
+            embed.add_field(
+                name=f"❌ Não Encontrados ({len(not_found)})",
+                value=", ".join(map(str, not_found)),
+                inline=False
+            )
+        
+        if errors:
+            embed.add_field(
+                name=f"⚠️ Erros ao Deletar ({len(errors)})",
+                value=", ".join(map(str, errors)),
+                inline=False
+            )
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
             
     except Exception as e:
-        print(f"Erro ao deletar produto: {e}")
+        print(f"Erro ao deletar produtos: {e}")
         await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
