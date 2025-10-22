@@ -2220,14 +2220,16 @@ async def setup_ticket_with_image(ctx, *, args=""):
     nome="Nome do produto",
     preco="Preço em R$",
     descricao="Descrição do produto",
-    categoria="Categoria (produto, vip, etc)"
+    categoria="Categoria (produto, vip, etc)",
+    estoque_ilimitado="Estoque infinito? (True para VIPs/roles)"
 )
 async def admin_criar_produto(
     interaction: discord.Interaction,
     nome: str,
     preco: float,
     descricao: str,
-    categoria: str = "produto"
+    categoria: str = "produto",
+    estoque_ilimitado: bool = False
 ):
     """Criar produto que atualiza diretamente no Supabase"""
     try:
@@ -2237,7 +2239,8 @@ async def admin_criar_produto(
             'name': nome,
             'price': preco,
             'description': descricao,
-            'category': categoria
+            'category': categoria,
+            'unlimited_stock': estoque_ilimitado
         }
         
         product = await product_model.create_product(interaction.guild_id, product_data)
@@ -2251,6 +2254,7 @@ async def admin_criar_produto(
             embed.add_field(name="ID", value=product['id'], inline=True)
             embed.add_field(name="Preço", value=f"R$ {preco:.2f}", inline=True)
             embed.add_field(name="Categoria", value=categoria, inline=True)
+            embed.add_field(name="Estoque", value="♾️ Ilimitado" if estoque_ilimitado else "📦 Gerenciado", inline=True)
             
             await interaction.followup.send(embed=embed, ephemeral=True)
         else:
@@ -2362,7 +2366,7 @@ async def admin_listar_produtos(interaction: discord.Interaction):
         
         if normais:
             produtos_text = "\n".join([
-                f"**ID {p['id']}** - {p['name']} - R$ {p['price']:.2f}"
+                f"**ID {p['id']}** - {p['name']} - R$ {p['price']:.2f} {'♾️' if p.get('unlimited_stock') else '📦'}"
                 for p in normais[:10]
             ])
             embed.add_field(
@@ -2373,7 +2377,7 @@ async def admin_listar_produtos(interaction: discord.Interaction):
         
         if vips:
             vips_text = "\n".join([
-                f"**ID {p['id']}** - {p['name']} - R$ {p['price']:.2f}"
+                f"**ID {p['id']}** - {p['name']} - R$ {p['price']:.2f} {'♾️' if p.get('unlimited_stock') else '📦'}"
                 for p in vips[:10]
             ])
             embed.add_field(
@@ -2424,7 +2428,8 @@ async def admin_criar_vip(
             'price': preco,
             'description': descricao,
             'category': 'vip',
-            'vip_config': vip_config
+            'vip_config': vip_config,
+            'unlimited_stock': True  # VIPs sempre têm estoque ilimitado
         }
         
         product = await product_model.create_product(interaction.guild_id, product_data)
