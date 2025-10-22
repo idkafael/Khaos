@@ -473,6 +473,42 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
             
             await interaction.response.send_message(embed=embed)
             
+            # Gerar e enviar QR Code como imagem
+            try:
+                import qrcode
+                import io
+                
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=10,
+                    border=4
+                )
+                qr.add_data(payment_data.get('pix_code'))
+                qr.make(fit=True)
+                
+                img = qr.make_image(fill_color="black", back_color="white")
+                img_buffer = io.BytesIO()
+                img.save(img_buffer, format='PNG')
+                img_buffer.seek(0)
+                
+                await interaction.channel.send(
+                    content=f"{interaction.user.mention} 📱 **QR Code do Pagamento**",
+                    file=discord.File(img_buffer, filename='qrcode_pix.png')
+                )
+            except Exception as qr_error:
+                print(f"Erro ao gerar QR Code: {qr_error}")
+            
+            # Atualizar dados do ticket
+            if interaction.user.id in active_tickets:
+                active_tickets[interaction.user.id]['transaction_id'] = transaction['id']
+                active_tickets[interaction.user.id]['product'] = product
+            
+            # Salvar canal de entrega na transação
+            await transaction_model.update_transaction(transaction['id'], {
+                'delivery_channel_id': interaction.channel.id
+            })
+            
         else:
             await interaction.response.send_message("❌ Erro ao gerar pagamento Pix!", ephemeral=True)
             
