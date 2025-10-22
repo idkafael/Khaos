@@ -162,59 +162,71 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 # PushinPay
 PUSHINPAY_API_KEY=50790|dakuggRtFoHjIZb2XpYYbDoa2exlT5NPspJayboI40bfb10f
 PUSHINPAY_SANDBOX=true
+
+# Configurações do Bot
+BOT_PREFIX=?
 ```
 
-### 2. Configurar Supabase
-1. Acesse: https://supabase.com/dashboard
-2. Vá para "SQL Editor"
-3. Execute este SQL:
+### 2. Configurar Supabase - PASSO A PASSO COMPLETO
 
+#### **2.1 - Criar Projeto no Supabase**
+1. Acesse: https://supabase.com
+2. Clique em **"New Project"**
+3. Preencha:
+   - **Name**: CaosBot (ou qualquer nome)
+   - **Database Password**: Escolha uma senha forte
+   - **Region**: South America (São Paulo)
+4. Aguarde ~2 minutos para criar
+
+#### **2.2 - Copiar Credenciais**
+1. Vá em **Settings** → **API**
+2. Copie:
+   - **URL**: Sua URL do projeto
+   - **anon/public key**: Sua chave API
+
+#### **2.3 - Executar SQL no Banco de Dados**
+
+**IMPORTANTE:** Execute os SQLs na ordem abaixo. Vá em **SQL Editor** → **New query** e execute cada bloco:
+
+**PASSO 1 - Execute o arquivo `database_coupon_setup.sql`**
+```bash
+# Abra o arquivo database_coupon_setup.sql e cole todo conteúdo no SQL Editor
+# Isso criará: tabelas de cupons, produtos, transações e funções
+```
+
+**PASSO 2 - Execute o arquivo `database_vip_setup.sql`**
+```bash
+# Abra o arquivo database_vip_setup.sql e cole todo conteúdo no SQL Editor
+# Isso criará: tabela de assinaturas VIP e triggers
+```
+
+**PASSO 3 - DESABILITAR RLS (Row Level Security) - ESSENCIAL!**
 ```sql
--- Tabela de produtos
-CREATE TABLE IF NOT EXISTS products (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    price DECIMAL(10,2) NOT NULL,
-    category VARCHAR(100),
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Tabela de transações
-CREATE TABLE IF NOT EXISTS transactions (
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    product_id INTEGER REFERENCES products(id),
-    amount DECIMAL(10,2) NOT NULL,
-    status VARCHAR(50) DEFAULT 'pending',
-    email VARCHAR(255),
-    payment_id VARCHAR(255),
-    pix_code TEXT,
-    qr_code TEXT,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Índices
-CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_status ON transactions(status);
-CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at);
-
--- Produtos de exemplo
-INSERT INTO products (name, description, price, category) VALUES
-('Minecraft Premium', 'Conta Minecraft Premium original com acesso completo ao jogo. Inclui skin personalizada e histórico limpo.', 45.00, 'Jogos Digitais'),
-('Spotify Premium', 'Conta Spotify Premium válida por 3 meses. Música sem anúncios, download offline e qualidade máxima.', 25.00, 'Streaming'),
-('Netflix Premium', 'Conta Netflix Premium compartilhada por 1 mês. Acesso completo a todos os conteúdos em 4K.', 35.00, 'Streaming'),
-('Discord Nitro', 'Discord Nitro válido por 1 mês. Uploads maiores, emojis personalizados e boost de servidor.', 20.00, 'Gaming'),
-('Adobe Creative Cloud', 'Acesso completo ao Adobe Creative Cloud por 1 mês. Photoshop, Illustrator, Premiere Pro e mais.', 80.00, 'Software'),
-('Office 365', 'Microsoft Office 365 válido por 1 ano. Word, Excel, PowerPoint e OneDrive com 1TB.', 60.00, 'Software'),
-('Steam Wallet', 'Saldo Steam Wallet de R$ 50,00. Use para comprar jogos, DLCs e itens na Steam.', 50.00, 'Gaming'),
-('YouTube Premium', 'YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.', 30.00, 'Streaming')
-ON CONFLICT DO NOTHING;
+-- Execute este SQL para permitir que o bot acesse as tabelas
+ALTER TABLE products DISABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE coupons DISABLE ROW LEVEL SECURITY;
+ALTER TABLE coupon_usage DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vip_subscriptions DISABLE ROW LEVEL SECURITY;
 ```
 
-### 3. Configurar Sistema de Tickets (Opcional)
+**PASSO 4 - Verificar se funcionou**
+```sql
+-- Ver todas as tabelas criadas
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_schema = 'public' 
+ORDER BY table_name;
+
+-- Deve mostrar: coupons, coupon_usage, products, transactions, vip_subscriptions
+```
+
+### 3. Instalar Dependências
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configurar Sistema de Tickets (Opcional)
 Adicione estas variáveis ao `.env` para configurar o sistema de tickets:
 
 ```env
@@ -229,7 +241,7 @@ TICKET_LOGS_CHANNEL_ID=1234567890123456789  # ID do canal para logs
 - **Role**: Clique com botão direito no role > "Copiar ID"  
 - **Canal**: Clique com botão direito no canal > "Copiar ID"
 
-### 4. Convidar Bot para Servidor
+### 5. Convidar Bot para Servidor
 1. Acesse: https://discord.com/developers/applications/784058182515425310
 2. Vá para "OAuth2" > "URL Generator"
 3. Selecione "bot" e "Send Messages"
@@ -480,6 +492,66 @@ git log --oneline -5
 ```
 
 **IMPORTANTE**: O deploy é sempre automático após push para GitHub. Não é necessário fazer nada manual na Shard Cloud após a configuração inicial.
+
+---
+
+## ✅ CHECKLIST COMPLETO DE DEPLOY
+
+Use este checklist para garantir que tudo está configurado corretamente:
+
+### 📋 Pré-Deploy (Local)
+
+- [ ] Arquivo `.env` criado com todas as variáveis
+- [ ] `BOT_PREFIX` configurado como `?` no `.env`
+- [ ] Supabase configurado (credenciais no `.env`)
+- [ ] SQL executado no Supabase (`database_coupon_setup.sql`)
+- [ ] SQL executado no Supabase (`database_vip_setup.sql`)
+- [ ] RLS desabilitado nas 5 tabelas do Supabase
+- [ ] Dependências instaladas (`pip install -r requirements.txt`)
+- [ ] Bot testado localmente (`python bot.py`)
+
+### 🚀 Deploy na Shard Cloud
+
+- [ ] Código commitado e enviado para GitHub
+- [ ] Projeto criado/conectado na Shard Cloud
+- [ ] Variáveis de ambiente configuradas:
+  - [ ] `DISCORD_TOKEN`
+  - [ ] `DISCORD_APPLICATION_ID`
+  - [ ] `SUPABASE_URL`
+  - [ ] `SUPABASE_KEY`
+  - [ ] `PUSHINPAY_API_KEY`
+  - [ ] `PUSHINPAY_SANDBOX` = `true`
+  - [ ] `BOT_PREFIX` = `?`
+  - [ ] `LOG_LEVEL` = `INFO` (opcional)
+  - [ ] `ENVIRONMENT` = `production` (opcional)
+- [ ] Deploy concluído com sucesso
+- [ ] Bot aparece online no Discord
+
+### 🎮 Pós-Deploy
+
+- [ ] Bot convidado para o servidor Discord
+- [ ] Comando `/teste` funcionando
+- [ ] Sistema de tickets configurado (`/setup_ticket`)
+- [ ] Produtos VIP cadastrados no banco
+- [ ] Cupons de desconto criados
+- [ ] Testado fluxo completo de compra
+
+### 🆘 Troubleshooting
+
+**Bot não conecta?**
+- Verifique `DISCORD_TOKEN` nas variáveis de ambiente
+- Veja os logs na Shard Cloud
+
+**Erro de banco de dados?**
+- Verifique `SUPABASE_URL` e `SUPABASE_KEY`
+- Confirme que as tabelas foram criadas
+- Verifique se RLS foi desabilitado
+
+**Comandos não aparecem?**
+- Aguarde até 1 hora (cache do Discord)
+- Ou retire e convide o bot novamente
+
+---
 
 ## 📊 Produtos de Exemplo
 
@@ -949,12 +1021,9 @@ O bot verifica **a cada 6 horas**:
 2. **Aviso** - 3 dias antes de expirar
 3. **Expiração** - Quando VIP expira
 
-### Documentação Completa
+### Documentação SQL
 
-- **Instalação Rápida:** `VIP_QUICKSTART.md`
-- **Documentação Completa:** `VIP_SYSTEM.md`
-- **Resumo da Implementação:** `SISTEMA_VIP_RESUMO.md`
-- **Estrutura SQL:** `database_vip_setup.sql`
+- **Estrutura SQL:** `database_vip_setup.sql` - Execute no Supabase para criar tabelas VIP
 
 ### Estrutura do Banco
 
