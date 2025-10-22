@@ -2455,6 +2455,148 @@ async def admin_criar_vip(
         print(f"Erro ao criar VIP: {e}")
         await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
+
+# Modal para adicionar estoque
+class AddStockModal(discord.ui.Modal):
+    def __init__(self, product):
+        super().__init__(title=f"Adicionar Estoque: {product['name']}")
+        self.product = product
+        
+        self.stock_items = discord.ui.InputText(
+            label="Códigos/Keys (um por linha)",
+            placeholder="CODIGO1-XXXX-YYYY\nCODIGO2-AAAA-BBBB\nCODIGO3-ZZZZ-WWWW",
+            style=discord.InputTextStyle.paragraph,
+            required=True
+        )
+        self.add_item(self.stock_items)
+    
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            # Processar os códigos
+            codes = [line.strip() for line in self.stock_items.value.split('\n') if line.strip()]
+            
+            if not codes:
+                await interaction.followup.send("❌ Nenhum código válido fornecido.", ephemeral=True)
+                return
+            
+            # Adicionar ao estoque
+            from models.inventory_model import InventoryModel
+            inventory_model = InventoryModel()
+            
+            added_count = 0
+            for code in codes:
+                success = await inventory_model.add_stock(
+                    product_id=self.product['id'],
+                    guild_id=interaction.guild_id,
+                    content=code
+                )
+                if success:
+                    added_count += 1
+            
+            # Embed de sucesso
+            embed = discord.Embed(
+                title="✅ Estoque Adicionado",
+                description=f"Códigos adicionados ao produto **{self.product['name']}**",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="📦 Produto", value=self.product['name'], inline=True)
+            embed.add_field(name="✅ Adicionados", value=f"{added_count} códigos", inline=True)
+            embed.add_field(name="❌ Falharam", value=f"{len(codes) - added_count}", inline=True)
+            
+            if added_count < len(codes):
+                embed.add_field(
+                    name="⚠️ Atenção",
+                    value=f"{len(codes) - added_count} código(s) já existem ou falharam.",
+                    inline=False
+                )
+            
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            
+        except Exception as e:
+            print(f"Erro ao adicionar estoque: {e}")
+            await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="adicionar_estoque", description="[ADMIN] Adicionar códigos/keys ao estoque")
+@discord.app_commands.default_permissions(administrator=True)
+async def adicionar_estoque(interaction: discord.Interaction):
+    """Adicionar códigos ao estoque de produtos"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        # Buscar produtos do servidor (exceto VIPs e ilimitados)
+        products = await product_model.get_products_by_guild(interaction.guild_id)
+        
+        # Filtrar apenas produtos que precisam de estoque
+        products_with_stock = [
+            p for p in products 
+            if not p.get('unlimited_stock') and p.get('category') != 'vip'
+        ]
+        
+        if not products_with_stock:
+            embed = discord.Embed(
+                title="⚠️ Nenhum Produto com Estoque Gerenciado",
+                description="Todos os produtos do servidor são ilimitados ou VIPs (não precisam de estoque).",
+                color=discord.Color.orange()
+            )
+            embed.add_field(
+                name="💡 Dica",
+                value="Use `/admin_criar_produto` com `estoque_ilimitado: False` para criar produtos que precisam de estoque.",
+                inline=False
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
+            return
+        
+        # Criar Select Menu com produtos
+        class ProductSelectView(discord.ui.View):
+            def __init__(self, products):
+                super().__init__(timeout=300)
+                self.products = products
+                
+                # Criar select menu
+                select = discord.ui.Select(
+                    placeholder="Escolha um produto...",
+                    options=[
+                        discord.SelectOption(
+                            label=p['name'][:100],
+                            description=f"R$ {p['price']:.2f} • ID: {p['id']}",
+                            value=str(p['id'])
+                        )
+                        for p in products[:25]  # Discord limita a 25 opções
+                    ]
+                )
+                select.callback = self.select_callback
+                self.add_item(select)
+            
+            async def select_callback(self, interaction: discord.Interaction):
+                product_id = int(interaction.data['values'][0])
+                product = next((p for p in self.products if p['id'] == product_id), None)
+                
+                if product:
+                    # Abrir modal para adicionar códigos
+                    modal = AddStockModal(product)
+                    await interaction.response.send_modal(modal)
+        
+        # Criar embed
+        embed = discord.Embed(
+            title="📦 Adicionar Estoque",
+            description=f"Selecione o produto para adicionar códigos/keys.\n\n"
+                       f"**Produtos com estoque gerenciado:** {len(products_with_stock)}",
+            color=discord.Color.blue()
+        )
+        
+        view = ProductSelectView(products_with_stock)
+        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando /adicionar_estoque: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
 # Executar o bot
 if __name__ == "__main__":
     try:
