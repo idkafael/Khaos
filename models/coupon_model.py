@@ -8,18 +8,24 @@ class CouponModel:
         """Inicializa o modelo de cupons"""
         self.supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
     
-    async def get_coupon_by_code(self, code: str) -> Optional[Dict]:
-        """Busca um cupom pelo código
+    async def get_coupon_by_code(self, code: str, guild_id: int) -> Optional[Dict]:
+        """Busca um cupom pelo código em um servidor específico
         
         Args:
             code: Código do cupom (case-insensitive)
+            guild_id: ID do servidor Discord
             
         Returns:
             Dados do cupom ou None se não encontrado
         """
         try:
             code = code.upper().strip()
-            response = self.supabase.table('coupons').select('*').eq('code', code).eq('active', True).execute()
+            response = self.supabase.table('coupons')\
+                .select('*')\
+                .eq('code', code)\
+                .eq('guild_id', guild_id)\
+                .eq('active', True)\
+                .execute()
             
             if response.data and len(response.data) > 0:
                 return response.data[0]
@@ -29,20 +35,21 @@ class CouponModel:
             print(f"Erro ao buscar cupom: {e}")
             return None
     
-    async def validate_coupon(self, code: str, user_id: int, amount: float) -> Tuple[bool, str, Optional[Dict]]:
+    async def validate_coupon(self, code: str, user_id: int, amount: float, guild_id: int) -> Tuple[bool, str, Optional[Dict]]:
         """Valida um cupom e retorna se é válido + mensagem + dados
         
         Args:
             code: Código do cupom
             user_id: ID do usuário
             amount: Valor da compra
+            guild_id: ID do servidor Discord
             
         Returns:
             (válido: bool, mensagem: str, dados_cupom: dict ou None)
         """
         try:
             # Buscar cupom
-            coupon = await self.get_coupon_by_code(code)
+            coupon = await self.get_coupon_by_code(code, guild_id)
             
             if not coupon:
                 return False, "Cupom não encontrado ou inativo.", None
