@@ -828,7 +828,7 @@ async def renovar_vip_slash(interaction: discord.Interaction):
         from models.product_model import ProductModel
         
         product_model = ProductModel()
-        all_products = await product_model.get_all_products()
+        all_products = await product_model.get_products_by_guild(interaction.guild_id)
         
         # Filtrar apenas produtos VIP
         vip_products = [p for p in all_products if p.get('category') == 'VIP']

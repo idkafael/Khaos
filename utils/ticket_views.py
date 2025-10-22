@@ -359,9 +359,9 @@ class TicketButton(ui.Button):
                 )
                 return
             
-            # Carregar produtos disponíveis
-            print(f"🔧 Debug: Tentando carregar produtos...")
-            products = await self.product_model.get_all_products()
+            # Carregar produtos disponíveis (apenas do servidor atual)
+            print(f"🔧 Debug: Tentando carregar produtos do servidor {interaction.guild_id}...")
+            products = await self.product_model.get_products_by_guild(interaction.guild_id)
             print(f"🔧 Debug: Produtos carregados: {len(products) if products else 0}")
             
             if not products:
