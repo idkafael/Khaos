@@ -1058,6 +1058,119 @@ Execute `database_vip_setup.sql` para criar:
 
 ---
 
+## 🎯 Como Criar e Gerenciar Produtos VIP
+
+### 📝 Estrutura de um Produto VIP
+
+Os produtos VIP são cadastrados na tabela `products` com um campo JSON `vip_config`:
+
+```sql
+INSERT INTO products (name, description, price, category, vip_config) VALUES
+(
+  'Nome do Produto',                        -- Ex: "VIP Premium - 30 Dias"
+  'Descrição do produto',                   -- Descrição detalhada
+  49.90,                                    -- Preço em R$
+  'vip',                                    -- SEMPRE 'vip' para produtos VIP
+  '{"role_name": "Nome da Role", "duration_days": 30}'::jsonb  -- Configuração VIP
+);
+```
+
+### 🆕 Criar Novos Produtos VIP
+
+**1. VIP Temporário (30 dias):**
+```sql
+INSERT INTO products (name, description, price, category, vip_config) VALUES
+('VIP Premium - 30 Dias', 'Acesso VIP Premium por 30 dias', 49.90, 'vip',
+ '{"role_name": "VIP Premium", "duration_days": 30}'::jsonb);
+```
+
+**2. VIP Vitalício (NUNCA EXPIRA):**
+```sql
+INSERT INTO products (name, description, price, category, vip_config) VALUES
+('VIP Ultimate - Vitalício', 'Acesso VIP permanente!', 299.90, 'vip',
+ '{"role_name": "VIP Ultimate", "duration_days": null}'::jsonb);
+```
+
+**3. VIP Semanal:**
+```sql
+INSERT INTO products (name, description, price, category, vip_config) VALUES
+('VIP Trial - 7 Dias', 'Teste nosso VIP por 7 dias', 15.00, 'vip',
+ '{"role_name": "VIP Trial", "duration_days": 7}'::jsonb);
+```
+
+### ✏️ Alterar Produtos Existentes
+
+**Alterar nome/preço/descrição:**
+```sql
+UPDATE products 
+SET name = 'Novo Nome', description = 'Nova descrição', price = 79.90
+WHERE id = 1;  -- ID do produto
+```
+
+**Alterar duração do VIP:**
+```sql
+UPDATE products 
+SET vip_config = '{"role_name": "VIP Gold", "duration_days": 45}'::jsonb
+WHERE id = 1;
+```
+
+**Transformar em vitalício:**
+```sql
+UPDATE products 
+SET vip_config = '{"role_name": "VIP Eterno", "duration_days": null}'::jsonb
+WHERE id = 1;
+```
+
+### 🎨 Personalizar Cores das Roles VIP
+
+Edite o arquivo `utils/vip_manager.py` na linha ~15:
+
+```python
+self.role_colors = {
+    'VIP Bronze': discord.Color.from_rgb(205, 127, 50),     # Bronze
+    'VIP Prata': discord.Color.from_rgb(192, 192, 192),     # Prata
+    'VIP Ouro': discord.Color.from_rgb(255, 215, 0),        # Ouro
+    'VIP Seu Nome': discord.Color.from_rgb(R, G, B),        # Sua cor
+}
+```
+
+Exemplos de cores:
+- Vermelho: `(255, 0, 0)`
+- Verde: `(0, 255, 0)`
+- Roxo: `(128, 0, 128)`
+- Rosa: `(255, 192, 203)`
+
+### 💰 Como os Clientes Compram VIP
+
+```
+1. Cliente abre ticket de compra
+2. Vê lista de produtos (incluindo todos os VIPs)
+3. Escolhe produto VIP desejado
+4. Paga via Pix
+5. Bot detecta pagamento AUTOMATICAMENTE:
+   - Cria role se não existir (com cor personalizada)
+   - Adiciona role ao cliente
+   - Registra assinatura no banco
+   - Envia DM de boas-vindas
+6. Sistema gerencia expiração automaticamente
+```
+
+### 🔍 Ver Todos os Produtos VIP
+
+```sql
+SELECT id, name, price, vip_config->>'role_name' as role, 
+       vip_config->>'duration_days' as dias
+FROM products WHERE category = 'vip' ORDER BY price ASC;
+```
+
+### 🗑️ Remover Produto VIP
+
+```sql
+DELETE FROM products WHERE id = 5;
+```
+
+---
+
 ## 🔮 Roadmap
 
 - [x] Sistema de cupons de desconto ✅
