@@ -187,7 +187,8 @@ class ProductModel:
                 .eq('id', product_id)\
                 .eq('guild_id', guild_id)\
                 .execute()
-            return True
+            # Retorna True apenas se algo foi deletado
+            return len(result.data) > 0 if result.data else False
         except Exception as e:
             print(f"Erro ao deletar produto: {e}")
             return False
