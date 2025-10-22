@@ -509,6 +509,12 @@ async def ajuda_slash(interaction: discord.Interaction):
     )
     
     embed.add_field(
+        name="» Comandos de Estoque (Admin)",
+        value="`/adicionar_estoque` :: 📦 Adicionar códigos/keys\n`/ver_estoque` :: 📊 Ver resumo do estoque\n`!adicionar_estoque` :: 📦 Adicionar via prefixo\n`!ver_estoque` :: 📊 Ver estoque via prefixo",
+        inline=False
+    )
+    
+    embed.add_field(
         name="» Comandos de Cupons (Admin)",
         value="`/criar_cupom` :: 🎟️ Criar novo cupom\n`/listar_cupons` :: 📋 Ver todos cupons\n`/cupom_stats` :: 📊 Estatísticas de cupom\n`/deletar_cupom` :: ❌ Desativar cupom",
         inline=False
@@ -1313,6 +1319,170 @@ async def reload_products(ctx):
         import traceback
         traceback.print_exc()
         await ctx.send(f"❌ Erro ao recarregar produtos: {e}")
+
+# Comando para adicionar estoque via prefixo
+@bot.command(name='adicionar_estoque', aliases=['add_stock'])
+@commands.has_permissions(administrator=True)
+async def add_stock_prefix(ctx):
+    """Adicionar itens ao estoque de um produto (versão prefixo)"""
+    try:
+        # Buscar todos os produtos
+        from models.product_model import ProductModel
+        product_model = ProductModel()
+        products = await product_model.get_all_products()
+        
+        if not products:
+            await ctx.send("❌ Nenhum produto cadastrado.")
+            return
+        
+        # Criar embed com lista de produtos
+        embed = discord.Embed(
+            title="➕ Adicionar Estoque",
+            description="**Produtos disponíveis:**",
+            color=0x3498db
+        )
+        
+        for i, p in enumerate(products[:10], 1):  # Limitar a 10 produtos
+            embed.add_field(
+                name=f"{i}. {p['name']}",
+                value=f"R$ {p['price']:.2f} • ID: {p['id']}",
+                inline=False
+            )
+        
+        embed.add_field(
+            name="📝 Como adicionar estoque:",
+            value="Use o comando slash `/adicionar_estoque` para uma interface melhor!\n\n"
+                  "Ou envie neste chat:\n"
+                  f"`!add_stock_id <ID> <códigos>`\n\n"
+                  "Exemplo:\n"
+                  f"`!add_stock_id {products[0]['id']}`\n"
+                  "Depois cole os códigos, um por linha.",
+            inline=False
+        )
+        
+        await ctx.send(embed=embed)
+        
+    except Exception as e:
+        print(f"Erro no comando !adicionar_estoque: {e}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Erro: {str(e)}")
+
+# Comando auxiliar para adicionar estoque por ID
+@bot.command(name='add_stock_id')
+@commands.has_permissions(administrator=True)
+async def add_stock_by_id(ctx, product_id: int):
+    """Adiciona estoque para um produto específico"""
+    try:
+        from models.product_model import ProductModel
+        from models.inventory_model import InventoryModel
+        
+        product_model = ProductModel()
+        product = await product_model.get_product_by_id(product_id)
+        
+        if not product:
+            await ctx.send(f"❌ Produto com ID {product_id} não encontrado.")
+            return
+        
+        await ctx.send(f"📦 **{product['name']}**\n\n"
+                      f"Cole os códigos/keys abaixo (um por linha).\n"
+                      f"Quando terminar, envie `!done` ou aguarde 30 segundos.")
+        
+        # Esperar pelas mensagens do usuário
+        codes = []
+        
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+        
+        for _ in range(100):  # Máximo 100 códigos por vez
+            try:
+                msg = await bot.wait_for('message', timeout=30.0, check=check)
+                
+                if msg.content.lower() in ['!done', 'done', 'pronto', '!pronto']:
+                    break
+                
+                # Adicionar códigos
+                lines = msg.content.strip().split('\n')
+                for line in lines:
+                    line = line.strip()
+                    if line and not line.startswith('!'):
+                        codes.append(line)
+                
+                if len(codes) > 0:
+                    await msg.add_reaction('✅')
+                    
+            except TimeoutError:
+                break
+        
+        if not codes:
+            await ctx.send("❌ Nenhum código fornecido.")
+            return
+        
+        # Adicionar ao estoque
+        inventory_model = InventoryModel()
+        added = await inventory_model.add_bulk_stock(product_id, codes)
+        
+        if added > 0:
+            embed = discord.Embed(
+                title="✅ Estoque Adicionado",
+                description=f"**{added}** itens foram adicionados ao produto **{product['name']}**.",
+                color=0x00ff00
+            )
+            embed.add_field(name="📦 Produto", value=product['name'], inline=True)
+            embed.add_field(name="➕ Itens Adicionados", value=str(added), inline=True)
+            await ctx.send(embed=embed)
+        else:
+            await ctx.send("❌ Erro ao adicionar estoque.")
+            
+    except Exception as e:
+        print(f"Erro ao adicionar estoque por ID: {e}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Erro: {str(e)}")
+
+# Comando para ver estoque via prefixo
+@bot.command(name='ver_estoque', aliases=['stock', 'estoque'])
+@commands.has_permissions(administrator=True)
+async def view_stock_prefix(ctx):
+    """Ver resumo do estoque de produtos (versão prefixo)"""
+    try:
+        from models.inventory_model import InventoryModel
+        
+        inventory_model = InventoryModel()
+        summary = await inventory_model.get_all_stock_summary()
+        
+        if not summary:
+            await ctx.send("❌ Nenhum produto com estoque.")
+            return
+        
+        # Criar embed com resumo
+        embed = discord.Embed(
+            title="📊 Resumo de Estoque",
+            description="Status de estoque de todos os produtos",
+            color=0x3498db
+        )
+        
+        for item in summary:
+            status_emoji = "✅" if item['available'] > 0 else "❌"
+            value = f"{status_emoji} Disponível: **{item['available']}**\n"
+            value += f"🔒 Reservado: {item['reserved']}\n"
+            value += f"💰 Vendido: {item['sold']}\n"
+            value += f"📦 Total: {item['total']}"
+            
+            embed.add_field(
+                name=f"{item['product_name']}",
+                value=value,
+                inline=True
+            )
+        
+        embed.set_footer(text="Use /adicionar_estoque para adicionar mais itens")
+        await ctx.send(embed=embed)
+        
+    except Exception as e:
+        print(f"Erro no comando !ver_estoque: {e}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Erro: {str(e)}")
 
 # Comando para configurar ticket com imagem e personalização
 @bot.command(name='setup_ticket_img')
