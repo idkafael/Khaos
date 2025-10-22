@@ -334,12 +334,12 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
             await interaction.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
             return
         
-        # Buscar produto por nome
+        # Buscar produto por nome (apenas no servidor atual)
         product_model = ProductModel()
-        product = await product_model.get_product_by_name(produto)
+        product = await product_model.get_product_by_name(produto, interaction.guild_id)
         
         if not product:
-            await interaction.response.send_message(f"❌ Produto '{produto}' não encontrado!", ephemeral=True)
+            await interaction.response.send_message(f"❌ Produto '{produto}' não encontrado neste servidor!", ephemeral=True)
             return
         
         # Buscar cupom do ticket (se houver)
@@ -354,13 +354,14 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
         if ticket_data and ticket_data.get('coupon_code'):
             coupon_code = ticket_data['coupon_code']
             
-            # Validar cupom
+            # Validar cupom (apenas do servidor atual)
             from models.coupon_model import CouponModel
             coupon_model = CouponModel()
             is_valid, message, coupon_data = await coupon_model.validate_coupon(
                 coupon_code,
                 interaction.user.id,
-                product['price']
+                product['price'],
+                interaction.guild_id
             )
             
             if is_valid and coupon_data:
@@ -573,7 +574,7 @@ async def listar_cupons_slash(interaction: discord.Interaction):
         from models.coupon_model import CouponModel
         
         coupon_model = CouponModel()
-        coupons = await coupon_model.get_all_coupons(active_only=True)
+        coupons = await coupon_model.get_all_coupons(interaction.guild_id, active_only=True)
         
         if not coupons:
             await interaction.response.send_message("📋 Nenhum cupom cadastrado.", ephemeral=True)
@@ -626,10 +627,10 @@ async def cupom_stats_slash(interaction: discord.Interaction, codigo: str):
         from models.coupon_model import CouponModel
         
         coupon_model = CouponModel()
-        stats = await coupon_model.get_coupon_stats(codigo)
+        stats = await coupon_model.get_coupon_stats(codigo, interaction.guild_id)
         
         if not stats:
-            await interaction.response.send_message(f"❌ Cupom '{codigo}' não encontrado.", ephemeral=True)
+            await interaction.response.send_message(f"❌ Cupom '{codigo}' não encontrado neste servidor.", ephemeral=True)
             return
         
         coupon = stats['coupon']
@@ -1258,7 +1259,7 @@ async def vip_stats_slash(interaction: discord.Interaction):
 async def produtos_slash(interaction: discord.Interaction):
     """Exibe os produtos disponíveis via slash command"""
     try:
-        products = await product_model.get_all_products()
+        products = await product_model.get_products_by_guild(interaction.guild_id)
         
         if not products:
             embed = discord.Embed(
