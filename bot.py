@@ -2456,69 +2456,79 @@ async def admin_criar_vip(
         await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-# Modal para adicionar estoque
-class AddStockModal(discord.ui.Modal):
-    def __init__(self, product):
-        super().__init__(title=f"Adicionar Estoque: {product['name'][:45]}")
-        self.product = product
-        
-        self.add_item(
-            discord.ui.InputText(
-                label="Códigos/Keys (um por linha)",
-                placeholder="CODIGO1-XXXX-YYYY\nCODIGO2-AAAA-BBBB\nCODIGO3-ZZZZ-WWWW",
-                style=discord.InputTextStyle.long,
-                required=True
-            )
-        )
+# Sistema de espera para adicionar estoque
+waiting_for_stock = {}
+
+# Listener para capturar mensagens de estoque
+@bot.event
+async def on_message(message):
+    # Ignorar mensagens do próprio bot
+    if message.author.bot:
+        return
     
-    async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
+    # Processar comandos normais
+    await bot.process_commands(message)
+    
+    # Verificar se está esperando códigos de estoque
+    if message.author.id in waiting_for_stock:
+        data = waiting_for_stock[message.author.id]
         
-        try:
-            # Processar os códigos (pegar o primeiro input do modal)
-            stock_input = self.children[0].value
-            codes = [line.strip() for line in stock_input.split('\n') if line.strip()]
-            
-            if not codes:
-                await interaction.followup.send("❌ Nenhum código válido fornecido.", ephemeral=True)
-                return
-            
-            # Adicionar ao estoque
-            from models.inventory_model import InventoryModel
-            inventory_model = InventoryModel()
-            
-            added_count = 0
-            for code in codes:
-                success = await inventory_model.add_stock(
-                    product_id=self.product['id'],
-                    guild_id=interaction.guild_id,
-                    content=code
+        # Verificar se é no canal correto
+        if message.channel.id == data['channel_id']:
+            try:
+                # Processar os códigos
+                codes = [line.strip() for line in message.content.split('\n') if line.strip()]
+                
+                if not codes:
+                    await message.reply("❌ Nenhum código válido encontrado.")
+                    return
+                
+                # Adicionar ao estoque
+                from models.inventory_model import InventoryModel
+                inventory_model = InventoryModel()
+                
+                added_count = 0
+                for code in codes:
+                    success = await inventory_model.add_stock(
+                        product_id=data['product']['id'],
+                        guild_id=data['guild_id'],
+                        content=code
+                    )
+                    if success:
+                        added_count += 1
+                
+                # Embed de sucesso
+                embed = discord.Embed(
+                    title="✅ Estoque Adicionado",
+                    description=f"Códigos adicionados ao produto **{data['product']['name']}**",
+                    color=discord.Color.green()
                 )
-                if success:
-                    added_count += 1
-            
-            # Embed de sucesso
-            embed = discord.Embed(
-                title="✅ Estoque Adicionado",
-                description=f"Códigos adicionados ao produto **{self.product['name']}**",
-                color=discord.Color.green()
-            )
-            embed.add_field(name="📦 Produto", value=self.product['name'], inline=True)
-            embed.add_field(name="✅ Adicionados", value=f"{added_count} códigos", inline=True)
-            embed.add_field(name="❌ Falharam", value=f"{len(codes) - added_count}", inline=True)
-            
-            if added_count < len(codes):
-                embed.add_field(
-                    name="⚠️ Atenção",
-                    value=f"{len(codes) - added_count} código(s) já existem ou falharam.",
-                    inline=False
-                )
-            
-            await interaction.followup.send(embed=embed, ephemeral=True)
-            
-        except Exception as e:
-            print(f"Erro ao adicionar estoque: {e}")
-            await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+                embed.add_field(name="📦 Produto", value=data['product']['name'], inline=True)
+                embed.add_field(name="✅ Adicionados", value=f"{added_count} códigos", inline=True)
+                embed.add_field(name="❌ Falharam", value=f"{len(codes) - added_count}", inline=True)
+                
+                if added_count < len(codes):
+                    embed.add_field(
+                        name="⚠️ Atenção",
+                        value=f"{len(codes) - added_count} código(s) já existem ou falharam.",
+                        inline=False
+                    )
+                
+                await message.reply(embed=embed)
+                
+                # Remover da fila de espera
+                del waiting_for_stock[message.author.id]
+                
+                # Deletar mensagem com os códigos por segurança
+                try:
+                    await message.delete()
+                except:
+                    pass
+                
+            except Exception as e:
+                print(f"Erro ao processar códigos: {e}")
+                await message.reply(f"❌ Erro ao adicionar estoque: {e}")
+                del waiting_for_stock[message.author.id]
 
 
 @bot.tree.command(name="adicionar_estoque", description="[ADMIN] Adicionar códigos/keys ao estoque")
@@ -2571,9 +2581,28 @@ async def adicionar_estoque(interaction: discord.Interaction):
                     product = next((p for p in self.products if p['id'] == product_id), None)
                     
                     if product:
-                        # Abrir modal para adicionar códigos
-                        modal = AddStockModal(product)
-                        await interaction.response.send_modal(modal)
+                        # Registrar que está esperando códigos deste usuário
+                        waiting_for_stock[interaction.user.id] = {
+                            'product': product,
+                            'guild_id': interaction.guild_id,
+                            'channel_id': interaction.channel_id
+                        }
+                        
+                        embed = discord.Embed(
+                            title="📝 Envie os Códigos",
+                            description=f"Produto selecionado: **{product['name']}**\n\n"
+                                       f"Envie os códigos/keys neste canal, **um por linha**.\n"
+                                       f"Exemplo:",
+                            color=discord.Color.blue()
+                        )
+                        embed.add_field(
+                            name="Formato:",
+                            value="```\nCODIGO1-XXXX-YYYY-ZZZZ\nCODIGO2-AAAA-BBBB-CCCC\nCODIGO3-EMAIL:SENHA\n```",
+                            inline=False
+                        )
+                        embed.set_footer(text="Você tem 5 minutos para enviar os códigos")
+                        
+                        await interaction.response.send_message(embed=embed, ephemeral=True)
                     else:
                         await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
                 except Exception as e:
