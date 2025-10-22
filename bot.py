@@ -521,6 +521,18 @@ async def ajuda_slash(interaction: discord.Interaction):
     )
     
     embed.add_field(
+        name="» Comandos VIP",
+        value="`/meu_vip` :: 👑 Ver sua assinatura VIP\n`/renovar_vip` :: 🔄 Ver planos disponíveis\n`/historico_vip` :: 📋 Histórico de assinaturas",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="» Comandos VIP (Admin)",
+        value="`/listar_vips` :: 📋 Listar VIPs ativos\n`/adicionar_vip` :: ➕ Adicionar VIP manual\n`/remover_vip` :: ➖ Remover VIP\n`/vip_stats` :: 📊 Estatísticas VIP",
+        inline=False
+    )
+    
+    embed.add_field(
         name="» Sistema de Pagamento",
         value="💎 **Pix Instantâneo** - QR Code + Código\n🚀 **Entrega Automática** - Após confirmação\n🛡️ **Suporte 24/7** - Atendimento completo",
         inline=False
@@ -705,6 +717,542 @@ async def deletar_cupom_slash(interaction: discord.Interaction, codigo: str):
     except Exception as e:
         print(f"Erro no comando deletar_cupom: {e}")
         await interaction.response.send_message("❌ Erro ao deletar cupom.", ephemeral=True)
+
+# ========================================
+# COMANDOS VIP (USUÁRIO)
+# ========================================
+
+@bot.tree.command(name="meu_vip", description="Ver status da sua assinatura VIP")
+async def meu_vip_slash(interaction: discord.Interaction):
+    """Mostra informações da assinatura VIP do usuário"""
+    try:
+        from models.vip_model import VipModel
+        from datetime import datetime
+        
+        vip_model = VipModel()
+        subscription = await vip_model.get_user_subscription(
+            interaction.user.id,
+            interaction.guild.id
+        )
+        
+        if not subscription:
+            embed = discord.Embed(
+                title="❌ Você não é VIP",
+                description="Você não possui uma assinatura VIP ativa no momento.",
+                color=discord.Color.red()
+            )
+            embed.add_field(
+                name="💎 Quer se tornar VIP?",
+                value="Use `/renovar_vip` para ver os planos disponíveis!",
+                inline=False
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        # Calcular informações
+        started_at = datetime.fromisoformat(subscription['started_at'].replace('Z', '+00:00'))
+        
+        embed = discord.Embed(
+            title="👑 Sua Assinatura VIP",
+            description=f"Olá {interaction.user.mention}! Aqui estão os detalhes da sua assinatura VIP.",
+            color=discord.Color.gold(),
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(
+            name="🏆 Role VIP",
+            value=f"**{subscription['role_name']}**",
+            inline=True
+        )
+        
+        # Informações de duração e expiração
+        if subscription['duration_days'] is None:
+            status_text = "🌟 **VITALÍCIO**\nSua assinatura nunca expira!"
+        else:
+            expires_at = datetime.fromisoformat(subscription['expires_at'].replace('Z', '+00:00'))
+            days_left = (expires_at.replace(tzinfo=None) - datetime.now()).days
+            
+            if days_left <= 3:
+                status_emoji = "⚠️"
+            else:
+                status_emoji = "✅"
+            
+            status_text = f"{status_emoji} **{days_left} dia(s) restante(s)**\nExpira: <t:{int(expires_at.timestamp())}:R>"
+        
+        embed.add_field(
+            name="📅 Status",
+            value=status_text,
+            inline=True
+        )
+        
+        embed.add_field(
+            name="📆 Início",
+            value=f"<t:{int(started_at.timestamp())}:F>",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="✨ Benefícios Ativos",
+            value="• Acesso a canais exclusivos VIP\n"
+                  "• Prioridade no suporte\n"
+                  "• Descontos especiais\n"
+                  "• Conteúdo exclusivo",
+            inline=False
+        )
+        
+        if subscription['duration_days'] is not None:
+            embed.add_field(
+                name="🔄 Renovação",
+                value="Use `/renovar_vip` para renovar sua assinatura!",
+                inline=False
+            )
+        
+        embed.set_footer(
+            text=f"VIP desde {started_at.strftime('%d/%m/%Y')}",
+            icon_url=interaction.user.display_avatar.url if interaction.user.display_avatar else None
+        )
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando meu_vip: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao buscar informações VIP.", ephemeral=True)
+
+@bot.tree.command(name="renovar_vip", description="Ver planos VIP disponíveis para renovação")
+async def renovar_vip_slash(interaction: discord.Interaction):
+    """Mostra os planos VIP disponíveis"""
+    try:
+        from models.product_model import ProductModel
+        
+        product_model = ProductModel()
+        all_products = await product_model.get_all_products()
+        
+        # Filtrar apenas produtos VIP
+        vip_products = [p for p in all_products if p.get('category') == 'VIP']
+        
+        if not vip_products:
+            await interaction.response.send_message("❌ Nenhum plano VIP disponível no momento.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="👑 Planos VIP Disponíveis",
+            description="Escolha o plano que mais combina com você e aproveite todos os benefícios exclusivos!",
+            color=discord.Color.gold()
+        )
+        
+        # Agrupar por role
+        by_role = {}
+        for product in vip_products:
+            vip_config = product.get('vip_config', {})
+            role_name = vip_config.get('role_name', 'VIP')
+            
+            if role_name not in by_role:
+                by_role[role_name] = []
+            by_role[role_name].append(product)
+        
+        # Adicionar campos por role
+        for role_name, products in by_role.items():
+            products_text = ""
+            
+            for product in products:
+                vip_config = product.get('vip_config', {})
+                duration = vip_config.get('duration_days')
+                
+                if duration is None:
+                    duration_text = "🌟 Vitalício"
+                elif duration == 1:
+                    duration_text = "⏰ 1 dia"
+                else:
+                    duration_text = f"⏰ {duration} dias"
+                
+                products_text += f"**{product['name']}**\n{duration_text} - R$ {product['price']:.2f}\n\n"
+            
+            embed.add_field(
+                name=f"👑 {role_name}",
+                value=products_text.strip(),
+                inline=True
+            )
+        
+        embed.add_field(
+            name="✨ Benefícios VIP",
+            value="• Acesso a canais exclusivos\n"
+                  "• Prioridade no suporte\n"
+                  "• Descontos especiais\n"
+                  "• Conteúdo exclusivo\n"
+                  "• E muito mais!",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="🛒 Como Comprar",
+            value="1. Crie um ticket de compra\n"
+                  "2. Use `/comprar [nome do produto VIP]`\n"
+                  "3. Pague via Pix\n"
+                  "4. Receba sua role automaticamente!",
+            inline=False
+        )
+        
+        embed.set_footer(text="Invista no seu futuro VIP! 💎")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando renovar_vip: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao carregar planos VIP.", ephemeral=True)
+
+@bot.tree.command(name="historico_vip", description="Ver histórico de assinaturas VIP")
+async def historico_vip_slash(interaction: discord.Interaction):
+    """Mostra o histórico completo de assinaturas VIP do usuário"""
+    try:
+        from models.vip_model import VipModel
+        from datetime import datetime
+        
+        vip_model = VipModel()
+        history = await vip_model.get_subscription_history(
+            interaction.user.id,
+            interaction.guild.id
+        )
+        
+        if not history:
+            embed = discord.Embed(
+                title="📋 Histórico VIP",
+                description="Você ainda não possui histórico de assinaturas VIP.",
+                color=discord.Color.blue()
+            )
+            embed.add_field(
+                name="💎 Quer se tornar VIP?",
+                value="Use `/renovar_vip` para ver os planos disponíveis!",
+                inline=False
+            )
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="📋 Seu Histórico VIP",
+            description=f"Histórico completo de assinaturas de {interaction.user.mention}",
+            color=discord.Color.blue(),
+            timestamp=datetime.now()
+        )
+        
+        for i, sub in enumerate(history[:10], 1):  # Limitar a 10
+            status_emoji = {
+                'active': '✅',
+                'expired': '⏰',
+                'cancelled': '🚫'
+            }.get(sub['status'], '❓')
+            
+            started = datetime.fromisoformat(sub['started_at'].replace('Z', '+00:00'))
+            
+            value_text = f"**Status:** {status_emoji} {sub['status'].upper()}\n"
+            value_text += f"**Início:** <t:{int(started.timestamp())}:d>\n"
+            
+            if sub['duration_days'] is None:
+                value_text += "**Duração:** 🌟 Vitalício"
+            else:
+                value_text += f"**Duração:** {sub['duration_days']} dias"
+            
+            if sub['expires_at']:
+                expires = datetime.fromisoformat(sub['expires_at'].replace('Z', '+00:00'))
+                value_text += f"\n**Expirou:** <t:{int(expires.timestamp())}:d>"
+            
+            embed.add_field(
+                name=f"{i}. {sub['role_name']}",
+                value=value_text,
+                inline=True
+            )
+        
+        if len(history) > 10:
+            embed.set_footer(text=f"Mostrando 10 de {len(history)} assinaturas")
+        else:
+            embed.set_footer(text=f"Total: {len(history)} assinatura(s)")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando historico_vip: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao buscar histórico VIP.", ephemeral=True)
+
+# ========================================
+# COMANDOS VIP (ADMIN)
+# ========================================
+
+@bot.tree.command(name="listar_vips", description="[ADMIN] Listar todos os VIPs ativos do servidor")
+@discord.app_commands.default_permissions(administrator=True)
+async def listar_vips_slash(interaction: discord.Interaction):
+    """Lista todos os membros VIP ativos"""
+    try:
+        from models.vip_model import VipModel
+        from datetime import datetime
+        
+        vip_model = VipModel()
+        subscriptions = await vip_model.get_all_subscriptions(
+            interaction.guild.id,
+            status='active'
+        )
+        
+        if not subscriptions:
+            await interaction.response.send_message("📋 Nenhum VIP ativo no servidor.", ephemeral=True)
+            return
+        
+        embed = discord.Embed(
+            title="👑 VIPs Ativos do Servidor",
+            description=f"Total: {len(subscriptions)} membro(s) VIP ativo(s)",
+            color=discord.Color.gold(),
+            timestamp=datetime.now()
+        )
+        
+        # Agrupar por role
+        by_role = {}
+        for sub in subscriptions:
+            role_name = sub['role_name']
+            if role_name not in by_role:
+                by_role[role_name] = []
+            by_role[role_name].append(sub)
+        
+        # Adicionar campos por role
+        for role_name, subs in by_role.items():
+            users_text = ""
+            
+            for sub in subs[:10]:  # Limitar 10 por role
+                user = interaction.guild.get_member(sub['user_id'])
+                user_mention = user.mention if user else f"ID: {sub['user_id']}"
+                
+                if sub['duration_days'] is None:
+                    duration_text = "🌟 Vitalício"
+                else:
+                    expires_at = datetime.fromisoformat(sub['expires_at'].replace('Z', '+00:00'))
+                    days_left = (expires_at.replace(tzinfo=None) - datetime.now()).days
+                    duration_text = f"⏰ {days_left}d"
+                
+                users_text += f"{user_mention} - {duration_text}\n"
+            
+            if len(subs) > 10:
+                users_text += f"\n*...e mais {len(subs) - 10}*"
+            
+            embed.add_field(
+                name=f"👑 {role_name} ({len(subs)})",
+                value=users_text.strip(),
+                inline=False
+            )
+        
+        embed.set_footer(text="Use /vip_stats para ver estatísticas completas")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando listar_vips: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao listar VIPs.", ephemeral=True)
+
+@bot.tree.command(name="adicionar_vip", description="[ADMIN] Adicionar VIP manualmente a um usuário")
+@discord.app_commands.default_permissions(administrator=True)
+async def adicionar_vip_slash(
+    interaction: discord.Interaction,
+    membro: discord.Member,
+    role_vip: str,
+    duracao_dias: int = None
+):
+    """Adiciona VIP manualmente a um usuário"""
+    try:
+        from models.vip_model import VipModel
+        from utils.vip_manager import VipManager
+        
+        vip_manager = VipManager(bot)
+        vip_model = VipModel()
+        
+        # Adicionar role
+        role = await vip_manager.grant_vip_role(membro, role_vip)
+        if not role:
+            await interaction.response.send_message(
+                f"❌ Erro ao adicionar role {role_vip}. Verifique se o bot tem permissões adequadas.",
+                ephemeral=True
+            )
+            return
+        
+        # Criar assinatura no banco
+        subscription = await vip_model.create_subscription(
+            user_id=membro.id,
+            guild_id=interaction.guild.id,
+            role_id=role.id,
+            role_name=role_vip,
+            product_id=0,  # 0 indica adição manual
+            duration_days=duracao_dias,
+            transaction_id=None
+        )
+        
+        if not subscription:
+            await interaction.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
+            return
+        
+        # Criar embed de confirmação
+        embed = discord.Embed(
+            title="✅ VIP Adicionado Manualmente",
+            description=f"VIP adicionado com sucesso para {membro.mention}",
+            color=discord.Color.green()
+        )
+        
+        embed.add_field(
+            name="👑 Role",
+            value=role_vip,
+            inline=True
+        )
+        
+        if duracao_dias is None:
+            duration_text = "🌟 Vitalício"
+        else:
+            duration_text = f"⏰ {duracao_dias} dias"
+        
+        embed.add_field(
+            name="📅 Duração",
+            value=duration_text,
+            inline=True
+        )
+        
+        embed.add_field(
+            name="👤 Admin",
+            value=interaction.user.mention,
+            inline=True
+        )
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+        # Enviar DM para o usuário (criar produto fictício para a mensagem)
+        fake_product = {
+            'id': 0,
+            'name': f"{role_vip} - Manual",
+            'description': "Adicionado manualmente pela administração"
+        }
+        await vip_manager.send_vip_welcome_dm(membro, subscription, fake_product)
+        
+    except Exception as e:
+        print(f"Erro no comando adicionar_vip: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
+
+@bot.tree.command(name="remover_vip", description="[ADMIN] Remover VIP de um usuário")
+@discord.app_commands.default_permissions(administrator=True)
+async def remover_vip_slash(interaction: discord.Interaction, membro: discord.Member):
+    """Remove VIP de um usuário"""
+    try:
+        from models.vip_model import VipModel
+        from utils.vip_manager import VipManager
+        
+        vip_model = VipModel()
+        vip_manager = VipManager(bot)
+        
+        # Buscar assinatura ativa
+        subscription = await vip_model.get_user_subscription(
+            membro.id,
+            interaction.guild.id
+        )
+        
+        if not subscription:
+            await interaction.response.send_message(
+                f"❌ {membro.mention} não possui VIP ativo.",
+                ephemeral=True
+            )
+            return
+        
+        # Cancelar assinatura
+        await vip_model.cancel_subscription(subscription['id'])
+        
+        # Remover role
+        await vip_manager.remove_vip_role(subscription)
+        
+        embed = discord.Embed(
+            title="🚫 VIP Removido",
+            description=f"VIP removido de {membro.mention}",
+            color=discord.Color.orange()
+        )
+        
+        embed.add_field(
+            name="👑 Role Removida",
+            value=subscription['role_name'],
+            inline=True
+        )
+        
+        embed.add_field(
+            name="👤 Admin",
+            value=interaction.user.mention,
+            inline=True
+        )
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando remover_vip: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao remover VIP.", ephemeral=True)
+
+@bot.tree.command(name="vip_stats", description="[ADMIN] Ver estatísticas de VIPs do servidor")
+@discord.app_commands.default_permissions(administrator=True)
+async def vip_stats_slash(interaction: discord.Interaction):
+    """Mostra estatísticas detalhadas dos VIPs"""
+    try:
+        from models.vip_model import VipModel
+        
+        vip_model = VipModel()
+        stats = await vip_model.get_vip_stats(interaction.guild.id)
+        
+        embed = discord.Embed(
+            title="📊 Estatísticas VIP do Servidor",
+            description=f"Estatísticas completas de assinaturas VIP",
+            color=discord.Color.blue(),
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(
+            name="✅ VIPs Ativos",
+            value=str(stats['total_active']),
+            inline=True
+        )
+        
+        embed.add_field(
+            name="⏰ VIPs Expirados",
+            value=str(stats['total_expired']),
+            inline=True
+        )
+        
+        embed.add_field(
+            name="🌟 Vitalícios",
+            value=str(stats['vitalicio_count']),
+            inline=True
+        )
+        
+        # Distribuição por role
+        if stats['by_role']:
+            roles_text = ""
+            for role_name, count in stats['by_role'].items():
+                roles_text += f"**{role_name}:** {count}\n"
+            
+            embed.add_field(
+                name="👑 Distribuição por Role",
+                value=roles_text.strip(),
+                inline=False
+            )
+        
+        embed.set_footer(text="Use /listar_vips para ver a lista completa")
+        
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando vip_stats: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.response.send_message("❌ Erro ao buscar estatísticas VIP.", ephemeral=True)
+
+# ========================================
+# COMANDOS DE PRODUTOS
+# ========================================
 
 @bot.tree.command(name="produtos", description="Ver produtos disponíveis")
 async def produtos_slash(interaction: discord.Interaction):
@@ -902,6 +1450,11 @@ async def on_ready():
     inventory_model = InventoryModel()
     await inventory_model.initialize()
     
+    # Inicializar VIP model
+    from models.vip_model import VipModel
+    vip_model = VipModel()
+    await vip_model.initialize()
+    
     # Iniciar webhook server
     try:
         from utils.webhook_handler import WebhookHandler
@@ -933,6 +1486,38 @@ async def on_ready():
             print(f"❌ Erro ao liberar reservas: {e}")
     
     release_expired_reservations.start()
+    
+    # Iniciar task para verificar assinaturas VIP
+    @tasks.loop(hours=6)
+    async def check_vip_expirations():
+        """Verifica assinaturas VIP expiradas e próximas de expirar a cada 6 horas"""
+        try:
+            from utils.vip_manager import VipManager
+            vip_manager = VipManager(bot)
+            
+            # 1. Expirar assinaturas vencidas
+            expired = await vip_model.check_and_expire_subscriptions()
+            for sub in expired:
+                # Remover role
+                await vip_manager.remove_vip_role(sub)
+                # Notificar usuário
+                await vip_manager.send_vip_expired_dm(sub)
+            
+            # 2. Avisar assinaturas próximas de expirar (3 dias)
+            expiring = await vip_model.get_expiring_subscriptions(days=3)
+            for sub in expiring:
+                # Verificar se já foi avisado (implementar controle depois se necessário)
+                await vip_manager.send_vip_expiration_warning(sub)
+            
+            if expired or expiring:
+                print(f"👑 VIP Check: {len(expired)} expirado(s), {len(expiring)} próximo(s) de expirar")
+                
+        except Exception as e:
+            print(f"❌ Erro ao verificar expirações VIP: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    check_vip_expirations.start()
     
     # Carregar comandos de admin
     try:
@@ -1022,6 +1607,67 @@ async def load_sample_products():
             "description": "YouTube Premium por 3 meses. Sem anúncios, downloads offline e YouTube Music incluído.",
             "price": 10.00,
             "category": "Streaming"
+        },
+        # Produtos VIP
+        {
+            "name": "VIP Bronze - 1 Dia",
+            "description": "Acesso VIP Bronze por 1 dia. Experimente todos os benefícios exclusivos!",
+            "price": 5.00,
+            "category": "VIP",
+            "vip_config": {
+                "role_name": "VIP Bronze",
+                "duration_days": 1
+            }
+        },
+        {
+            "name": "VIP Bronze - 15 Dias",
+            "description": "Acesso VIP Bronze por 15 dias. Ideal para testar nossos benefícios exclusivos.",
+            "price": 25.00,
+            "category": "VIP",
+            "vip_config": {
+                "role_name": "VIP Bronze",
+                "duration_days": 15
+            }
+        },
+        {
+            "name": "VIP Bronze - 30 Dias",
+            "description": "Acesso VIP Bronze por 30 dias. Melhor custo-benefício para começar!",
+            "price": 45.00,
+            "category": "VIP",
+            "vip_config": {
+                "role_name": "VIP Bronze",
+                "duration_days": 30
+            }
+        },
+        {
+            "name": "VIP Prata - 30 Dias",
+            "description": "Acesso VIP Prata por 30 dias. Mais benefícios e vantagens exclusivas!",
+            "price": 75.00,
+            "category": "VIP",
+            "vip_config": {
+                "role_name": "VIP Prata",
+                "duration_days": 30
+            }
+        },
+        {
+            "name": "VIP Ouro - 30 Dias",
+            "description": "Acesso VIP Ouro por 30 dias. O melhor plano mensal com todos os benefícios!",
+            "price": 120.00,
+            "category": "VIP",
+            "vip_config": {
+                "role_name": "VIP Ouro",
+                "duration_days": 30
+            }
+        },
+        {
+            "name": "VIP Diamante - Vitalício",
+            "description": "Acesso VIP Diamante VITALÍCIO! Benefícios exclusivos para sempre. Investimento único!",
+            "price": 500.00,
+            "category": "VIP",
+            "vip_config": {
+                "role_name": "VIP Diamante",
+                "duration_days": None  # Vitalício
+            }
         }
     ]
     

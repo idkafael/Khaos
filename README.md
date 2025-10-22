@@ -871,14 +871,134 @@ Se você encontrar algum problema ou tiver sugestões:
 3. Consulte a documentação da [OpenPix](https://docs.openpix.com.br)
 4. Consulte a documentação do [Supabase](https://supabase.com/docs)
 
+## 👑 Sistema VIP - Gerenciamento de Assinaturas
+
+Sistema completo de gerenciamento de assinaturas VIP no Discord com roles temporárias, controle automático de expiração e notificações via DM.
+
+### Visão Geral
+
+O Sistema VIP permite vender e gerenciar acesso premium no Discord com:
+- ✅ **Roles automáticas** - Adicionadas após pagamento
+- ✅ **Duração flexível** - 1 dia, 15 dias, 30 dias ou vitalício
+- ✅ **Expiração automática** - Remove roles automaticamente
+- ✅ **Notificações DM** - Boas-vindas, avisos e expiração
+- ✅ **Cores personalizadas** - Roles com cores predefinidas
+- ✅ **Gestão completa** - Comandos para usuários e admins
+
+### Produtos VIP Disponíveis
+
+- **VIP Bronze - 1 Dia** - R$ 5,00
+- **VIP Bronze - 15 Dias** - R$ 25,00
+- **VIP Bronze - 30 Dias** - R$ 45,00
+- **VIP Prata - 30 Dias** - R$ 75,00
+- **VIP Ouro - 30 Dias** - R$ 120,00
+- **VIP Diamante - Vitalício** - R$ 500,00
+
+### Instalação Rápida
+
+1. **Execute o SQL no Supabase:**
+```bash
+# Cole o conteúdo de database_vip_setup.sql no SQL Editor
+```
+
+2. **Configure permissões do bot:**
+   - Manage Roles (Gerenciar Cargos)
+   - Bot deve estar ACIMA das roles VIP na hierarquia
+
+3. **Reinicie o bot:**
+```bash
+python bot.py
+```
+
+### Comandos de Usuário
+
+```bash
+/meu_vip         # Ver status da assinatura VIP
+/renovar_vip     # Ver planos disponíveis
+/historico_vip   # Ver histórico de assinaturas
+```
+
+### Comandos Admin
+
+```bash
+/listar_vips                              # Listar VIPs ativos
+/adicionar_vip @user "Role VIP" [dias]    # Adicionar VIP manual
+/remover_vip @user                        # Remover VIP
+/vip_stats                                # Estatísticas
+```
+
+### Fluxo de Compra VIP
+
+```
+Cliente → Abre Ticket → Escolhe VIP → Paga via Pix
+  → Role Adicionada Automaticamente → DM de Boas-vindas
+  → Expiração Automática após X dias
+```
+
+### Sistema Automático
+
+O bot verifica **a cada 6 horas**:
+- ✅ Expira assinaturas vencidas
+- ✅ Remove roles expiradas
+- ✅ Envia avisos 3 dias antes da expiração
+- ✅ Envia notificação ao expirar
+
+### Notificações DM
+
+1. **Boas-vindas** - Ao ativar VIP
+2. **Aviso** - 3 dias antes de expirar
+3. **Expiração** - Quando VIP expira
+
+### Documentação Completa
+
+- **Instalação Rápida:** `VIP_QUICKSTART.md`
+- **Documentação Completa:** `VIP_SYSTEM.md`
+- **Resumo da Implementação:** `SISTEMA_VIP_RESUMO.md`
+- **Estrutura SQL:** `database_vip_setup.sql`
+
+### Estrutura do Banco
+
+Execute `database_vip_setup.sql` para criar:
+- Tabela `vip_subscriptions`
+- Campo `vip_config` em `products`
+- Índices otimizados
+- Triggers automáticos
+
+### Cores das Roles VIP
+
+| Role | Cor | RGB |
+|------|-----|-----|
+| VIP Bronze | 🟤 | 205, 127, 50 |
+| VIP Prata | ⚪ | 192, 192, 192 |
+| VIP Ouro | 🟡 | 255, 215, 0 |
+| VIP Diamante | 💎 | 185, 242, 255 |
+
+### Troubleshooting
+
+**Role não foi adicionada?**
+- Verificar hierarquia (bot acima das roles VIP)
+- Verificar permissão "Manage Roles"
+
+**DM não foi enviada?**
+- Normal se usuário tiver DMs desabilitadas
+- Sistema funciona mesmo sem DM
+
+**VIP não expirou?**
+- Task roda a cada 6 horas
+- Pode ter delay de até 6h
+
+---
+
 ## 🔮 Roadmap
 
+- [x] Sistema de cupons de desconto ✅
+- [x] Sistema VIP com assinaturas ✅
 - [ ] Interface web para administração
-- [ ] Sistema de cupons de desconto
-- [ ] Relatórios de vendas
+- [ ] Relatórios de vendas e analytics
 - [ ] Integração com outros métodos de pagamento
 - [ ] Sistema de avaliações de produtos
 - [ ] Notificações push para mobile
+- [ ] Sistema de renovação automática VIP
 
 ---
 
