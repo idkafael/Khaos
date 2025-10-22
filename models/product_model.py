@@ -182,15 +182,23 @@ class ProductModel:
             True se deletou com sucesso
         """
         try:
+            # Primeiro verifica se o produto existe
+            product = await self.get_product_by_id(product_id, guild_id)
+            if not product:
+                print(f"Produto {product_id} não encontrado no servidor {guild_id}")
+                return False
+            
+            # Deleta o produto
             result = self.supabase.table(self.table_name)\
                 .delete()\
                 .eq('id', product_id)\
                 .eq('guild_id', guild_id)\
                 .execute()
-            # Retorna True apenas se algo foi deletado
-            return len(result.data) > 0 if result.data else False
+            
+            print(f"✅ Produto {product_id} deletado com sucesso")
+            return True
         except Exception as e:
-            print(f"Erro ao deletar produto: {e}")
+            print(f"❌ Erro ao deletar produto {product_id}: {e}")
             return False
     
     async def get_products_by_category(self, category: str, guild_id: int) -> List[Dict]:
