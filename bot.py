@@ -21,7 +21,7 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='?', intents=intents)
 
 # Adicionar comandos slash manualmente
 @bot.tree.command(name="teste", description="Comando de teste")
@@ -147,8 +147,8 @@ async def setup_suporte_slash(interaction: discord.Interaction):
 async def clear_messages(ctx, amount: int = 10):
     """Comando para apagar mensagens do chat
     
-    Uso: !clear [número]
-    Exemplo: !clear 50
+    Uso: ?clear [número]
+    Exemplo: ?clear 50
     """
     try:
         # Validar o número de mensagens
@@ -173,7 +173,7 @@ async def clear_messages(ctx, amount: int = 10):
     except discord.HTTPException as e:
         await ctx.send(f"❌ Erro ao apagar mensagens: {e}", delete_after=5)
     except Exception as e:
-        print(f"Erro no comando !clear: {e}")
+        print(f"Erro no comando ?clear: {e}")
         await ctx.send("❌ Ocorreu um erro ao apagar as mensagens.", delete_after=5)
 
 @clear_messages.error
@@ -182,7 +182,7 @@ async def clear_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("❌ Você não tem permissão para usar este comando! (Necessário: Gerenciar Mensagens)", delete_after=5)
     elif isinstance(error, commands.BadArgument):
-        await ctx.send("❌ Uso correto: `!clear [número]` - Exemplo: `!clear 50`", delete_after=5)
+        await ctx.send("❌ Uso correto: `?clear [número]` - Exemplo: `?clear 50`", delete_after=5)
     else:
         print(f"Erro no comando clear: {error}")
 
@@ -504,13 +504,13 @@ async def ajuda_slash(interaction: discord.Interaction):
     
     embed.add_field(
         name="» Comandos Admin",
-        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets (vendas)\n`/setup_suporte` :: 🆘 Enviar mensagem de suporte\n`/setup_msg` :: 📝 Criar mensagem embed\n`/close_ticket` :: 🔒 Fechar ticket manualmente\n`!clear [número]` :: 🗑️ Apagar mensagens do chat",
+        value="`/setup_ticket` :: ⚙️ Enviar mensagem de tickets (vendas)\n`/setup_suporte` :: 🆘 Enviar mensagem de suporte\n`/setup_msg` :: 📝 Criar mensagem embed\n`/close_ticket` :: 🔒 Fechar ticket manualmente\n`?clear [número]` :: 🗑️ Apagar mensagens do chat",
         inline=False
     )
     
     embed.add_field(
         name="» Comandos de Estoque (Admin)",
-        value="`/adicionar_estoque` :: 📦 Adicionar códigos/keys\n`/ver_estoque` :: 📊 Ver resumo do estoque\n`!adicionar_estoque` :: 📦 Adicionar via prefixo\n`!ver_estoque` :: 📊 Ver estoque via prefixo",
+        value="`/adicionar_estoque` :: 📦 Adicionar códigos/keys\n`/ver_estoque` :: 📊 Ver resumo do estoque\n`?adicionar_estoque` :: 📦 Adicionar via prefixo\n`?ver_estoque` :: 📊 Ver estoque via prefixo",
         inline=False
     )
     
@@ -1055,7 +1055,7 @@ async def show_products(ctx):
                 inline=False
             )
         
-        embed.set_footer(text="Use !buy <nome_do_produto> para comprar")
+        embed.set_footer(text="Use ?buy <nome_do_produto> para comprar")
         await ctx.send(embed=embed)
         
     except Exception as e:
@@ -1081,7 +1081,7 @@ async def buy_product(ctx, *, product_name):
         product = await product_model.get_product_by_name(product_name)
         
         if not product:
-            await ctx.send("❌ Produto não encontrado. Use `!products` para ver os produtos disponíveis.")
+            await ctx.send("❌ Produto não encontrado. Use `?products` para ver os produtos disponíveis.")
             return
         
         # Verificar se o usuário tem um ticket ativo
@@ -1221,7 +1221,7 @@ async def monitor_payment(transaction_id, user_id):
                     channel = bot.get_channel(channel_id)
                     
                     if channel:
-                        await channel.send("❌ Pagamento não foi confirmado. Tente novamente com `!buy <produto>`")
+                        await channel.send("❌ Pagamento não foi confirmado. Tente novamente com `?buy <produto>`")
                         
                         # Limpar ticket ativo
                         del active_tickets[user_id]
@@ -1239,7 +1239,7 @@ async def monitor_payment(transaction_id, user_id):
                 channel = bot.get_channel(channel_id)
                 
                 if channel:
-                    await channel.send("⏰ Tempo limite para pagamento expirado. Use `!buy <produto>` para tentar novamente.")
+                    await channel.send("⏰ Tempo limite para pagamento expirado. Use `?buy <produto>` para tentar novamente.")
                     
                     # Limpar ticket ativo
                     del active_tickets[user_id]
@@ -1353,9 +1353,9 @@ async def add_stock_prefix(ctx):
             name="📝 Como adicionar estoque:",
             value="Use o comando slash `/adicionar_estoque` para uma interface melhor!\n\n"
                   "Ou envie neste chat:\n"
-                  f"`!add_stock_id <ID> <códigos>`\n\n"
+                  f"`?add_stock_id <ID> <códigos>`\n\n"
                   "Exemplo:\n"
-                  f"`!add_stock_id {products[0]['id']}`\n"
+                  f"`?add_stock_id {products[0]['id']}`\n"
                   "Depois cole os códigos, um por linha.",
             inline=False
         )
@@ -1363,7 +1363,7 @@ async def add_stock_prefix(ctx):
         await ctx.send(embed=embed)
         
     except Exception as e:
-        print(f"Erro no comando !adicionar_estoque: {e}")
+        print(f"Erro no comando ?adicionar_estoque: {e}")
         import traceback
         traceback.print_exc()
         await ctx.send(f"❌ Erro: {str(e)}")
@@ -1386,7 +1386,7 @@ async def add_stock_by_id(ctx, product_id: int):
         
         await ctx.send(f"📦 **{product['name']}**\n\n"
                       f"Cole os códigos/keys abaixo (um por linha).\n"
-                      f"Quando terminar, envie `!done` ou aguarde 30 segundos.")
+                      f"Quando terminar, envie `?done` ou aguarde 30 segundos.")
         
         # Esperar pelas mensagens do usuário
         codes = []
@@ -1398,14 +1398,14 @@ async def add_stock_by_id(ctx, product_id: int):
             try:
                 msg = await bot.wait_for('message', timeout=30.0, check=check)
                 
-                if msg.content.lower() in ['!done', 'done', 'pronto', '!pronto']:
+                if msg.content.lower() in ['?done', 'done', 'pronto', '?pronto']:
                     break
                 
                 # Adicionar códigos
                 lines = msg.content.strip().split('\n')
                 for line in lines:
                     line = line.strip()
-                    if line and not line.startswith('!'):
+                    if line and not line.startswith('?'):
                         codes.append(line)
                 
                 if len(codes) > 0:
