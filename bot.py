@@ -2459,23 +2459,25 @@ async def admin_criar_vip(
 # Modal para adicionar estoque
 class AddStockModal(discord.ui.Modal):
     def __init__(self, product):
-        super().__init__(title=f"Adicionar Estoque: {product['name']}")
+        super().__init__(title=f"Adicionar Estoque: {product['name'][:45]}")
         self.product = product
         
-        self.stock_items = discord.ui.InputText(
-            label="Códigos/Keys (um por linha)",
-            placeholder="CODIGO1-XXXX-YYYY\nCODIGO2-AAAA-BBBB\nCODIGO3-ZZZZ-WWWW",
-            style=discord.InputTextStyle.paragraph,
-            required=True
+        self.add_item(
+            discord.ui.InputText(
+                label="Códigos/Keys (um por linha)",
+                placeholder="CODIGO1-XXXX-YYYY\nCODIGO2-AAAA-BBBB\nCODIGO3-ZZZZ-WWWW",
+                style=discord.InputTextStyle.long,
+                required=True
+            )
         )
-        self.add_item(self.stock_items)
     
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
         
         try:
-            # Processar os códigos
-            codes = [line.strip() for line in self.stock_items.value.split('\n') if line.strip()]
+            # Processar os códigos (pegar o primeiro input do modal)
+            stock_input = self.children[0].value
+            codes = [line.strip() for line in stock_input.split('\n') if line.strip()]
             
             if not codes:
                 await interaction.followup.send("❌ Nenhum código válido fornecido.", ephemeral=True)
