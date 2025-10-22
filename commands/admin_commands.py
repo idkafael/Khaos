@@ -159,12 +159,12 @@ class ProductSelectView(ui.View):
 async def setup_admin_commands(bot: discord.Bot):
     """Configura os comandos de admin"""
     
-    @bot.tree.command(
+    @bot.slash_command(
         name="adicionar_estoque",
         description="[ADMIN] Adicionar itens ao estoque de um produto"
     )
-    @discord.app_commands.default_permissions(administrator=True)
-    async def add_stock_command(interaction: discord.Interaction):
+    @commands.has_permissions(administrator=True)
+    async def add_stock_command(ctx: discord.ApplicationContext):
         """Comando para adicionar estoque"""
         try:
             # Buscar todos os produtos
@@ -172,7 +172,7 @@ async def setup_admin_commands(bot: discord.Bot):
             products = await product_model.get_all_products()
             
             if not products:
-                await interaction.response.send_message("❌ Nenhum produto cadastrado.", ephemeral=True)
+                await ctx.respond("❌ Nenhum produto cadastrado.", ephemeral=True)
                 return
             
             # Criar embed de introdução
@@ -189,27 +189,27 @@ async def setup_admin_commands(bot: discord.Bot):
             
             # Enviar com select menu
             view = ProductSelectView(products, action="add")
-            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+            await ctx.respond(embed=embed, view=view, ephemeral=True)
             
         except Exception as e:
             print(f"Erro no comando adicionar_estoque: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message(f"❌ Erro: {str(e)}", ephemeral=True)
+            await ctx.respond(f"❌ Erro: {str(e)}", ephemeral=True)
     
-    @bot.tree.command(
+    @bot.slash_command(
         name="ver_estoque",
         description="[ADMIN] Ver resumo do estoque de produtos"
     )
-    @discord.app_commands.default_permissions(administrator=True)
-    async def view_stock_command(interaction: discord.Interaction):
+    @commands.has_permissions(administrator=True)
+    async def view_stock_command(ctx: discord.ApplicationContext):
         """Comando para ver estoque"""
         try:
             inventory_model = InventoryModel()
             summary = await inventory_model.get_all_stock_summary()
             
             if not summary:
-                await interaction.response.send_message("❌ Nenhum produto com estoque.", ephemeral=True)
+                await ctx.respond("❌ Nenhum produto com estoque.", ephemeral=True)
                 return
             
             # Criar embed com resumo
@@ -237,13 +237,13 @@ async def setup_admin_commands(bot: discord.Bot):
             products = await product_model.get_all_products()
             view = ProductSelectView(products, action="view")
             
-            await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+            await ctx.respond(embed=embed, view=view, ephemeral=True)
             
         except Exception as e:
             print(f"Erro no comando ver_estoque: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message(f"❌ Erro: {str(e)}", ephemeral=True)
+            await ctx.respond(f"❌ Erro: {str(e)}", ephemeral=True)
     
     print("✅ Comandos de admin configurados")
 
