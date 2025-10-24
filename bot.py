@@ -1974,15 +1974,6 @@ async def buy_product(ctx, *, product_name):
         await ctx.send("❌ Erro ao iniciar processo de compra. Tente novamente.")
 
 
-@bot.event
-async def on_message(message):
-    """Processa mensagens normalmente"""
-    if message.author.bot:
-        return
-    
-    # py-cord: discord.Bot não precisa de process_commands()
-    # await bot.process_commands(message)
-
 async def monitor_payment(transaction_id, user_id):
     """Monitora o status do pagamento"""
     try:
