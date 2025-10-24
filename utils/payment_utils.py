@@ -64,6 +64,8 @@ class PaymentUtils:
                 qr_code_data = payment_data.get('qr_code', '')
                 payment_id = payment_data.get('payment_id', '')
                 
+                print(f"✅ [PaymentUtils] Mercado Pago payment created: ID {payment_id}")
+                
                 # Gerar QR Code visual
                 qr_code_image = self._generate_qr_code(qr_code_data) if qr_code_data else None
                 

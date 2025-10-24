@@ -38,7 +38,13 @@ class MercadoPagoManager:
         amount: float,
         description: str,
         transaction_id: int,
-        payer_email: str = None
+        payer_email: str = None,
+        payer_first_name: str = None,
+        payer_last_name: str = None,
+        item_title: str = None,
+        item_category: str = None,
+        item_id: str = None,
+        item_quantity: int = 1
     ) -> Optional[Dict]:
         """
         Cria pagamento Pix e retorna QR Code + Pix Copia e Cola
@@ -69,16 +75,48 @@ class MercadoPagoManager:
             
             print(f"📧 [MP] Email do pagador: {payer_email}")
             
+            # Preparar dados do pagador (para ganhar pontos no MP)
+            payer_data = {"email": payer_email}
+            
+            if payer_first_name:
+                payer_data["first_name"] = payer_first_name
+                print(f"👤 [MP] Nome: {payer_first_name}")
+            
+            if payer_last_name:
+                payer_data["last_name"] = payer_last_name
+                print(f"👤 [MP] Sobrenome: {payer_last_name}")
+            
+            # Preparar items (para ganhar pontos no MP)
+            items = []
+            if item_title:
+                item_data = {
+                    "title": item_title or description,
+                    "description": description,
+                    "quantity": item_quantity,
+                    "unit_price": round(float(amount) / item_quantity, 2),
+                    "category_id": item_category or "digital_goods"
+                }
+                
+                if item_id:
+                    item_data["id"] = str(item_id)
+                
+                items.append(item_data)
+                print(f"📦 [MP] Item: {item_title} (x{item_quantity})")
+            
             # Criar pagamento
             payment_data = {
                 "transaction_amount": round(float(amount), 2),  # Sempre 2 casas decimais
                 "description": description,
                 "payment_method_id": "pix",
-                "payer": {
-                    "email": payer_email
-                },
+                "payer": payer_data,
                 "external_reference": str(transaction_id)  # Para rastrear
             }
+            
+            # Adicionar items se houver
+            if items:
+                payment_data["additional_info"] = {
+                    "items": items
+                }
             
             # Adicionar notification_url apenas se WEBHOOK_URL estiver configurado
             webhook_url = os.getenv('WEBHOOK_URL', '').strip()

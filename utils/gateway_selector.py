@@ -183,11 +183,53 @@ class GatewaySelector:
         """
         try:
             if gateway == 'mercadopago':
+                # Buscar informações do produto se houver transaction_id
+                item_title = None
+                item_category = None
+                item_id = None
+                
+                if transaction_id:
+                    try:
+                        from models.transaction_model import TransactionModel
+                        from models.product_model import ProductModel
+                        
+                        transaction_model = TransactionModel()
+                        product_model = ProductModel()
+                        
+                        # Buscar transação para pegar product_id
+                        transaction = await transaction_model.get_transaction(transaction_id)
+                        if transaction and transaction.get('product_id'):
+                            product = await product_model.get_product_by_id(transaction['product_id'])
+                            if product:
+                                item_title = product.get('name')
+                                item_category = product.get('category', 'digital_goods')
+                                item_id = product.get('id')
+                                print(f"📦 [GatewaySelector] Produto encontrado: {item_title}")
+                    except Exception as e:
+                        print(f"⚠️ [GatewaySelector] Erro ao buscar produto: {e}")
+                
+                # Extrair nome/sobrenome do email se possível
+                payer_first_name = None
+                payer_last_name = None
+                if user_email:
+                    email_parts = user_email.split('@')[0].replace('.', ' ').replace('_', ' ')
+                    name_parts = email_parts.split()
+                    if len(name_parts) >= 1:
+                        payer_first_name = name_parts[0].capitalize()
+                    if len(name_parts) >= 2:
+                        payer_last_name = ' '.join(name_parts[1:]).capitalize()
+                
                 return await self.mp_manager.create_pix_payment(
                     amount=amount,
                     description=description,
                     transaction_id=transaction_id,
-                    payer_email=user_email
+                    payer_email=user_email,
+                    payer_first_name=payer_first_name,
+                    payer_last_name=payer_last_name,
+                    item_title=item_title,
+                    item_category=item_category,
+                    item_id=str(item_id) if item_id else None,
+                    item_quantity=1
                 )
             
             elif gateway == 'pushinpay':
