@@ -3049,6 +3049,117 @@ async def historico_saques_cmd(interaction: discord.Interaction):
         print(f"Erro ao buscar saques: {e}")
         await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
+@bot.tree.command(name="verificar_pagamentos", description="[ADMIN] Verificar pagamentos pendentes manualmente")
+@discord.app_commands.default_permissions(administrator=True)
+async def verificar_pagamentos_cmd(interaction: discord.Interaction):
+    """Verificar pagamentos pendentes manualmente (enquanto webhook não está configurado)"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        from models.transaction_model import TransactionModel
+        from utils.mercadopago_manager import MercadoPagoManager
+        from models.wallet_model import WalletModel
+        from utils.delivery_manager import DeliveryManager
+        
+        transaction_model = TransactionModel()
+        mp_manager = MercadoPagoManager()
+        wallet_model = WalletModel()
+        delivery_manager = DeliveryManager()
+        
+        # Buscar transações pendentes deste servidor
+        print(f"🔍 Verificando pagamentos pendentes do servidor {interaction.guild_id}")
+        
+        # Query manual para buscar transações pendentes
+        result = transaction_model.supabase.table('transactions')\
+            .select('*')\
+            .eq('guild_id', interaction.guild_id)\
+            .eq('status', 'pending')\
+            .order('created_at', desc=True)\
+            .limit(10)\
+            .execute()
+        
+        pending_transactions = result.data if result.data else []
+        
+        if not pending_transactions:
+            await interaction.followup.send("✅ Nenhum pagamento pendente encontrado!", ephemeral=True)
+            return
+        
+        # Verificar cada transação
+        checked = 0
+        approved = 0
+        
+        for transaction in pending_transactions:
+            payment_id = transaction.get('payment_id')
+            if not payment_id:
+                continue
+            
+            checked += 1
+            print(f"🔍 Verificando pagamento {payment_id}...")
+            
+            # Consultar status no Mercado Pago
+            payment_info = await mp_manager.check_payment_status(payment_id)
+            
+            if payment_info and payment_info.get('status') == 'approved':
+                print(f"✅ Pagamento {payment_id} APROVADO!")
+                approved += 1
+                
+                # Atualizar transação
+                await transaction_model.update_transaction(transaction['id'], {
+                    'status': 'approved',
+                    'gateway_used': 'mercadopago'
+                })
+                
+                # Creditar carteira (descontando R$ 0,80)
+                amount = float(transaction['amount'])
+                platform_fee = 0.80
+                net_amount = amount - platform_fee
+                
+                await wallet_model.credit_wallet(
+                    guild_id=interaction.guild_id,
+                    amount=net_amount,
+                    transaction_id=transaction['id'],
+                    platform_fee=platform_fee,
+                    description=f"Venda aprovada - Transaction #{transaction['id']}"
+                )
+                
+                print(f"💰 Carteira creditada: R$ {net_amount:.2f} (R$ {amount:.2f} - R$ {platform_fee:.2f})")
+                
+                # Entregar produto
+                try:
+                    await delivery_manager.deliver_product(transaction['id'])
+                    print(f"📦 Produto entregue!")
+                except Exception as delivery_error:
+                    print(f"⚠️ Erro ao entregar produto: {delivery_error}")
+        
+        # Resposta
+        embed = discord.Embed(
+            title="🔍 Verificação de Pagamentos",
+            color=discord.Color.green() if approved > 0 else discord.Color.blue()
+        )
+        
+        embed.add_field(name="📊 Total verificado", value=str(checked), inline=True)
+        embed.add_field(name="✅ Aprovados", value=str(approved), inline=True)
+        embed.add_field(name="⏳ Pendentes", value=str(checked - approved), inline=True)
+        
+        if approved > 0:
+            embed.add_field(
+                name="💰 Ação tomada",
+                value=f"✅ {approved} pagamento(s) processado(s)\n"
+                      f"💵 Carteira creditada\n"
+                      f"📦 Produto(s) entregue(s)",
+                inline=False
+            )
+        
+        embed.set_footer(text="Use /saldo para ver o saldo atualizado")
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"❌ Erro ao verificar pagamentos: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
 
 # Sistema de espera para adicionar estoque
 waiting_for_stock = {}

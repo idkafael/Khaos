@@ -71,7 +71,7 @@ class MercadoPagoManager:
             
             # Criar pagamento
             payment_data = {
-                "transaction_amount": float(amount),
+                "transaction_amount": round(float(amount), 2),  # Sempre 2 casas decimais
                 "description": description,
                 "payment_method_id": "pix",
                 "payer": {
