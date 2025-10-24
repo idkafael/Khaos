@@ -9,6 +9,13 @@ postgrest>=0.10.0
 requests>=2.31.0
 qrcode[pil]>=7.4.0
 pushinpay>=0.3.0
+mercadopago>=2.2.0
+
+# Painel Web
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+jinja2>=3.1.2
+python-multipart>=0.0.6
 
 # Webhook Server
 aiohttp>=3.9.0

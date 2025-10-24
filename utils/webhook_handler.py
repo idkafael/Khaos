@@ -19,6 +19,7 @@ class WebhookHandler:
         
         # Configurar rotas
         self.app.router.add_post('/webhook/pushinpay', self.handle_pushinpay_webhook)
+        self.app.router.add_post('/webhook/mercadopago', self.handle_mercadopago_webhook)
         self.app.router.add_get('/health', self.health_check)
     
     async def start(self):
@@ -109,6 +110,114 @@ class WebhookHandler:
             return web.json_response({'error': 'invalid json'}, status=400)
         except Exception as e:
             print(f"❌ Erro ao processar webhook: {e}")
+            import traceback
+            traceback.print_exc()
+            return web.json_response({'error': str(e)}, status=500)
+    
+    async def handle_mercadopago_webhook(self, request):
+        """Processa webhooks do Mercado Pago"""
+        try:
+            # Mercado Pago envia dados via query params e body
+            query_params = request.rel_url.query
+            
+            # Tipo de notificação
+            topic = query_params.get('topic') or query_params.get('type')
+            resource_id = query_params.get('id')
+            
+            print(f"📨 Webhook Mercado Pago - Topic: {topic}, ID: {resource_id}")
+            
+            # Mercado Pago pode enviar vários tipos de notificação
+            # Nos interessa apenas 'payment' e 'merchant_order'
+            if topic not in ['payment', 'merchant_order']:
+                print(f"⚠️ Tipo de webhook ignorado: {topic}")
+                return web.json_response({'status': 'ignored'})
+            
+            # Buscar informações do pagamento via API
+            from utils.mercadopago_manager import MercadoPagoManager
+            mp_manager = MercadoPagoManager()
+            
+            if topic == 'payment':
+                payment_info = await mp_manager.check_payment_status(resource_id)
+                
+                if not payment_info:
+                    print(f"❌ Não foi possível buscar informações do pagamento {resource_id}")
+                    return web.json_response({'error': 'payment not found'}, status=404)
+                
+                # Buscar transação pelo external_reference (nosso transaction_id)
+                external_ref = payment_info.get('external_reference')
+                
+                if not external_ref:
+                    print("⚠️ Webhook sem external_reference")
+                    return web.json_response({'error': 'external_reference missing'}, status=400)
+                
+                # Buscar transação
+                try:
+                    transaction_id = int(external_ref)
+                    transaction = await self.transaction_model.get_transaction_by_id(transaction_id)
+                except:
+                    print(f"❌ Transaction ID inválido: {external_ref}")
+                    return web.json_response({'error': 'invalid transaction_id'}, status=400)
+                
+                if not transaction:
+                    print(f"⚠️ Transação não encontrada: {transaction_id}")
+                    return web.json_response({'error': 'transaction not found'}, status=404)
+                
+                print(f"📦 Webhook para transação #{transaction['id']} - Status: {payment_info['status']}")
+                
+                # Processar baseado no status
+                if payment_info['status'] == 'approved':
+                    # Pagamento aprovado - creditar carteira + entregar produto
+                    
+                    # 1. Creditar carteira do servidor
+                    from models.wallet_model import WalletModel
+                    from decimal import Decimal
+                    
+                    wallet_model = WalletModel()
+                    
+                    amount = Decimal(str(transaction['amount']))
+                    guild_id = transaction['guild_id']
+                    
+                    await wallet_model.credit_wallet(
+                        guild_id=guild_id,
+                        amount=amount,
+                        transaction_id=transaction['id'],
+                        description=f"Venda via Mercado Pago - Pagamento {resource_id}"
+                    )
+                    
+                    # 2. Entregar produto ao cliente
+                    asyncio.create_task(
+                        self.delivery_manager.process_payment_confirmation(
+                            transaction['id'],
+                            resource_id
+                        )
+                    )
+                    
+                    print(f"✅ Carteira creditada + Entrega processando para transação #{transaction['id']}")
+                    
+                elif payment_info['status'] in ['rejected', 'cancelled', 'refunded']:
+                    # Pagamento rejeitado/cancelado
+                    await self.transaction_model.update_transaction(
+                        transaction['id'],
+                        {'status': 'failed'}
+                    )
+                    print(f"❌ Transação #{transaction['id']} marcada como falhada")
+                    
+                    # Liberar estoque se reservado
+                    await self._release_reserved_stock(transaction['id'])
+                
+                # Retornar sucesso
+                return web.json_response({
+                    'status': 'ok',
+                    'transaction_id': transaction['id'],
+                    'payment_status': payment_info['status'],
+                    'processed': True
+                })
+            
+            # Outros tipos de webhook
+            return web.json_response({'status': 'ok'})
+            
+        except Exception as e:
+            print(f"❌ Erro ao processar webhook Mercado Pago: {e}")
             import traceback
             traceback.print_exc()
             return web.json_response({'error': str(e)}, status=500)

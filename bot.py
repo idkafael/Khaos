@@ -2611,7 +2611,7 @@ async def admin_listar_produtos(interaction: discord.Interaction):
     preco="Preço em R$",
     role_name="Nome da role Discord (ex: VIP Gold)",
     descricao="Descrição do produto VIP",
-    duracao_dias="Duração em dias (0 para vitalício)"
+    duracao_dias="Duração em dias (deixe vazio para vitalício)"
 )
 async def admin_criar_vip(
     interaction: discord.Interaction,
@@ -2661,6 +2661,392 @@ async def admin_criar_vip(
             
     except Exception as e:
         print(f"Erro ao criar VIP: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+# =============================================
+# COMANDOS MICRO SAAS - CARTEIRA VIRTUAL
+# =============================================
+
+@bot.tree.command(name="saldo", description="Ver saldo disponível e estatísticas da carteira")
+@discord.app_commands.default_permissions(administrator=True)
+async def saldo_cmd(interaction: discord.Interaction):
+    """Ver saldo e estatísticas da carteira do servidor"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        from models.wallet_model import WalletModel
+        wallet_model = WalletModel()
+        
+        # Buscar estatísticas
+        stats = await wallet_model.get_wallet_stats(interaction.guild_id)
+        
+        # Criar embed
+        embed = discord.Embed(
+            title="💰 Carteira do Servidor",
+            description=f"Estatísticas financeiras de **{interaction.guild.name}**",
+            color=discord.Color.green()
+        )
+        
+        # Saldo disponível
+        embed.add_field(
+            name="💵 Saldo Disponível",
+            value=f"R$ {stats['balance_available']:.2f}",
+            inline=True
+        )
+        
+        # Saldo pendente
+        embed.add_field(
+            name="⏳ Saldo Pendente",
+            value=f"R$ {stats['balance_pending']:.2f}",
+            inline=True
+        )
+        
+        # Total ganho
+        embed.add_field(
+            name="📈 Total Ganho",
+            value=f"R$ {stats['total_earned']:.2f}",
+            inline=True
+        )
+        
+        # Total sacado
+        embed.add_field(
+            name="💸 Total Sacado",
+            value=f"R$ {stats['total_withdrawn']:.2f}",
+            inline=True
+        )
+        
+        # Taxas pagas
+        embed.add_field(
+            name="💳 Taxas Pagas",
+            value=f"R$ {stats['platform_fees_paid']:.2f}",
+            inline=True
+        )
+        
+        # Lucro líquido
+        embed.add_field(
+            name="💎 Lucro Líquido",
+            value=f"R$ {stats['net_profit']:.2f}",
+            inline=True
+        )
+        
+        # Chave Pix configurada
+        if stats.get('pix_key'):
+            embed.add_field(
+                name="🔑 Chave Pix Cadastrada",
+                value=f"Tipo: {stats['pix_type'].upper()}",
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="⚠️ Chave Pix",
+                value="Use `/configurar_pix` para cadastrar",
+                inline=False
+            )
+        
+        embed.set_footer(text=f"Use /solicitar_saque para sacar • Mínimo: R$ 10,00")
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro ao buscar saldo: {e}")
+        import traceback
+        traceback.print_exc()
+        await interaction.followup.send(f"❌ Erro ao buscar saldo: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="configurar_pix", description="Cadastrar chave Pix padrão para saques")
+@discord.app_commands.default_permissions(administrator=True)
+@discord.app_commands.describe(
+    chave_pix="Sua chave Pix (CPF, email, telefone, etc)",
+    tipo="Tipo da chave Pix"
+)
+@discord.app_commands.choices(tipo=[
+    discord.app_commands.Choice(name="CPF", value="cpf"),
+    discord.app_commands.Choice(name="CNPJ", value="cnpj"),
+    discord.app_commands.Choice(name="Email", value="email"),
+    discord.app_commands.Choice(name="Telefone (+5511999999999)", value="phone"),
+    discord.app_commands.Choice(name="Chave Aleatória", value="random")
+])
+async def configurar_pix_cmd(interaction: discord.Interaction, chave_pix: str, tipo: str):
+    """Cadastrar chave Pix padrão"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        from models.wallet_model import WalletModel
+        from utils.withdrawal_manager import WithdrawalManager
+        
+        wallet_model = WalletModel()
+        withdrawal_manager = WithdrawalManager()
+        
+        # Validar chave Pix
+        valid, result = withdrawal_manager.validate_pix_key(chave_pix, tipo)
+        
+        if not valid:
+            await interaction.followup.send(result, ephemeral=True)
+            return
+        
+        # Salvar
+        success = await wallet_model.save_pix_key(interaction.guild_id, result, tipo)
+        
+        if success:
+            # Mascarar chave para exibir
+            if tipo == 'cpf':
+                masked = f"{result[:3]}.XXX.XXX-{result[-2:]}"
+            elif tipo == 'email':
+                parts = result.split('@')
+                masked = f"{parts[0][:2]}***@{parts[1]}"
+            elif tipo == 'phone':
+                masked = f"{result[:3]}***{result[-4:]}"
+            else:
+                masked = f"{result[:5]}***{result[-4:]}"
+            
+            embed = discord.Embed(
+                title="✅ Chave Pix Cadastrada",
+                description=f"Chave Pix salva com sucesso!",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="Tipo", value=tipo.upper(), inline=True)
+            embed.add_field(name="Chave", value=masked, inline=True)
+            embed.set_footer(text="Esta chave será usada como padrão nos saques")
+            
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Erro ao salvar chave Pix", ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro ao configurar Pix: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="solicitar_saque", description="Solicitar saque via Pix")
+@discord.app_commands.default_permissions(administrator=True)
+async def solicitar_saque_cmd(interaction: discord.Interaction):
+    """Solicitar saque via modal"""
+    try:
+        # Criar modal para saque
+        class WithdrawalModal(discord.ui.Modal, title="💸 Solicitar Saque"):
+            amount_input = discord.ui.TextInput(
+                label="Valor a Sacar (R$)",
+                placeholder="Ex: 50.00",
+                required=True,
+                min_length=1,
+                max_length=10
+            )
+            
+            pix_key_input = discord.ui.TextInput(
+                label="Chave Pix",
+                placeholder="CPF, email, telefone, etc (ou deixe vazio para usar padrão)",
+                required=False,
+                max_length=255
+            )
+            
+            pix_type_input = discord.ui.TextInput(
+                label="Tipo da Chave Pix",
+                placeholder="cpf, cnpj, email, phone ou random",
+                required=False,
+                max_length=10
+            )
+            
+            async def on_submit(self, interaction: discord.Interaction):
+                await interaction.response.defer(ephemeral=True)
+                
+                try:
+                    from decimal import Decimal
+                    from models.wallet_model import WalletModel
+                    from utils.withdrawal_manager import WithdrawalManager
+                    
+                    wallet_model = WalletModel()
+                    withdrawal_manager = WithdrawalManager()
+                    
+                    # Validar valor
+                    try:
+                        amount = Decimal(self.amount_input.value.replace(',', '.'))
+                    except:
+                        await interaction.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
+                        return
+                    
+                    # Buscar chave Pix (usar padrão se não informada)
+                    pix_key = self.pix_key_input.value.strip()
+                    pix_type = self.pix_type_input.value.strip().lower()
+                    
+                    if not pix_key:
+                        # Usar chave padrão
+                        wallet = await wallet_model.get_wallet(interaction.guild_id)
+                        if not wallet or not wallet.get('pix_key'):
+                            await interaction.followup.send(
+                                "❌ Nenhuma chave Pix cadastrada. Use `/configurar_pix` primeiro ou informe a chave no formulário.",
+                                ephemeral=True
+                            )
+                            return
+                        
+                        pix_key = wallet['pix_key']
+                        pix_type = wallet['pix_type']
+                    
+                    # Validar tipo
+                    if pix_type not in ['cpf', 'cnpj', 'email', 'phone', 'random']:
+                        await interaction.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
+                        return
+                    
+                    # Criar solicitação
+                    withdrawal = await withdrawal_manager.create_withdrawal_request(
+                        guild_id=interaction.guild_id,
+                        user_id=interaction.user.id,
+                        amount=amount,
+                        pix_key=pix_key,
+                        pix_type=pix_type
+                    )
+                    
+                    if not withdrawal:
+                        await interaction.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
+                        return
+                    
+                    # Calcular taxas
+                    fees = await wallet_model.calculate_withdrawal_fees(amount)
+                    
+                    # Enviar confirmação
+                    embed = discord.Embed(
+                        title="📝 Solicitação de Saque Criada",
+                        description="Seu saque será processado automaticamente!",
+                        color=discord.Color.blue()
+                    )
+                    embed.add_field(name="Valor Solicitado", value=f"R$ {amount:.2f}", inline=True)
+                    embed.add_field(name="Taxa (3%)", value=f"R$ {fees['fee_amount']:.2f}", inline=True)
+                    embed.add_field(name="Você Receberá", value=f"R$ {fees['net_amount']:.2f}", inline=True)
+                    embed.add_field(name="Chave Pix", value=f"{pix_type.upper()}", inline=True)
+                    embed.add_field(name="Status", value="⏳ Processando...", inline=True)
+                    embed.set_footer(text=f"ID: #{withdrawal['id']}")
+                    
+                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    
+                    # Processar saque imediatamente em background
+                    import asyncio
+                    asyncio.create_task(withdrawal_manager.process_withdrawal(withdrawal['id']))
+                    
+                except Exception as e:
+                    print(f"Erro ao processar saque: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        
+        # Mostrar modal
+        await interaction.response.send_modal(WithdrawalModal())
+        
+    except Exception as e:
+        print(f"Erro ao abrir modal de saque: {e}")
+        await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="historico_vendas", description="Ver histórico de vendas e movimentações")
+@discord.app_commands.default_permissions(administrator=True)
+async def historico_vendas_cmd(interaction: discord.Interaction):
+    """Ver histórico de transações da carteira"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        from models.wallet_model import WalletModel
+        wallet_model = WalletModel()
+        
+        # Buscar histórico
+        history = await wallet_model.get_wallet_history(interaction.guild_id, limit=10)
+        
+        if not history:
+            await interaction.followup.send("📭 Nenhuma movimentação encontrada.", ephemeral=True)
+            return
+        
+        # Criar embed
+        embed = discord.Embed(
+            title="📊 Histórico de Movimentações",
+            description=f"Últimas 10 transações da carteira",
+            color=discord.Color.blue()
+        )
+        
+        for tx in history[:10]:
+            tx_type = tx['type']
+            
+            # Ícone baseado no tipo
+            if 'credit' in tx_type:
+                icon = "💰"
+                type_name = "Venda"
+            elif 'debit' in tx_type:
+                icon = "💸"
+                type_name = "Saque"
+            elif 'fee' in tx_type:
+                icon = "💳"
+                type_name = "Taxa"
+            else:
+                icon = "📌"
+                type_name = "Outro"
+            
+            value_str = f"R$ {tx['net_amount']:.2f}"
+            if tx.get('platform_fee', 0) > 0:
+                value_str += f" (taxa: R$ {tx['platform_fee']:.2f})"
+            
+            embed.add_field(
+                name=f"{icon} {type_name} - {tx['created_at'][:10]}",
+                value=f"{value_str}\nSaldo após: R$ {tx['balance_after']:.2f}",
+                inline=False
+            )
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro ao buscar histórico: {e}")
+        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+
+
+@bot.tree.command(name="historico_saques", description="Ver histórico de saques processados")
+@discord.app_commands.default_permissions(administrator=True)
+async def historico_saques_cmd(interaction: discord.Interaction):
+    """Ver histórico de saques"""
+    try:
+        await interaction.response.defer(ephemeral=True)
+        
+        from utils.withdrawal_manager import WithdrawalManager
+        withdrawal_manager = WithdrawalManager()
+        
+        # Buscar histórico
+        history = await withdrawal_manager.get_withdrawal_history(interaction.guild_id, limit=10)
+        
+        if not history:
+            await interaction.followup.send("📭 Nenhum saque encontrado.", ephemeral=True)
+            return
+        
+        # Criar embed
+        embed = discord.Embed(
+            title="💸 Histórico de Saques",
+            description=f"Últimos 10 saques solicitados",
+            color=discord.Color.purple()
+        )
+        
+        for withdrawal in history:
+            status = withdrawal['status']
+            
+            # Ícone baseado no status
+            status_icons = {
+                'pending': '⏳',
+                'processing': '🔄',
+                'completed': '✅',
+                'failed': '❌',
+                'rejected': '🚫',
+                'cancelled': '⛔'
+            }
+            icon = status_icons.get(status, '❓')
+            
+            value_text = f"Solicitado: R$ {withdrawal['amount_requested']:.2f}\n"
+            value_text += f"Taxa: R$ {withdrawal['fee_amount']:.2f}\n"
+            value_text += f"Recebido: R$ {withdrawal['net_amount']:.2f}"
+            
+            embed.add_field(
+                name=f"{icon} Saque #{withdrawal['id']} - {status.upper()}",
+                value=value_text,
+                inline=False
+            )
+        
+        await interaction.followup.send(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro ao buscar saques: {e}")
         await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
