@@ -10,7 +10,7 @@ class SetupMessageModal(ui.Modal):
     """Modal para criar mensagens embed personalizadas sem botões"""
     
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(title="Criar Mensagem Embed", timeout=300)
+        super().__init__(title="Criar Mensagem Embed", timeout=600)
         self.add_item(ui.InputText(
             label="Título", 
             placeholder="Ex: Bem-vindo ao Servidor!", 
@@ -49,7 +49,14 @@ class SetupMessageModal(ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a criação da mensagem embed"""
+        print(f"🔧 MODAL SUBMIT: SetupMessageModal iniciado por {interaction.user.name}")
+        
         try:
+            # Verificar se interaction ainda é válida
+            if interaction.response.is_done():
+                print("❌ Interaction já foi respondida!")
+                return
+                
             print(f"Modal de mensagem submetido por {interaction.user.name}")
             titulo = self.children[0].value.strip()
             descricao = self.children[1].value.strip()
@@ -100,20 +107,29 @@ class SetupMessageModal(ui.Modal):
                 embed.set_footer(text=rodape)
             
             # Enviar mensagem embed (sem view/botões)
+            print("🔧 Enviando resposta do modal...")
             await interaction.response.send_message(embed=embed)
-            print("Mensagem embed criada com sucesso")
+            print("✅ Mensagem embed criada com sucesso")
             
         except Exception as e:
-            print(f"Erro ao criar mensagem embed: {e}")
+            print(f"❌ ERRO CRÍTICO ao criar mensagem embed: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message("❌ Erro ao criar mensagem embed.", ephemeral=True)
+            
+            # Tentar enviar mensagem de erro
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message("❌ Erro ao criar mensagem embed.", ephemeral=True)
+                else:
+                    await interaction.followup.send("❌ Erro ao criar mensagem embed.", ephemeral=True)
+            except Exception as e2:
+                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
 
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
     
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(title="Configurar Sistema de Tickets", timeout=300)
+        super().__init__(title="Configurar Sistema de Tickets", timeout=600)
         self.add_item(ui.InputText(
             label="Headline", 
             placeholder="Ex: Sistema de Vendas Automatizado", 
@@ -149,7 +165,14 @@ class SetupTicketModal(ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets"""
+        print(f"🔧 MODAL SUBMIT: SetupTicketModal iniciado por {interaction.user.name}")
+        
         try:
+            # Verificar se interaction ainda é válida
+            if interaction.response.is_done():
+                print("❌ Interaction já foi respondida!")
+                return
+                
             print("🔧 ========== SETUP TICKET MODAL DEBUG ==========")
             print(f"🔧 Modal submetido por {interaction.user.name} (ID: {interaction.user.id})")
             print(f"🔧 Guild: {interaction.guild.name} (ID: {interaction.guild_id})")
@@ -352,16 +375,24 @@ class SetupTicketModal(ui.Modal):
                 return
             
         except Exception as e:
-            print(f"Erro ao configurar sistema de tickets: {e}")
+            print(f"❌ ERRO CRÍTICO ao configurar sistema de tickets: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+            
+            # Tentar enviar mensagem de erro
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+                else:
+                    await interaction.followup.send("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
+            except Exception as e2:
+                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
 
 class CouponInputModal(ui.Modal):
     """Modal para coletar código de cupom (opcional)"""
     
     def __init__(self, user, guild, product):
-        super().__init__(title="Cupom de Desconto (Opcional)", timeout=180)
+        super().__init__(title="Cupom de Desconto (Opcional)", timeout=600)
         self.user = user
         self.guild = guild
         self.product = product
@@ -375,7 +406,14 @@ class CouponInputModal(ui.Modal):
     
     async def on_submit(self, interaction: discord.Interaction):
         """Processa o cupom e cria o ticket"""
+        print(f"🔧 MODAL SUBMIT: CouponInputModal iniciado por {interaction.user.name}")
+        
         try:
+            # Verificar se interaction ainda é válida
+            if interaction.response.is_done():
+                print("❌ Interaction já foi respondida!")
+                return
+                
             coupon_code = self.children[0].value.strip() if self.children[0].value else None
             
             # Importar TicketManager e criar instância com bot
@@ -401,11 +439,23 @@ class CouponInputModal(ui.Modal):
             
             # Mensagem de erro mais informativa
             error_message = str(e) if str(e) else "Erro desconhecido ao criar ticket"
-            await interaction.response.send_message(
-                f"❌ **Algo deu errado, tente novamente.**\n\n"
-                f"Detalhes técnicos: {error_message[:100]}",
-                ephemeral=True
-            )
+            
+            # Tentar enviar mensagem de erro
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message(
+                        f"❌ **Algo deu errado, tente novamente.**\n\n"
+                        f"Detalhes técnicos: {error_message[:100]}",
+                        ephemeral=True
+                    )
+                else:
+                    await interaction.followup.send(
+                        f"❌ **Algo deu errado, tente novamente.**\n\n"
+                        f"Detalhes técnicos: {error_message[:100]}",
+                        ephemeral=True
+                    )
+            except Exception as e2:
+                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
 
 class ProductSelect(ui.Select):
     """Select menu personalizado para escolher produto"""
@@ -623,7 +673,7 @@ class CreateCouponModal(ui.Modal):
     """Modal para criar cupom"""
     
     def __init__(self):
-        super().__init__(title="Criar Novo Cupom", timeout=300)
+        super().__init__(title="Criar Novo Cupom", timeout=600)
         
         self.add_item(ui.InputText(
             label="Código do Cupom",
@@ -664,7 +714,14 @@ class CreateCouponModal(ui.Modal):
     
     async def on_submit(self, interaction: discord.Interaction):
         """Processa criação do cupom"""
+        print(f"🔧 MODAL SUBMIT: CreateCouponModal iniciado por {interaction.user.name}")
+        
         try:
+            # Verificar se interaction ainda é válida
+            if interaction.response.is_done():
+                print("❌ Interaction já foi respondida!")
+                return
+                
             from models.coupon_model import CouponModel
             from datetime import datetime
             
@@ -719,16 +776,24 @@ class CreateCouponModal(ui.Modal):
         except ValueError:
             await interaction.response.send_message("❌ Valores inválidos! Verifique desconto e limite.", ephemeral=True)
         except Exception as e:
-            print(f"Erro ao criar cupom: {e}")
+            print(f"❌ ERRO CRÍTICO ao criar cupom: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message("❌ Erro ao criar cupom.", ephemeral=True)
+            
+            # Tentar enviar mensagem de erro
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message("❌ Erro ao criar cupom.", ephemeral=True)
+                else:
+                    await interaction.followup.send("❌ Erro ao criar cupom.", ephemeral=True)
+            except Exception as e2:
+                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
 
 class SetupSupportModal(ui.Modal):
     """Modal para configurar o sistema de tickets de suporte com select menu"""
     
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(title="Configurar Tickets de Suporte", timeout=300)
+        super().__init__(title="Configurar Tickets de Suporte", timeout=600)
         self.add_item(ui.InputText(
             label="Título da Mensagem", 
             placeholder="Ex: Central de Atendimento", 
@@ -764,7 +829,14 @@ class SetupSupportModal(ui.Modal):
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets de suporte"""
+        print(f"🔧 MODAL SUBMIT: SetupSupportModal iniciado por {interaction.user.name}")
+        
         try:
+            # Verificar se interaction ainda é válida
+            if interaction.response.is_done():
+                print("❌ Interaction já foi respondida!")
+                return
+                
             print(f"Modal de suporte submetido por {interaction.user.name}")
             titulo = self.children[0].value.strip()
             descricao = self.children[1].value.strip()
@@ -862,10 +934,18 @@ class SetupSupportModal(ui.Modal):
             print(f"Modal de suporte processado com sucesso - {len(opcoes_config)} opções criadas")
             
         except Exception as e:
-            print(f"Erro ao configurar sistema de suporte: {e}")
+            print(f"❌ ERRO CRÍTICO ao configurar sistema de suporte: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
+            
+            # Tentar enviar mensagem de erro
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
+                else:
+                    await interaction.followup.send("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
+            except Exception as e2:
+                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
 
 class CustomSupportTicketButton(ui.Button):
     """Botão customizado para criar ticket de suporte com categoria específica"""

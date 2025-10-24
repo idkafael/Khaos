@@ -36,6 +36,41 @@ async def teste_slash(ctx):
     )
     await ctx.response.send_message(embed=embed)
 
+@bot.slash_command(name="teste_modal", description="[ADMIN] Testar funcionamento dos modais")
+@discord.default_permissions(administrator=True)
+async def teste_modal_slash(ctx: discord.ApplicationContext):
+    """Comando admin para testar se os modais estão funcionando"""
+    try:
+        print(f"🔧 Comando teste_modal executado por {ctx.user.name}")
+        
+        from utils.ticket_views import SetupMessageModal
+        print("✅ SetupMessageModal importado com sucesso!")
+        
+        modal = SetupMessageModal()
+        print("✅ Modal de teste criado com sucesso!")
+        
+        await ctx.response.send_modal(modal)
+        print("✅ Modal de teste enviado com sucesso!")
+        
+    except ImportError as e:
+        print(f"❌ Erro de importação: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro de importação no sistema de modais.",
+            color=0xff0000
+        )
+        await ctx.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        print(f"❌ Erro no comando teste_modal: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro ao testar modais.",
+            color=0xff0000
+        )
+        await ctx.response.send_message(embed=embed, ephemeral=True)
+
 @bot.slash_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
 @discord.default_permissions(administrator=True)
 async def setup_ticket_slash(ctx: discord.ApplicationContext):
