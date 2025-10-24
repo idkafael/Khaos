@@ -394,7 +394,9 @@ class TicketManager:
                 amount=product['price'],
                 description=f"Compra: {product['name']}",
                 customer_email=f"{user.name.lower().replace(' ', '')}@khaos.com",
-                customer_name=user.display_name
+                customer_name=user.display_name,
+                guild_id=guild_id,  # Passa guild_id para identificar gateway preferido
+                transaction_id=transaction['id']  # Passa transaction_id para vincular pagamento
             )
             
             if payment_data:

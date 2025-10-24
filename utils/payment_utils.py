@@ -6,28 +6,20 @@ from typing import Dict, Optional
 import json
 
 class PaymentUtils:
-    """Utilitários para processamento de pagamentos via Pix usando PushinPay"""
+    """Utilitários para processamento de pagamentos via Pix usando Multi-Gateway (Mercado Pago + PushinPay)"""
     
     def __init__(self):
-        self.pushinpay_api_key = Config.PUSHINPAY_API_KEY
-        self.pushinpay_base_url = "https://api.pushinpay.com.br"
-        self.pushinpay_sandbox_url = "https://api-sandbox.pushinpay.com.br"
-        self.use_sandbox = False  # FORÇAR PRODUÇÃO
-        self.base_url = self.pushinpay_base_url  # SEMPRE PRODUÇÃO
-        self.headers = {
-            "Authorization": f"Bearer {self.pushinpay_api_key}",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
+        # Import do Gateway Selector (Mercado Pago + PushinPay)
+        from utils.gateway_selector import GatewaySelector
+        self.gateway_selector = GatewaySelector()
         
         # Debug: Verificar configuração
-        print(f"🚀 PRODUÇÃO PaymentUtils: API Key carregada: {self.pushinpay_api_key[:10]}...")
-        print(f"🚀 PRODUÇÃO PaymentUtils: Modo: PRODUÇÃO (não sandbox)")
-        print(f"🚀 PRODUÇÃO PaymentUtils: Base URL: {self.base_url}")
-        print(f"🚀 PRODUÇÃO PaymentUtils: Headers: {self.headers}")
+        print(f"💳 PaymentUtils: Usando Multi-Gateway (Mercado Pago prioritário)")
+        gateways_disponiveis = self.gateway_selector.get_available_gateways()
+        print(f"✅ Gateways disponíveis: {', '.join(gateways_disponiveis)}")
     
-    async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str, split_config: Optional[Dict] = None) -> Optional[Dict]:
-        """Cria um pagamento via Pix usando a API PushinPay
+    async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str, split_config: Optional[Dict] = None, guild_id: int = None, transaction_id: int = None) -> Optional[Dict]:
+        """Cria um pagamento via Pix usando Multi-Gateway (Mercado Pago prioritário, PushinPay fallback)
         
         Args:
             amount: Valor do pagamento
@@ -35,93 +27,87 @@ class PaymentUtils:
             customer_email: Email do cliente
             customer_name: Nome do cliente
             split_config: Configuração de split (opcional) - dict com 'recipient_id' e 'percent'
+            guild_id: ID do servidor Discord (para identificar gateway preferido)
+            transaction_id: ID da transação no banco
         """
         try:
-            print(f"🔧 Debug: Iniciando pagamento - Valor: {amount}, Email: {customer_email}")
-            print(f"🔧 Debug: API Key: {self.pushinpay_api_key[:10]}...")
-            print(f"🔧 Debug: Base URL: {self.base_url}")
+            print(f"💳 Iniciando pagamento - Valor: R$ {amount:.2f}")
+            print(f"📧 Cliente: {customer_name} ({customer_email})")
+            print(f"📝 Descrição: {description}")
             
-            # Converter valor para centavos (PushinPay usa centavos)
-            amount_cents = int(amount * 100)
-            
-            # Validar valor mínimo (50 centavos)
-            if amount_cents < 50:
-                print("❌ Valor mínimo é R$ 0,50 (50 centavos)")
+            # Validar valor mínimo (R$ 0,50)
+            if amount < 0.50:
+                print("❌ Valor mínimo é R$ 0,50")
                 return None
             
-            # Preparar regras de split se configurado
-            split_rules = []
-            if split_config and split_config.get('recipient_id') and split_config.get('percent'):
-                recipient_id = split_config['recipient_id']
-                split_percent = float(split_config['percent'])
-                split_amount = int(amount_cents * (split_percent / 100))
-                
-                split_rules.append({
-                    "recipient_id": recipient_id,
-                    "amount": split_amount,
-                    "liable": True,  # Responsável por chargebacks
-                    "charge_processing_fee": False
-                })
-                
-                print(f"🔧 Debug: Split configurado - Destinatário: {recipient_id}, Percentual: {split_percent}%, Valor: {split_amount} centavos")
-            
-            # Dados do pagamento para PushinPay
-            payment_data = {
-                "value": amount_cents,
-                "split_rules": split_rules
-            }
-            
-            print(f"🔧 Debug: Dados do pagamento: {payment_data}")
-            print(f"🔧 Debug: Headers: {self.headers}")
-            
-            # Fazer requisição para a API PushinPay
-            url = f"{self.base_url}/api/pix/cashIn"
-            print(f"🔧 Debug: URL da requisição: {url}")
-            print(f"🔧 Debug: Método: POST")
-            print(f"🔧 Debug: JSON data: {payment_data}")
-            
-            response = requests.post(
-                url,
-                headers=self.headers,
-                json=payment_data,
-                timeout=30
+            # Usar Gateway Selector para criar pagamento
+            # Prioridade: Mercado Pago → PushinPay (fallback automático)
+            payment_data = await self.gateway_selector.create_payment(
+                guild_id=guild_id or 0,  # Se não tiver guild_id, usa 0 (vai usar Mercado Pago por padrão)
+                amount=amount,
+                description=description,
+                transaction_id=transaction_id or 0,
+                user_email=customer_email
             )
             
-            print(f"🔧 Debug: Status da resposta: {response.status_code}")
-            print(f"🔧 Debug: Resposta: {response.text}")
+            if not payment_data:
+                print("❌ Falha ao criar pagamento em TODOS os gateways")
+                return None
             
-            if response.status_code == 200:
-                payment_info = response.json()
-                
-                # Extrair dados do QR Code
-                qr_code_data = payment_info.get('qr_code', '')
-                qr_code_id = payment_info.get('id', '')
-                qr_code_base64 = payment_info.get('qr_code_base64', '')
+            # Identificar qual gateway foi usado
+            gateway_used = payment_data.get('gateway_used', 'mercadopago')
+            print(f"✅ Pagamento criado via {gateway_used.upper()}")
+            
+            # Normalizar resposta para formato esperado
+            if gateway_used == 'mercadopago':
+                # Mercado Pago retorna: qr_code_base64, qr_code (pix copia e cola), payment_id
+                qr_code_data = payment_data.get('qr_code', '')
+                payment_id = payment_data.get('payment_id', '')
                 
                 # Gerar QR Code visual
-                qr_code_image = self._generate_qr_code(qr_code_data)
+                qr_code_image = self._generate_qr_code(qr_code_data) if qr_code_data else None
                 
                 return {
-                    'id': qr_code_id,
+                    'id': payment_id,
                     'pix_code': qr_code_data,
                     'qr_code': qr_code_data,
                     'qr_code_image': qr_code_image,
-                    'qr_code_base64': qr_code_base64,
-                    'status': payment_info.get('status', 'created'),
+                    'qr_code_base64': payment_data.get('qr_code_base64', ''),
+                    'status': payment_data.get('status', 'pending'),
                     'value': amount,
-                    'value_cents': amount_cents,
-                    'correlation_id': f"discord_{customer_name}_{amount_cents}",
-                    'webhook_url': payment_info.get('webhook_url'),
-                    'end_to_end_id': payment_info.get('end_to_end_id'),
-                    'payer_name': payment_info.get('payer_name'),
-                    'payer_national_registration': payment_info.get('payer_national_registration')
+                    'correlation_id': f"discord_{customer_name}_{int(amount*100)}",
+                    'gateway_used': 'mercadopago'
                 }
+            
+            elif gateway_used == 'pushinpay':
+                # PushinPay retorna estrutura diferente
+                qr_code_data = payment_data.get('qr_code', '')
+                payment_id = payment_data.get('id', '')
+                
+                # Gerar QR Code visual
+                qr_code_image = self._generate_qr_code(qr_code_data) if qr_code_data else None
+                
+                return {
+                    'id': payment_id,
+                    'pix_code': qr_code_data,
+                    'qr_code': qr_code_data,
+                    'qr_code_image': qr_code_image,
+                    'qr_code_base64': payment_data.get('qr_code_base64', ''),
+                    'status': payment_data.get('status', 'created'),
+                    'value': amount,
+                    'value_cents': int(amount * 100),
+                    'correlation_id': f"discord_{customer_name}_{int(amount*100)}",
+                    'gateway_used': 'pushinpay'
+                }
+            
             else:
-                print(f"Erro na API PushinPay: {response.status_code} - {response.text}")
+                print(f"⚠️ Gateway desconhecido: {gateway_used}")
                 return None
                 
         except Exception as e:
-            print(f"Erro ao criar pagamento Pix: {e}")
+            print(f"❌ Erro ao criar pagamento Pix: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def check_payment_status(self, transaction_id: str) -> str:
