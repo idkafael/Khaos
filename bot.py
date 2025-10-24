@@ -13,6 +13,7 @@ from models.transaction_model import TransactionModel
 from utils.payment_utils import PaymentUtils
 from utils.ticket_views import TicketView, TicketChannelView
 from utils.ticket_manager import TicketManager
+from utils.log_system import LogSystem
 from config.config import Config
 
 # Configuração do bot
@@ -1481,7 +1482,7 @@ async def produtos_slash(interaction: discord.Interaction):
 product_model = ProductModel()
 transaction_model = TransactionModel()
 payment_utils = PaymentUtils()
-ticket_manager = TicketManager()
+# ticket_manager será inicializado após o bot estar pronto
 
 # Dicionário para armazenar tickets ativos
 active_tickets = {}
@@ -1526,6 +1527,15 @@ async def on_ready():
     print(f'Bot {bot.user} está online!')
     print(f'ID: {bot.user.id}')
     print(f'Guilds: {len(bot.guilds)}')
+    
+    # Inicializar sistema de logs
+    bot.log_system = LogSystem(bot)
+    print("✅ Sistema de logs inicializado")
+    
+    # Inicializar ticket manager com bot
+    global ticket_manager
+    ticket_manager = TicketManager(bot)
+    print("✅ Ticket Manager inicializado")
     
     # Listar guilds conectadas
     for guild in bot.guilds:
@@ -1989,6 +1999,35 @@ async def monitor_payment(transaction_id, user_id):
                 # Atualizar transação como aprovada
                 await transaction_model.update_transaction(transaction_id, {'status': 'approved'})
                 
+                # Buscar dados da transação para logs
+                transaction = await transaction_model.get_transaction(transaction_id)
+                product_id = transaction.get('product_id') if transaction else None
+                guild_id = transaction.get('guild_id') if transaction else None
+                amount = transaction.get('amount', 0) if transaction else 0
+                
+                # Buscar dados do produto
+                product_name = "Produto"
+                if product_id and guild_id:
+                    product_model = ProductModel()
+                    product = await product_model.get_product_by_id(product_id, guild_id)
+                    if product:
+                        product_name = product.get('name', 'Produto')
+                
+                # LOG: Pagamento confirmado
+                if hasattr(bot, 'log_system') and guild_id:
+                    try:
+                        user = bot.get_user(user_id)
+                        if user:
+                            await bot.log_system.log_payment_confirmed(
+                                guild_id=guild_id,
+                                user=user,
+                                product_name=product_name,
+                                amount=amount,
+                                transaction_id=transaction_id
+                            )
+                    except Exception as log_err:
+                        print(f"Erro ao enviar log de pagamento confirmado: {log_err}")
+                
                 # Enviar mensagem "Quase lá!"
                 if user_id in active_tickets:
                     channel_id = active_tickets[user_id]['channel_id']
@@ -2029,6 +2068,21 @@ async def monitor_payment(transaction_id, user_id):
                         embed.set_footer(text="Use /status para verificar o histórico • Ticket será fechado em breve")
                         
                         await channel.send(embed=embed)
+                        
+                        # LOG: Produto entregue
+                        if hasattr(bot, 'log_system') and guild_id:
+                            try:
+                                user = bot.get_user(user_id)
+                                if user:
+                                    await bot.log_system.log_product_delivered(
+                                        guild_id=guild_id,
+                                        user=user,
+                                        product_name=product_name,
+                                        amount=amount,
+                                        channel=channel
+                                    )
+                            except Exception as log_err:
+                                print(f"Erro ao enviar log de produto entregue: {log_err}")
                         
                         # Limpar ticket ativo
                         del active_tickets[user_id]

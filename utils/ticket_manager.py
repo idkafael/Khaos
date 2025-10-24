@@ -6,7 +6,8 @@ from config.config import Config
 class TicketManager:
     """Gerenciador de tickets e canais privados"""
     
-    def __init__(self):
+    def __init__(self, bot=None):
+        self.bot = bot
         self.ticket_category_id = getattr(Config, 'TICKET_CATEGORY_ID', None)
         self.admin_role_id = getattr(Config, 'ADMIN_ROLE_ID', None)
         self.logs_channel_id = getattr(Config, 'TICKET_LOGS_CHANNEL_ID', None)
@@ -72,6 +73,19 @@ class TicketManager:
             # Log da criação do ticket
             await self._log_ticket_creation(guild, user, product, ticket_channel)
             
+            # LOG: Ticket de compra criado
+            if self.bot and hasattr(self.bot, 'log_system'):
+                try:
+                    await self.bot.log_system.log_ticket_created(
+                        guild_id=guild.id,
+                        user=user,
+                        product_name=product['name'],
+                        product_price=product['price'],
+                        channel=ticket_channel
+                    )
+                except Exception as log_err:
+                    print(f"Erro ao enviar log de ticket criado: {log_err}")
+            
             return True, f"Ticket criado com sucesso! Acesse {ticket_channel.mention}"
             
         except Exception as e:
@@ -133,6 +147,18 @@ class TicketManager:
             }
             
             print(f"✅ Ticket de suporte criado: {channel_name} (Categoria: {categoria})")
+            
+            # LOG: Ticket de suporte criado
+            if self.bot and hasattr(self.bot, 'log_system'):
+                try:
+                    await self.bot.log_system.log_support_ticket_created(
+                        guild_id=guild.id,
+                        user=user,
+                        category=categoria,
+                        channel=ticket_channel
+                    )
+                except Exception as log_err:
+                    print(f"Erro ao enviar log de ticket de suporte criado: {log_err}")
             
             return True, f"Ticket de {categoria} criado! Acesse {ticket_channel.mention}"
             
@@ -381,6 +407,19 @@ class TicketManager:
                 })
                 
                 print(f"✅ Pagamento gerado com sucesso! ID: {payment_data.get('id')}")
+                
+                # LOG: Pagamento gerado
+                if self.bot and hasattr(self.bot, 'log_system'):
+                    try:
+                        await self.bot.log_system.log_payment_generated(
+                            guild_id=channel.guild.id,
+                            user=user,
+                            product_name=product['name'],
+                            amount=product['price'],
+                            transaction_id=transaction['id']
+                        )
+                    except Exception as log_err:
+                        print(f"Erro ao enviar log de pagamento gerado: {log_err}")
                 
                 # Enviar pagamento no canal
                 await self._send_payment_message(channel, user, product, payment_data)
