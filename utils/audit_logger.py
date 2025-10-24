@@ -4,7 +4,7 @@ Registra todas operações financeiras e ações administrativas
 """
 
 from supabase import create_client
-from config.config import SUPABASE_URL, SUPABASE_KEY
+from config.config import Config
 from typing import Optional, Dict, Any
 from datetime import datetime
 import json
@@ -13,7 +13,7 @@ class AuditLogger:
     """Logger de auditoria para operações financeiras"""
     
     def __init__(self):
-        self.supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        self.supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
     
     async def log(
         self,

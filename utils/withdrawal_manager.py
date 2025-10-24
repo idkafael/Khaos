@@ -4,7 +4,7 @@ Processa solicitações de saque via Pix automaticamente
 """
 
 from supabase import create_client
-from config.config import SUPABASE_URL, SUPABASE_KEY
+from config.config import Config
 from utils.mercadopago_manager import MercadoPagoManager
 from models.wallet_model import WalletModel
 from decimal import Decimal
@@ -16,7 +16,7 @@ class WithdrawalManager:
     """Gerencia solicitações de saque dos servidores"""
     
     def __init__(self):
-        self.supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        self.supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
         self.mp_manager = MercadoPagoManager()
         self.wallet_model = WalletModel()
     

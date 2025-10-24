@@ -4,7 +4,7 @@ Gerencia saldo dos servidores, transações e histórico financeiro
 """
 
 from supabase import create_client
-from config.config import SUPABASE_URL, SUPABASE_KEY
+from config.config import Config
 from decimal import Decimal
 from typing import Optional, Dict, List
 from datetime import datetime
@@ -13,7 +13,7 @@ class WalletModel:
     """Modelo para gerenciar carteira virtual dos servidores"""
     
     def __init__(self):
-        self.supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        self.supabase = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
         self.SALE_FEE = Decimal('0.80')  # Taxa fixa por venda: R$ 0,80
         self.WITHDRAWAL_FEE_PERCENT = Decimal('3.00')  # Taxa de saque: 3%
         self.MIN_WITHDRAWAL = Decimal('10.00')  # Saque mínimo: R$ 10,00
