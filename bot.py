@@ -23,7 +23,7 @@ intents.guilds = True
 intents.members = True
 
 bot = discord.Bot(intents=intents)
-# Deploy: 24/10/2025 15:25
+# Deploy: 24/10/2025 15:35 - Fix InputText
 
 # Adicionar comandos slash manualmente
 @bot.slash_command(name="teste", description="Comando de teste")
