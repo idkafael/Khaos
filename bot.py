@@ -3311,3 +3311,4 @@ if __name__ == "__main__":
         bot.run(Config.DISCORD_TOKEN)
     except Exception as e:
         print(f"Erro ao iniciar o bot: {e}")
+# Force deploy - 10/24/2025 17:16:33
