@@ -154,11 +154,13 @@ class SetupTicketModal(ui.Modal):
             print(f"🔧 Modal submetido por {interaction.user.name} (ID: {interaction.user.id})")
             print(f"🔧 Guild: {interaction.guild.name} (ID: {interaction.guild_id})")
             print(f"🔧 Channel: {interaction.channel.name} (ID: {interaction.channel_id})")
+            print(f"🔧 Interaction type: {type(interaction)}")
+            print(f"🔧 Interaction responded: {interaction.response.is_done()}")
 
             # Debug: Verificar todos os children
             print(f"🔧 Modal tem {len(self.children)} children:")
             for i, child in enumerate(self.children):
-                print(f"🔧   Child {i}: {child.label} = '{child.value}'")
+                print(f"🔧   Child {i}: {child.label} = '{child.value}' (type: {type(child.value)})")
 
             headline = self.children[0].value
             descricao = self.children[1].value
@@ -167,13 +169,15 @@ class SetupTicketModal(ui.Modal):
             cor_hex = self.children[4].value.strip()
 
             print("🔧 ========== VALORES RECEBIDOS ==========")
-            print(f"🔧 Headline: '{headline}'")
-            print(f"🔧 Descrição: '{descricao}'")
-            print(f"🔧 Product IDs Input: '{product_ids_input}'")
-            print(f"🔧 Nome Botão: '{nome_botao}'")
-            print(f"🔧 Cor Hex: '{cor_hex}'")
+            print(f"🔧 Headline: '{headline}' (type: {type(headline)})")
+            print(f"🔧 Descrição: '{descricao}' (type: {type(descricao)})")
+            print(f"🔧 Product IDs Input: '{product_ids_input}' (type: {type(product_ids_input)})")
+            print(f"🔧 Nome Botão: '{nome_botao}' (type: {type(nome_botao)})")
+            print(f"🔧 Cor Hex: '{cor_hex}' (type: {type(cor_hex)})")
             print(f"🔧 User permissions: {interaction.user.guild_permissions}")
             print(f"🔧 User is admin: {interaction.user.guild_permissions.administrator}")
+            print(f"🔧 Bot has manage channels: {interaction.guild.me.guild_permissions.manage_channels}")
+            print(f"🔧 Bot has manage roles: {interaction.guild.me.guild_permissions.manage_roles}")
             
             # Processar IDs dos produtos
             print("🔧 ========== PROCESSANDO PRODUTOS ==========")
@@ -213,10 +217,21 @@ class SetupTicketModal(ui.Modal):
                 print(f"❌ ERRO AO SALVAR NO BANCO: {e}")
                 import traceback
                 traceback.print_exc()
-                await interaction.response.send_message(
-                    f"❌ Erro interno do servidor. Verifique os logs.\n\nErro: {str(e)}",
-                    ephemeral=True
-                )
+
+                # Verificar se é erro de coluna inexistente
+                if "ticket_allowed_products" in str(e) or "column" in str(e).lower():
+                    await interaction.response.send_message(
+                        "❌ **Erro de configuração do banco de dados!**\n\n"
+                        "A coluna `ticket_allowed_products` não existe na tabela.\n"
+                        "Execute o arquivo `database_ticket_product_filter.sql` no Supabase.\n\n"
+                        f"Erro técnico: {str(e)}",
+                        ephemeral=True
+                    )
+                else:
+                    await interaction.response.send_message(
+                        f"❌ Erro interno do servidor. Verifique os logs.\n\nErro: {str(e)}",
+                        ephemeral=True
+                    )
                 return
             
             print("🔧 ========== VERIFICANDO RESULTADO DO SAVE ==========")
@@ -297,9 +312,34 @@ class SetupTicketModal(ui.Modal):
                 print(f"✅ View criada com botão: '{nome_botao}'")
 
                 print("🔧 ========== ENVIANDO RESPOSTA ==========")
-                await interaction.response.send_message(embed=embed, view=view)
-                print("✅ Resposta enviada com sucesso!")
-                print("🎉 Modal processado completamente!")
+                print(f"🔧 Interaction responded: {interaction.response.is_done()}")
+
+                try:
+                    await interaction.response.send_message(embed=embed, view=view)
+                    print("✅ Resposta enviada com sucesso!")
+                    print("🎉 Modal processado completamente!")
+                except Exception as e:
+                    print(f"❌ ERRO AO ENVIAR RESPOSTA: {e}")
+                    print(f"❌ Interaction already responded: {interaction.response.is_done()}")
+
+                    # Se já foi respondido, tentar followup
+                    if interaction.response.is_done():
+                        print(f"🔧 Tentando followup message...")
+                        try:
+                            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+                            print("✅ Followup enviado com sucesso!")
+                        except Exception as e2:
+                            print(f"❌ Erro no followup: {e2}")
+                            # Última tentativa: editar a resposta original
+                            try:
+                                await interaction.edit_original_response(embed=embed, view=view)
+                                print("✅ Edit original response com sucesso!")
+                            except Exception as e3:
+                                print(f"❌ Erro no edit original response: {e3}")
+                                # Forçar erro para o usuário ver
+                                raise e3
+                    else:
+                        raise e
 
             except Exception as e:
                 print(f"❌ ERRO AO CRIAR EMBED/VIEW: {e}")

@@ -304,6 +304,19 @@ class GuildConfigModel:
 
         try:
             print(f"🔧 [GuildConfigModel] Chamando create_or_update_config...")
+
+            # Primeiro, verificar se a coluna ticket_allowed_products existe
+            print(f"🔧 [GuildConfigModel] Verificando se coluna ticket_allowed_products existe...")
+            try:
+                # Tentar fazer uma query que use a coluna
+                test_result = self.supabase.table(self.table_name).select('ticket_allowed_products').limit(1).execute()
+                print(f"✅ Coluna ticket_allowed_products existe no banco")
+            except Exception as e:
+                print(f"❌ Coluna ticket_allowed_products NÃO existe no banco!")
+                print(f"❌ Erro: {e}")
+                print(f"💡 Execute: ALTER TABLE guild_config ADD COLUMN IF NOT EXISTS ticket_allowed_products INTEGER[];")
+                return False
+
             result = await self.create_or_update_config(
                 guild_id=guild_id,
                 ticket_allowed_products=product_ids

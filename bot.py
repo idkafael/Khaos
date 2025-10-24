@@ -90,18 +90,35 @@ async def setup_ticket_slash(ctx: discord.ApplicationContext):
 
         print("🔧 ========== ENVIANDO MODAL ==========")
         print("Enviando modal...")
+        print(f"🔧 Context response done: {ctx.response.is_done()}")
+
         try:
             await ctx.response.send_modal(modal)
             print("✅ Modal enviado com sucesso!")
         except Exception as e:
             print(f"❌ Erro ao enviar modal: {e}")
+            print(f"❌ Context response already done: {ctx.response.is_done()}")
             import traceback
             traceback.print_exc()
-            embed = discord.Embed(
-                description="❌ Erro ao abrir formulário.",
-                color=0x8B5CF6
-            )
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+
+            # Se já foi respondido, tentar followup
+            if ctx.response.is_done():
+                print("🔧 Context já respondido, tentando followup...")
+                try:
+                    embed = discord.Embed(
+                        description="❌ Erro ao abrir formulário.",
+                        color=0x8B5CF6
+                    )
+                    await ctx.followup.send(embed=embed, ephemeral=True)
+                    print("✅ Followup enviado com sucesso!")
+                except Exception as e2:
+                    print(f"❌ Erro no followup: {e2}")
+            else:
+                embed = discord.Embed(
+                    description="❌ Erro ao abrir formulário.",
+                    color=0x8B5CF6
+                )
+                await ctx.response.send_message(embed=embed, ephemeral=True)
             return
 
         print("🎉 Comando setup_ticket executado completamente!")
