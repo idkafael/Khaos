@@ -14,14 +14,14 @@ class SetupMessageModal(ui.Modal):
         self.add_item(ui.InputText(
             label="Título", 
             placeholder="Ex: Bem-vindo ao Servidor!", 
-            default="",
+            value="",
             max_length=256,
             required=False
         ))
         self.add_item(ui.InputText(
             label="Descrição", 
             placeholder="Escreva o conteúdo principal da mensagem...", 
-            default="",
+            value="",
             style=discord.TextStyle.long,
             max_length=4000,
             required=True
@@ -29,20 +29,20 @@ class SetupMessageModal(ui.Modal):
         self.add_item(ui.InputText(
             label="URL da Imagem", 
             placeholder="Cole o link da imagem (opcional)", 
-            default="",
+            value="",
             required=False,
             max_length=500
         ))
         self.add_item(ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #0099ff ou 0x0099ff", 
-            default="#0099ff",
+            value="#0099ff",
             max_length=10
         ))
         self.add_item(ui.InputText(
             label="Rodapé (Footer)", 
             placeholder="Texto no rodapé (opcional)", 
-            default="",
+            value="",
             required=False,
             max_length=100
         ))
@@ -117,33 +117,33 @@ class SetupTicketModal(ui.Modal):
         self.add_item(ui.InputText(
             label="Headline", 
             placeholder="Ex: Sistema de Vendas Automatizado", 
-            default="🛒 Sistema de Vendas Automatizado",
+            value="🛒 Sistema de Vendas Automatizado",
             max_length=100
         ))
         self.add_item(ui.InputText(
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
-            default="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
             style=discord.TextStyle.long,
             max_length=1000
         ))
         self.add_item(ui.InputText(
             label="IDs dos Produtos (vazio = todos)", 
             placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
-            default="",
+            value="",
             required=False,
             max_length=200
         ))
         self.add_item(ui.InputText(
             label="Nome do Botão", 
             placeholder="Ex: Criar Ticket de Compra", 
-            default="Criar Ticket de Compra",
+            value="Criar Ticket de Compra",
             max_length=80
         ))
         self.add_item(ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #0099ff ou 0x0099ff", 
-            default="#0099ff",
+            value="#0099ff",
             max_length=10
         ))
 
@@ -528,7 +528,7 @@ class CreateCouponModal(ui.Modal):
         self.add_item(ui.InputText(
             label="Limite de Usos (0 = ilimitado)",
             placeholder="Ex: 100",
-            default="0",
+            value="0",
             max_length=10,
             required=False
         ))
@@ -536,7 +536,7 @@ class CreateCouponModal(ui.Modal):
         self.add_item(ui.InputText(
             label="Um uso por usuário? (sim/nao)",
             placeholder="sim ou nao",
-            default="nao",
+            value="nao",
             max_length=3,
             required=False
         ))
@@ -618,19 +618,19 @@ class SetupSupportModal(ui.Modal):
         self.add_item(ui.InputText(
             label="Título da Mensagem", 
             placeholder="Ex: Central de Atendimento", 
-            default="🎫 Central de Atendimento",
+            value="🎫 Central de Atendimento",
             max_length=100
         ))
         self.add_item(ui.InputText(
             label="Descrição da Mensagem", 
             placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
-            default="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
+            value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
             max_length=1000
         ))
         self.add_item(ui.InputText(
             label="Opções Menu (EMOJI|Nome|Descrição)", 
             placeholder="Uma por linha", 
-            default="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
+            value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
             style=discord.TextStyle.long,
             max_length=1000,
             required=True
@@ -638,13 +638,13 @@ class SetupSupportModal(ui.Modal):
         self.add_item(ui.InputText(
             label="Nome do Botão | Emoji (opcional)", 
             placeholder="Ex: Abrir Ticket | 🎫", 
-            default="Abrir Ticket | 🎫",
+            value="Abrir Ticket | 🎫",
             max_length=100
         ))
         self.add_item(ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #5865F2", 
-            default="#5865F2",
+            value="#5865F2",
             max_length=10
         ))
 
