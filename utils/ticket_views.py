@@ -125,6 +125,656 @@ class SetupMessageModal(ui.Modal):
             except Exception as e2:
                 print(f"❌ Falha ao enviar mensagem de erro: {e2}")
 
+# Sistema de gerenciamento de views ativas
+active_config_views = {}
+
+class TicketConfigView(ui.View):
+    """View interativa para configurar tickets com preview em tempo real"""
+    
+    def __init__(self, guild_id: int):
+        super().__init__(timeout=1800)  # 30 minutos
+        self.guild_id = guild_id
+        self.config = {
+            'title': "🛒 Sistema de Vendas Automatizado",
+            'description': "Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            'color': 0x0099ff,
+            'button_name': "Criar Ticket de Compra",
+            'product_ids': None,
+            'author': None,
+            'thumbnail': None,
+            'image': None,
+            'footer': "Atendimento 24/7 • Pagamento via Pix",
+            'fields': []
+        }
+        self.message = None
+        
+        # Registrar esta view como ativa
+        active_config_views[guild_id] = self
+        
+        # Adicionar botões de configuração
+        self.add_item(TitleButton())
+        self.add_item(DescriptionButton())
+        self.add_item(ColorButton())
+        self.add_item(AuthorButton())
+        self.add_item(FieldsButton())
+        self.add_item(ImageButton())
+        self.add_item(FooterButton())
+        self.add_item(ButtonNameButton())
+        self.add_item(ProductFilterButton())
+        self.add_item(PreviewButton())
+        self.add_item(FinishButton())
+    
+    async def on_timeout(self):
+        """Quando o timeout expira"""
+        if self.guild_id in active_config_views:
+            del active_config_views[self.guild_id]
+        for item in self.children:
+            item.disabled = True
+        if self.message:
+            await self.message.edit(view=self)
+    
+    async def update_preview(self, interaction: discord.Interaction):
+        """Atualiza o preview do embed"""
+        try:
+            embed = discord.Embed(
+                title=self.config['title'],
+                description=self.config['description'],
+                color=self.config['color']
+            )
+            
+            # Adicionar autor se configurado
+            if self.config['author']:
+                embed.set_author(name=self.config['author'])
+            
+            # Adicionar thumbnail se configurado
+            if self.config['thumbnail']:
+                embed.set_thumbnail(url=self.config['thumbnail'])
+            
+            # Adicionar imagem se configurada
+            if self.config['image']:
+                embed.set_image(url=self.config['image'])
+            
+            # Adicionar campos se configurados
+            for field in self.config['fields']:
+                embed.add_field(
+                    name=field['name'],
+                    value=field['value'],
+                    inline=field.get('inline', False)
+                )
+            
+            # Adicionar rodapé se configurado
+            if self.config['footer']:
+                embed.set_footer(text=self.config['footer'])
+            
+            # Adicionar informações sobre filtro de produtos
+            if self.config['product_ids']:
+                embed.add_field(
+                    name="🔍 Produtos Filtrados",
+                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
+                    inline=False
+                )
+            
+            # Criar view com botão de ticket
+            ticket_view = TicketView(self.config['button_name'])
+            
+            if self.message:
+                await self.message.edit(embed=embed, view=self)
+            else:
+                self.message = await interaction.response.send_message(embed=embed, view=self)
+                
+        except Exception as e:
+            print(f"Erro ao atualizar preview: {e}")
+            import traceback
+            traceback.print_exc()
+
+class TitleButton(ui.Button):
+    """Botão para editar título"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Título",
+            style=discord.ButtonStyle.secondary,
+            emoji="📝",
+            custom_id="edit_title"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = TitleModal()
+        await interaction.response.send_modal(modal)
+
+class DescriptionButton(ui.Button):
+    """Botão para editar descrição"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Descrição",
+            style=discord.ButtonStyle.secondary,
+            emoji="📄",
+            custom_id="edit_description"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = DescriptionModal()
+        await interaction.response.send_modal(modal)
+
+class ColorButton(ui.Button):
+    """Botão para editar cor"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Cor",
+            style=discord.ButtonStyle.secondary,
+            emoji="🎨",
+            custom_id="edit_color"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = ColorModal()
+        await interaction.response.send_modal(modal)
+
+class AuthorButton(ui.Button):
+    """Botão para editar autor"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Autor",
+            style=discord.ButtonStyle.secondary,
+            emoji="👤",
+            custom_id="edit_author"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = AuthorModal()
+        await interaction.response.send_modal(modal)
+
+class FieldsButton(ui.Button):
+    """Botão para editar campos"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Campos",
+            style=discord.ButtonStyle.secondary,
+            emoji="📋",
+            custom_id="edit_fields"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = FieldsModal()
+        await interaction.response.send_modal(modal)
+
+class ImageButton(ui.Button):
+    """Botão para editar imagens"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Imagens",
+            style=discord.ButtonStyle.secondary,
+            emoji="🖼️",
+            custom_id="edit_images"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = ImageModal()
+        await interaction.response.send_modal(modal)
+
+class FooterButton(ui.Button):
+    """Botão para editar rodapé"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Rodapé",
+            style=discord.ButtonStyle.secondary,
+            emoji="🏷️",
+            custom_id="edit_footer"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = FooterModal()
+        await interaction.response.send_modal(modal)
+
+class ButtonNameButton(ui.Button):
+    """Botão para editar nome do botão"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Botão",
+            style=discord.ButtonStyle.secondary,
+            emoji="🔘",
+            custom_id="edit_button"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = ButtonNameModal()
+        await interaction.response.send_modal(modal)
+
+class ProductFilterButton(ui.Button):
+    """Botão para editar filtro de produtos"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Produtos",
+            style=discord.ButtonStyle.secondary,
+            emoji="🛍️",
+            custom_id="edit_products"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        modal = ProductFilterModal()
+        await interaction.response.send_modal(modal)
+
+class PreviewButton(ui.Button):
+    """Botão para atualizar preview"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Preview",
+            style=discord.ButtonStyle.primary,
+            emoji="👁️",
+            custom_id="update_preview"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        await view.update_preview(interaction)
+
+class FinishButton(ui.Button):
+    """Botão para finalizar configuração"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Finalizar",
+            style=discord.ButtonStyle.success,
+            emoji="✅",
+            custom_id="finish_config"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        view = self.view
+        await view.finish_configuration(interaction)
+
+class TitleModal(ui.Modal):
+    """Modal para editar título"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Título", timeout=300)
+        self.add_item(ui.InputText(
+            label="Título do Embed",
+            placeholder="Ex: Sistema de Vendas Automatizado",
+            value="🛒 Sistema de Vendas Automatizado",
+            max_length=256,
+            required=True
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            title = self.children[0].value.strip()
+            
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['title'] = title
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar título: {e}")
+            await interaction.response.send_message("❌ Erro ao editar título.", ephemeral=True)
+
+class DescriptionModal(ui.Modal):
+    """Modal para editar descrição"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Descrição", timeout=300)
+        self.add_item(ui.InputText(
+            label="Descrição do Embed",
+            placeholder="Ex: Clique no botão abaixo para criar um ticket de compra",
+            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            style=discord.InputTextStyle.paragraph,
+            max_length=4000,
+            required=True
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            description = self.children[0].value.strip()
+            
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['description'] = description
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar descrição: {e}")
+            await interaction.response.send_message("❌ Erro ao editar descrição.", ephemeral=True)
+
+class ColorModal(ui.Modal):
+    """Modal para editar cor"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Cor", timeout=300)
+        self.add_item(ui.InputText(
+            label="Cor do Embed (Hex)",
+            placeholder="Ex: #0099ff ou 0x0099ff",
+            value="#0099ff",
+            max_length=10,
+            required=True
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            color_hex = self.children[0].value.strip()
+            
+            # Converter cor hex para int
+            try:
+                color_hex = color_hex.strip().lower()
+                
+                if color_hex.startswith('#'):
+                    color_hex = color_hex[1:]
+                elif color_hex.startswith('0x'):
+                    color_hex = color_hex[2:]
+                
+                if len(color_hex) == 3:
+                    color_hex = color_hex[0] + color_hex[0] + color_hex[1] + color_hex[1] + color_hex[2] + color_hex[2]
+                
+                color_int = int(color_hex, 16)
+            except (ValueError, IndexError):
+                color_int = 0x0099ff
+            
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['color'] = color_int
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar cor: {e}")
+            await interaction.response.send_message("❌ Erro ao editar cor.", ephemeral=True)
+
+class AuthorModal(ui.Modal):
+    """Modal para editar autor"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Autor", timeout=300)
+        self.add_item(ui.InputText(
+            label="Nome do Autor",
+            placeholder="Ex: Sistema de Vendas",
+            value="",
+            max_length=256,
+            required=False
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            author = self.children[0].value.strip() if self.children[0].value else None
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['author'] = author
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar autor: {e}")
+            await interaction.response.send_message("❌ Erro ao editar autor.", ephemeral=True)
+
+class FieldsModal(ui.Modal):
+    """Modal para editar campos"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Campos", timeout=300)
+        self.add_item(ui.InputText(
+            label="Campos (Nome|Valor|Inline)",
+            placeholder="Um campo por linha. Ex: Nome|Valor|true",
+            value="",
+            style=discord.InputTextStyle.paragraph,
+            max_length=4000,
+            required=False
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            fields_text = self.children[0].value.strip()
+            fields = []
+            
+            if fields_text:
+                for line in fields_text.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    
+                    parts = line.split('|')
+                    if len(parts) >= 2:
+                        name = parts[0].strip()
+                        value = parts[1].strip()
+                        inline = parts[2].strip().lower() == 'true' if len(parts) > 2 else False
+                        
+                        fields.append({
+                            'name': name,
+                            'value': value,
+                            'inline': inline
+                        })
+            
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['fields'] = fields
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar campos: {e}")
+            await interaction.response.send_message("❌ Erro ao editar campos.", ephemeral=True)
+
+class ImageModal(ui.Modal):
+    """Modal para editar imagens"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Imagens", timeout=300)
+        self.add_item(ui.InputText(
+            label="URL da Imagem Principal",
+            placeholder="https://exemplo.com/imagem.png",
+            value="",
+            max_length=500,
+            required=False
+        ))
+        self.add_item(ui.InputText(
+            label="URL da Thumbnail",
+            placeholder="https://exemplo.com/thumbnail.png",
+            value="",
+            max_length=500,
+            required=False
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            image_url = self.children[0].value.strip() if self.children[0].value else None
+            thumbnail_url = self.children[1].value.strip() if self.children[1].value else None
+            
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['image'] = image_url
+                view.config['thumbnail'] = thumbnail_url
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar imagens: {e}")
+            await interaction.response.send_message("❌ Erro ao editar imagens.", ephemeral=True)
+
+class FooterModal(ui.Modal):
+    """Modal para editar rodapé"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Rodapé", timeout=300)
+        self.add_item(ui.InputText(
+            label="Texto do Rodapé",
+            placeholder="Ex: Atendimento 24/7 • Pagamento via Pix",
+            value="Atendimento 24/7 • Pagamento via Pix",
+            max_length=2048,
+            required=False
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            footer = self.children[0].value.strip() if self.children[0].value else None
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['footer'] = footer
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar rodapé: {e}")
+            await interaction.response.send_message("❌ Erro ao editar rodapé.", ephemeral=True)
+
+class ButtonNameModal(ui.Modal):
+    """Modal para editar nome do botão"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Nome do Botão", timeout=300)
+        self.add_item(ui.InputText(
+            label="Nome do Botão",
+            placeholder="Ex: Criar Ticket de Compra",
+            value="Criar Ticket de Compra",
+            max_length=80,
+            required=True
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            button_name = self.children[0].value.strip()
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['button_name'] = button_name
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar nome do botão: {e}")
+            await interaction.response.send_message("❌ Erro ao editar nome do botão.", ephemeral=True)
+
+class ProductFilterModal(ui.Modal):
+    """Modal para editar filtro de produtos"""
+    
+    def __init__(self):
+        super().__init__(title="Editar Filtro de Produtos", timeout=300)
+        self.add_item(ui.InputText(
+            label="IDs dos Produtos (vazio = todos)",
+            placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
+            value="",
+            max_length=200,
+            required=False
+        ))
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            product_ids_input = self.children[0].value.strip()
+            product_ids = None
+            
+            if product_ids_input:
+                try:
+                    product_ids = [int(pid.strip()) for pid in product_ids_input.split(',') if pid.strip()]
+                except ValueError:
+                    await interaction.response.send_message("❌ IDs de produtos inválidos! Use números separados por vírgula.", ephemeral=True)
+                    return
+            
+            # Buscar a view ativa
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['product_ids'] = product_ids
+                await view.update_preview(interaction)
+            else:
+                await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
+        except Exception as e:
+            print(f"Erro ao editar filtro de produtos: {e}")
+            await interaction.response.send_message("❌ Erro ao editar filtro de produtos.", ephemeral=True)
+
+    async def finish_configuration(self, interaction: discord.Interaction):
+        """Finaliza a configuração e salva no banco"""
+        try:
+            print(f"🔧 Finalizando configuração para guild {self.guild_id}")
+            
+            # Salvar configuração no banco de dados
+            from models.guild_config_model import GuildConfigModel
+            guild_config = GuildConfigModel()
+            
+            success = await guild_config.set_ticket_product_filter(
+                guild_id=self.guild_id,
+                product_ids=self.config['product_ids']
+            )
+            
+            if not success:
+                await interaction.response.send_message(
+                    "❌ Erro ao salvar configuração no banco de dados.",
+                    ephemeral=True
+                )
+                return
+            
+            # Criar embed final
+            embed = discord.Embed(
+                title=self.config['title'],
+                description=self.config['description'],
+                color=self.config['color']
+            )
+            
+            # Adicionar autor se configurado
+            if self.config['author']:
+                embed.set_author(name=self.config['author'])
+            
+            # Adicionar thumbnail se configurado
+            if self.config['thumbnail']:
+                embed.set_thumbnail(url=self.config['thumbnail'])
+            
+            # Adicionar imagem se configurada
+            if self.config['image']:
+                embed.set_image(url=self.config['image'])
+            
+            # Adicionar campos se configurados
+            for field in self.config['fields']:
+                embed.add_field(
+                    name=field['name'],
+                    value=field['value'],
+                    inline=field.get('inline', False)
+                )
+            
+            # Adicionar rodapé se configurado
+            if self.config['footer']:
+                embed.set_footer(text=self.config['footer'])
+            
+            # Adicionar informações sobre filtro de produtos
+            if self.config['product_ids']:
+                embed.add_field(
+                    name="🔍 Produtos Filtrados",
+                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
+                    inline=False
+                )
+            
+            # Criar view com botão de ticket
+            ticket_view = TicketView(self.config['button_name'])
+            
+            # Enviar mensagem final
+            await interaction.response.send_message(embed=embed, view=ticket_view)
+            print("✅ Configuração finalizada com sucesso!")
+            
+            # Remover view das ativas
+            if self.guild_id in active_config_views:
+                del active_config_views[self.guild_id]
+            
+        except Exception as e:
+            print(f"❌ Erro ao finalizar configuração: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(
+                "❌ Erro ao finalizar configuração.",
+                ephemeral=True
+            )
+
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
     
