@@ -33,13 +33,29 @@ class TransactionModel:
                 'inventory_id': kwargs.get('inventory_id'),
                 'delivered_at': kwargs.get('delivered_at'),
                 'delivery_channel_id': kwargs.get('delivery_channel_id'),
-                **kwargs
+                'guild_id': kwargs.get('guild_id')  # Adicionar guild_id explicitamente
             }
             
+            # Adicionar outros campos do kwargs que não foram listados acima
+            for key, value in kwargs.items():
+                if key not in transaction_data and value is not None:
+                    transaction_data[key] = value
+            
+            print(f"🔧 Debug: Criando transação com dados: {transaction_data}")
+            
             result = self.supabase.table(self.table_name).insert(transaction_data).execute()
-            return result.data[0] if result.data else None
+            
+            if result.data:
+                print(f"✅ Transação criada com sucesso: ID #{result.data[0].get('id')}")
+                return result.data[0]
+            else:
+                print(f"❌ Nenhum dado retornado ao criar transação")
+                return None
+                
         except Exception as e:
-            print(f"Erro ao criar transação: {e}")
+            print(f"❌ ERRO ao criar transação: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def get_transaction(self, transaction_id: int) -> Optional[Dict]:
