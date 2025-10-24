@@ -3374,3 +3374,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Erro ao iniciar o bot: {e}")
 # Force deploy - 10/24/2025 17:16:33
+# Force deploy - debug logs 10/24/2025 17:26:13
