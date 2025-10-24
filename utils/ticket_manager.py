@@ -255,8 +255,9 @@ class TicketManager:
         embed.add_field(
             name="⏳ Próximos Passos",
             value="1️⃣ Aguarde a geração do QR Code\n"
-                  "2️⃣ Pague via Pix\n"
-                  "3️⃣ Receba o produto automaticamente",
+                  "2️⃣ Se falhar, use `/comprar` (detecta automaticamente!)\n"
+                  "3️⃣ Pague via Pix\n"
+                  "4️⃣ Receba o produto automaticamente",
             inline=False
         )
         
@@ -276,67 +277,92 @@ class TicketManager:
         try:
             print(f"🔄 Gerando pagamento automático para {user.name} - {product['name']}")
             
-            # 1. Verificar estoque disponível
-            from models.inventory_model import InventoryModel
-            inventory_model = InventoryModel()
+            # Verificar se produto tem estoque ilimitado
+            is_unlimited = product.get('unlimited_stock', False)
             guild_id = channel.guild.id
             
-            stock_counts = await inventory_model.get_stock_count(product['id'], guild_id)
-            if stock_counts['available'] == 0:
-                # Sem estoque disponível
-                embed = discord.Embed(
-                    title="❌ Produto Esgotado",
-                    description=f"Infelizmente o produto **{product['name']}** está temporariamente sem estoque.",
-                    color=0xff0000
-                )
-                embed.add_field(
-                    name="📬 Notificação",
-                    value="Entre em contato com um administrador para saber quando teremos novos itens disponíveis.",
-                    inline=False
-                )
-                await channel.send(embed=embed)
-                return
-            
-            # 2. Reservar item do estoque
-            available_stock = await inventory_model.get_available_stock(product['id'], guild_id)
-            if not available_stock:
-                await self._send_out_of_stock_message(channel, product)
-                return
+            # 1. Verificar estoque disponível (apenas para produtos gerenciados)
+            inventory_id = None
+            if not is_unlimited:
+                from models.inventory_model import InventoryModel
+                inventory_model = InventoryModel()
+                
+                stock_counts = await inventory_model.get_stock_count(product['id'], guild_id)
+                print(f"📦 Estoque disponível: {stock_counts['available']} itens")
+                
+                if stock_counts['available'] == 0:
+                    # Sem estoque disponível
+                    embed = discord.Embed(
+                        title="❌ Produto Esgotado",
+                        description=f"Infelizmente o produto **{product['name']}** está temporariamente sem estoque.",
+                        color=0xff0000
+                    )
+                    embed.add_field(
+                        name="📬 Notificação",
+                        value="Entre em contato com um administrador para saber quando teremos novos itens disponíveis.",
+                        inline=False
+                    )
+                    await channel.send(embed=embed)
+                    return
+                
+                # 2. Reservar item do estoque
+                available_stock = await inventory_model.get_available_stock(product['id'], guild_id)
+                if not available_stock:
+                    await self._send_out_of_stock_message(channel, product)
+                    return
+                
+                inventory_id = available_stock['id']
+            else:
+                print(f"♾️ Produto com estoque ilimitado - pulando verificação")
             
             # 3. Criar transação no banco
             from models.transaction_model import TransactionModel
             transaction_model = TransactionModel()
-            transaction = await transaction_model.create_transaction(
-                user_id=user.id,
-                product_id=product['id'],
-                amount=product['price'],
-                status='pending',
-                delivery_channel_id=channel.id
-            )
+            
+            transaction_data = {
+                'user_id': user.id,
+                'product_id': product['id'],
+                'amount': product['price'],
+                'status': 'pending',
+                'delivery_channel_id': channel.id,
+                'guild_id': guild_id
+            }
+            
+            transaction = await transaction_model.create_transaction(**transaction_data)
             
             if not transaction:
+                print(f"❌ Falha ao criar transação no banco de dados")
                 await self._send_fallback_message(channel, user, product)
                 return
             
-            # 4. Reservar o estoque para esta transação
-            reserved = await inventory_model.reserve_stock(
-                available_stock['id'],
-                user.id,
-                transaction['id']
-            )
+            print(f"✅ Transação criada: #{transaction['id']}")
             
-            if not reserved:
-                print(f"⚠️ Falha ao reservar estoque para transação #{transaction['id']}")
-            else:
-                print(f"✅ Estoque reservado: Item #{available_stock['id']} para transação #{transaction['id']}")
-                # Atualizar transação com inventory_id
-                await transaction_model.update_transaction(transaction['id'], {
-                    'inventory_id': available_stock['id']
-                })
+            # 4. Reservar o estoque para esta transação (apenas para produtos gerenciados)
+            if not is_unlimited and inventory_id:
+                from models.inventory_model import InventoryModel
+                inventory_model = InventoryModel()
+                
+                reserved = await inventory_model.reserve_stock(
+                    inventory_id,
+                    user.id,
+                    transaction['id']
+                )
+                
+                if not reserved:
+                    print(f"⚠️ Falha ao reservar estoque para transação #{transaction['id']}")
+                else:
+                    print(f"✅ Estoque reservado: Item #{inventory_id} para transação #{transaction['id']}")
+                    # Atualizar transação com inventory_id
+                    await transaction_model.update_transaction(transaction['id'], {
+                        'inventory_id': inventory_id
+                    })
             
             # 5. Gerar pagamento Pix
             from utils.payment_utils import PaymentUtils
             payment_utils = PaymentUtils()
+            
+            print(f"💳 Gerando pagamento Pix - Valor: R$ {product['price']:.2f}")
+            
             payment_data = await payment_utils.create_pix_payment(
                 amount=product['price'],
                 description=f"Compra: {product['name']}",
@@ -353,19 +379,41 @@ class TicketManager:
                     'email': f"{user.name.lower().replace(' ', '')}@khaos.com"
                 })
                 
+                print(f"✅ Pagamento gerado com sucesso! ID: {payment_data.get('id')}")
+                
                 # Enviar pagamento no canal
                 await self._send_payment_message(channel, user, product, payment_data)
             else:
+                print(f"❌ Falha ao gerar pagamento Pix")
+                
                 # Se falhar, liberar reserva e enviar instruções para usar /comprar
-                if reserved:
-                    await inventory_model.release_reservation(available_stock['id'])
+                if not is_unlimited and inventory_id:
+                    from models.inventory_model import InventoryModel
+                    inventory_model = InventoryModel()
+                    await inventory_model.release_reservation(inventory_id)
+                    print(f"🔄 Reserva liberada: Item #{inventory_id}")
+                
                 await self._send_fallback_message(channel, user, product)
                 
         except Exception as e:
-            print(f"Erro ao gerar pagamento automático: {e}")
+            print(f"❌ ERRO CRÍTICO ao gerar pagamento automático: {e}")
             import traceback
             traceback.print_exc()
-            await self._send_fallback_message(channel, user, product)
+            
+            # Tentar enviar mensagem de erro ao usuário
+            try:
+                await self._send_fallback_message(channel, user, product)
+            except Exception as fallback_error:
+                print(f"❌ Falha ao enviar mensagem de fallback: {fallback_error}")
+                
+                # Última tentativa: mensagem simples
+                try:
+                    await channel.send(
+                        f"{user.mention} ❌ Ocorreu um erro ao processar seu pedido. "
+                        f"Por favor, use o comando `/comprar` para tentar novamente."
+                    )
+                except:
+                    pass
     
     async def _send_out_of_stock_message(self, channel: discord.TextChannel, product: dict):
         """Envia mensagem de produto esgotado"""
@@ -385,20 +433,34 @@ class TicketManager:
         """Envia mensagem de fallback quando pagamento automático falha"""
         embed = discord.Embed(
             title="⚠️ Pagamento Automático Falhou",
-            description="O pagamento automático falhou, mas você pode tentar novamente usando o comando `/comprar`.",
+            description="Não conseguimos gerar o pagamento automaticamente, mas você pode tentar novamente manualmente.",
             color=0xffa500
         )
+        
         embed.add_field(
             name="🔧 Como Continuar",
-            value=f"Use o comando: `/comprar {product['name']}`",
+            value=f"Digite o comando abaixo neste canal:\n```/comprar```\n\n"
+                  f"✨ **Novo:** O bot identifica automaticamente o produto **{product['name']}** do seu ticket!",
             inline=False
         )
+        
+        embed.add_field(
+            name="❓ Possíveis Causas",
+            value="• Instabilidade na API de pagamento\n"
+                  "• Problemas temporários de conexão\n"
+                  "• Produto pode estar sem estoque",
+            inline=False
+        )
+        
         embed.add_field(
             name="💡 Dica",
-            value="O comando `/comprar` funciona apenas neste canal de ticket.",
+            value=f"Se o erro persistir, entre em contato com um administrador.",
             inline=False
         )
-        await channel.send(embed=embed)
+        
+        embed.set_footer(text=f"Ticket de {user.name} • Suporte disponível 24/7")
+        
+        await channel.send(f"{user.mention}", embed=embed)
     
     async def _send_payment_message(self, channel: discord.TextChannel, user: discord.Member, product: dict, payment_data: dict):
         """Envia mensagem com dados do pagamento Pix"""

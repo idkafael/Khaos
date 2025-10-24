@@ -239,4 +239,48 @@ class GuildConfigModel:
         except Exception as e:
             print(f"❌ Erro ao desativar servidor: {e}")
             return False
+    
+    async def set_ticket_product_filter(
+        self,
+        guild_id: int,
+        product_ids: Optional[List[int]] = None
+    ) -> bool:
+        """
+        Define filtro de produtos para tickets de compra
+        
+        Args:
+            guild_id: ID do servidor
+            product_ids: Lista de IDs de produtos permitidos (None = todos)
+        
+        Returns:
+            True se salvou com sucesso
+        """
+        try:
+            result = await self.create_or_update_config(
+                guild_id=guild_id,
+                ticket_allowed_products=product_ids
+            )
+            return result is not None
+        except Exception as e:
+            print(f"❌ Erro ao definir filtro de produtos: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    async def get_allowed_products(self, guild_id: int) -> Optional[List[int]]:
+        """
+        Retorna lista de IDs de produtos permitidos no ticket
+        
+        Args:
+            guild_id: ID do servidor
+        
+        Returns:
+            Lista de IDs permitidos ou None (todos produtos)
+        """
+        config = await self.get_config(guild_id)
+        
+        if not config:
+            return None  # Todos produtos disponíveis
+        
+        return config.get('ticket_allowed_products')
 

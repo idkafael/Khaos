@@ -127,17 +127,17 @@ class SetupTicketModal(ui.Modal):
             max_length=1000
         ))
         self.add_item(ui.TextInput(
+            label="IDs dos Produtos (vazio = todos)", 
+            placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
+            default="",
+            required=False,
+            max_length=200
+        ))
+        self.add_item(ui.TextInput(
             label="Nome do Botão", 
             placeholder="Ex: Criar Ticket de Compra", 
             default="Criar Ticket de Compra",
             max_length=80
-        ))
-        self.add_item(ui.TextInput(
-            label="URL da Imagem", 
-            placeholder="Cole o link da imagem ou envie uma imagem no chat", 
-            default="",
-            required=False,
-            max_length=500
         ))
         self.add_item(ui.TextInput(
             label="Cor do Embed (Hex)", 
@@ -152,11 +152,40 @@ class SetupTicketModal(ui.Modal):
             print(f"Modal submetido por {interaction.user.name}")
             headline = self.children[0].value
             descricao = self.children[1].value
-            nome_botao = self.children[2].value
-            url_imagem = self.children[3].value.strip()
+            product_ids_input = self.children[2].value.strip()
+            nome_botao = self.children[3].value
             cor_hex = self.children[4].value.strip()
             
-            print(f"Valores: {headline}, {descricao}, {nome_botao}, {url_imagem}, {cor_hex}")
+            print(f"Valores: {headline}, {descricao}, {nome_botao}, produtos: {product_ids_input}, {cor_hex}")
+            
+            # Processar IDs dos produtos
+            allowed_product_ids = None
+            if product_ids_input:
+                try:
+                    # Converter string "1,2,3" para lista de inteiros
+                    allowed_product_ids = [int(pid.strip()) for pid in product_ids_input.split(',') if pid.strip()]
+                    print(f"✅ Produtos filtrados: {allowed_product_ids}")
+                except ValueError:
+                    await interaction.response.send_message(
+                        "❌ IDs de produtos inválidos! Use números separados por vírgula (ex: 1,2,3)",
+                        ephemeral=True
+                    )
+                    return
+            
+            # Salvar configuração no banco de dados
+            from models.guild_config_model import GuildConfigModel
+            guild_config = GuildConfigModel()
+            
+            success = await guild_config.set_ticket_product_filter(
+                guild_id=interaction.guild_id,
+                product_ids=allowed_product_ids
+            )
+            
+            if success:
+                if allowed_product_ids:
+                    print(f"✅ Filtro de produtos salvo: {allowed_product_ids}")
+                else:
+                    print(f"✅ Filtro removido - todos produtos disponíveis")
             
             # Converter cor hex para int
             try:
@@ -185,21 +214,20 @@ class SetupTicketModal(ui.Modal):
                 color=cor_int
             )
             
-            # Adicionar imagem se fornecida
-            if url_imagem and url_imagem.startswith(('http://', 'https://')):
-                try:
-                    embed.set_image(url=url_imagem)
-                    print(f"Imagem adicionada: {url_imagem}")
-                except Exception as e:
-                    print(f"Erro ao adicionar imagem: {e}")
-            elif url_imagem:
-                print(f"URL de imagem inválida: {url_imagem}")
-            
             embed.add_field(
                 name="🚀 Como Funciona?",
                 value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
                 inline=False
             )
+            
+            # Adicionar info sobre filtro de produtos
+            if allowed_product_ids:
+                embed.add_field(
+                    name="🔍 Produtos Filtrados",
+                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                    inline=False
+                )
+            
             embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
             
             # Criar view com botão personalizado
@@ -370,6 +398,23 @@ class TicketButton(ui.Button):
                     ephemeral=True
                 )
                 return
+            
+            # Aplicar filtro de produtos se configurado
+            from models.guild_config_model import GuildConfigModel
+            guild_config = GuildConfigModel()
+            allowed_product_ids = await guild_config.get_allowed_products(interaction.guild_id)
+            
+            if allowed_product_ids:
+                # Filtrar apenas produtos permitidos
+                products = [p for p in products if p['id'] in allowed_product_ids]
+                print(f"🔍 Debug: Filtro aplicado - {len(products)} produtos após filtro (IDs permitidos: {allowed_product_ids})")
+                
+                if not products:
+                    await interaction.response.send_message(
+                        "❌ Nenhum produto disponível neste ticket no momento.",
+                        ephemeral=True
+                    )
+                    return
             
             # Criar view com select menu
             view = ProductSelectView(products)

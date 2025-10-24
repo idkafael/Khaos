@@ -94,6 +94,13 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 
 ### **Novidades Recentes** 🆕
 
+- ✅ **Comando `/comprar` Automático** - Implementado (24/10/2025)
+  - Agora basta digitar `/comprar` sem parâmetros!
+  - Bot detecta automaticamente o produto do ticket
+  - Zero erros de digitação do nome do produto
+  - UX super simplificada e intuitiva
+  - Compatibilidade mantida: ainda aceita nome manual se quiser
+
 - ✅ **Sistema Multi-Servidor** - Implementado (22/10/2025)
   - Cada servidor Discord gerencia **seus próprios produtos** independentemente
   - VIPs, cupons e estoque isolados por servidor
@@ -347,7 +354,7 @@ TICKET_LOGS_CHANNEL_ID=1234567890123456789  # ID do canal para logs
 ### 📱 Comandos Slash (Recomendado)
 - `/ajuda` - Lista de comandos e instruções
 - `/produtos` - Ver produtos disponíveis
-- `/comprar` - Comprar produto (no canal do ticket)
+- `/comprar` - ✨ **Gerar pagamento automaticamente** (detecta produto do ticket!)
 - `/status` - Verificar status do pagamento
 - `/setup_ticket` - [ADMIN] Enviar mensagem de tickets de compra
 - `/setup_suporte` - [ADMIN] Enviar mensagem de tickets de suporte customizados
@@ -370,17 +377,25 @@ TICKET_LOGS_CHANNEL_ID=1234567890123456789  # ID do canal para logs
 1. **Criar Ticket**: Clique no botão "Criar Ticket de Compra" na mensagem do bot
 2. **Escolher Produto**: Selecione o produto desejado no modal que aparece
 3. **Acessar Canal**: Vá para o canal privado criado automaticamente
-4. **Comprar**: Use `/comprar` no canal do ticket para gerar pagamento
-5. **Acompanhar**: Use `/status` para verificar o progresso do pagamento
+4. **Pagamento Automático**: O bot gera o pagamento automaticamente
+5. **Ou Manual**: Se falhar, use `/comprar` (detecta o produto automaticamente!)
+6. **Acompanhar**: Use `/status` para verificar o progresso do pagamento
 
 ### Fluxo Completo:
 ```
 Admin → /setup_ticket → Botão aparece
 Usuário → Clica botão → Modal com produtos
 Usuário → Escolhe produto → Canal privado criado
-Usuário → /comprar → Pagamento Pix gerado
+Bot → Pagamento gerado AUTOMATICAMENTE com QR Code
+Se falhar → Usuário digita /comprar → Pagamento gerado
 Usuário → Paga → Bot detecta → Entrega automática
 ```
+
+**✨ Melhorias de UX:**
+- ✅ Pagamento automático ao criar ticket
+- ✅ Comando `/comprar` **sem parâmetros** - detecta produto automaticamente
+- ✅ Mensagens claras e instruções diretas
+- ✅ Logs detalhados para troubleshooting
 
 ## 🆘 Sistema de Suporte Customizado
 
@@ -707,15 +722,50 @@ O bot vem com 8 produtos digitais pré-configurados:
 
 ## 🐛 Solução de Problemas
 
+### ⚠️ Pagamento Automático Falhou
+
+**Sintoma:** Ao criar ticket, aparece mensagem "Pagamento Automático Falhou"
+
+**Causas Comuns:**
+1. **Produto sem estoque** - Adicione estoque usando `/adicionar_estoque`
+2. **Erro na API PushinPay** - Verifique se a API Key está correta no `.env`
+3. **Produto VIP sem `unlimited_stock`** - Execute o SQL: `database_unlimited_stock.sql`
+4. **Guild ID ausente** - Execute o SQL: `database_multiserver_setup_v2.sql`
+
+**Solução Rápida:**
+```bash
+# Usuário pode usar comando manual
+/comprar produto: Nome do Produto
+```
+
+**Verificar Logs:**
+```bash
+# Procure por estas mensagens no console:
+🔄 Gerando pagamento automático...
+❌ Falha ao criar transação no banco de dados
+❌ Falha ao gerar pagamento Pix
+```
+
+**Correção Permanente:**
+- ✅ Execute `database_unlimited_stock.sql` no Supabase
+- ✅ Verifique `PUSHINPAY_API_KEY` no `.env`
+- ✅ Adicione estoque para produtos gerenciados
+- ✅ Reinicie o bot
+
+📄 **Documentação completa:** Veja `FIX_PAGAMENTO_AUTOMATICO.md`
+
+---
+
 ### Erro de Conexão com Supabase
 - Verifique se as credenciais estão corretas
 - Confirme se as tabelas foram criadas
 - Verifique se o projeto está ativo
 
-### Erro de Pagamento OpenPix
-- Verifique se a API Key está correta
-- Confirme se a conta está ativa
+### Erro de Pagamento PushinPay
+- Verifique se a API Key está correta no `.env`
+- Confirme se está usando modo PRODUÇÃO (não sandbox)
 - Verifique os logs para mais detalhes
+- Consulte: https://pushinpay.com.br/docs
 
 ### Bot não responde
 - Verifique se o token do Discord está correto

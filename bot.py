@@ -325,8 +325,8 @@ async def status_slash(interaction: discord.Interaction):
         traceback.print_exc()
         await interaction.response.send_message("❌ Erro ao buscar status do pagamento.", ephemeral=True)
 
-@bot.tree.command(name="comprar", description="Comprar produto (use no canal do ticket)")
-async def comprar_slash(interaction: discord.Interaction, produto: str):
+@bot.tree.command(name="comprar", description="Comprar produto do ticket (automático)")
+async def comprar_slash(interaction: discord.Interaction, produto: str = None):
     """Comando para comprar produto no canal do ticket"""
     try:
         # Verificar se está em canal de ticket
@@ -334,12 +334,33 @@ async def comprar_slash(interaction: discord.Interaction, produto: str):
             await interaction.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
             return
         
-        # Buscar produto por nome (apenas no servidor atual)
+        # Buscar produto automaticamente do ticket ou pelo nome fornecido
         product_model = ProductModel()
-        product = await product_model.get_product_by_name(produto, interaction.guild_id)
+        product = None
+        
+        # Se produto não foi fornecido, buscar do ticket ativo
+        if not produto:
+            ticket_data = active_tickets.get(interaction.user.id)
+            if ticket_data and ticket_data.get('product_id'):
+                # Buscar produto pelo ID armazenado no ticket
+                product = await product_model.get_product_by_id(ticket_data['product_id'], interaction.guild_id)
+                print(f"🎯 Produto detectado automaticamente do ticket: {product['name'] if product else 'None'}")
+            else:
+                await interaction.response.send_message(
+                    "❌ Não foi possível identificar o produto automaticamente!\n"
+                    "💡 Dica: Use `/comprar produto: Nome do Produto`",
+                    ephemeral=True
+                )
+                return
+        else:
+            # Buscar produto por nome (apenas no servidor atual)
+            product = await product_model.get_product_by_name(produto, interaction.guild_id)
         
         if not product:
-            await interaction.response.send_message(f"❌ Produto '{produto}' não encontrado neste servidor!", ephemeral=True)
+            await interaction.response.send_message(
+                f"❌ Produto '{produto}' não encontrado neste servidor!" if produto else "❌ Produto não encontrado!",
+                ephemeral=True
+            )
             return
         
         # Buscar cupom do ticket (se houver)
@@ -535,7 +556,7 @@ async def ajuda_slash(interaction: discord.Interaction):
     
     embed.add_field(
         name="» Comandos Principais",
-        value="`/ajuda` :: 🤖 Lista de comandos\n`/produtos` :: 🛍️ Ver produtos disponíveis\n`/comprar` :: 💳 Comprar produto (no canal do ticket)\n`/status` :: 📊 Status do pagamento",
+        value="`/ajuda` :: 🤖 Lista de comandos\n`/produtos` :: 🛍️ Ver produtos disponíveis\n`/comprar` :: 💳 Gerar pagamento (detecta automaticamente!)\n`/status` :: 📊 Status do pagamento",
         inline=False
     )
     
