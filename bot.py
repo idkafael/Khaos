@@ -1980,8 +1980,8 @@ async def on_message(message):
     if message.author.bot:
         return
     
-    # Processar comandos normalmente
-    await bot.process_commands(message)
+    # py-cord: discord.Bot não precisa de process_commands()
+    # await bot.process_commands(message)
 
 async def monitor_payment(transaction_id, user_id):
     """Monitora o status do pagamento"""
@@ -3146,8 +3146,8 @@ async def on_message(message):
     if message.author.bot:
         return
     
-    # Processar comandos normais
-    await bot.process_commands(message)
+    # py-cord: discord.Bot não precisa de process_commands()
+    # await bot.process_commands(message)
     
     # Verificar se está esperando códigos de estoque
     if message.author.id in waiting_for_stock:
