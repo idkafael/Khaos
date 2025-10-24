@@ -53,13 +53,21 @@ class MercadoPagoManager:
             Dict com: qr_code_base64, qr_code, payment_id, status
         """
         if not self.is_configured():
-            print("❌ Mercado Pago não configurado")
+            print("❌ Mercado Pago não configurado - SDK não inicializado")
+            print(f"   ACCESS_TOKEN presente: {bool(self.access_token)}")
+            print(f"   SDK inicializado: {self.sdk is not None}")
             return None
         
         try:
+            print(f"💳 [MP] Criando pagamento Pix de R$ {amount:.2f}")
+            print(f"📝 [MP] Descrição: {description}")
+            print(f"🆔 [MP] Transaction ID: {transaction_id}")
+            
             # Se não tiver email, usar um genérico
             if not payer_email:
                 payer_email = f"user{transaction_id}@placeholder.com"
+            
+            print(f"📧 [MP] Email do pagador: {payer_email}")
             
             # Criar pagamento
             payment_data = {
@@ -73,11 +81,18 @@ class MercadoPagoManager:
                 "notification_url": f"{os.getenv('WEBHOOK_URL', '')}/webhook/mercadopago"
             }
             
+            print(f"📤 [MP] Enviando dados para API Mercado Pago...")
+            print(f"💰 [MP] Valor: R$ {payment_data['transaction_amount']}")
+            
             payment_response = self.sdk.payment().create(payment_data)
+            
+            print(f"📥 [MP] Resposta recebida - Status: {payment_response['status']}")
+            
             payment = payment_response["response"]
             
             if payment_response["status"] != 201:
-                print(f"❌ Erro ao criar pagamento: {payment}")
+                print(f"❌ [MP] Erro ao criar pagamento - Status: {payment_response['status']}")
+                print(f"📄 [MP] Resposta: {payment}")
                 return None
             
             # Extrair dados do Pix
