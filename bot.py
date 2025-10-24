@@ -3064,7 +3064,7 @@ async def verificar_pagamentos_cmd(interaction: discord.Interaction):
         transaction_model = TransactionModel()
         mp_manager = MercadoPagoManager()
         wallet_model = WalletModel()
-        delivery_manager = DeliveryManager()
+        delivery_manager = DeliveryManager(bot)
         
         # Buscar transações pendentes deste servidor
         print(f"🔍 Verificando pagamentos pendentes do servidor {interaction.guild_id}")
