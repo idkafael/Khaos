@@ -150,92 +150,166 @@ class SetupTicketModal(ui.Modal):
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets"""
         try:
-            print(f"Modal submetido por {interaction.user.name}")
+            print("🔧 ========== SETUP TICKET MODAL DEBUG ==========")
+            print(f"🔧 Modal submetido por {interaction.user.name} (ID: {interaction.user.id})")
+            print(f"🔧 Guild: {interaction.guild.name} (ID: {interaction.guild_id})")
+            print(f"🔧 Channel: {interaction.channel.name} (ID: {interaction.channel_id})")
+
+            # Debug: Verificar todos os children
+            print(f"🔧 Modal tem {len(self.children)} children:")
+            for i, child in enumerate(self.children):
+                print(f"🔧   Child {i}: {child.label} = '{child.value}'")
+
             headline = self.children[0].value
             descricao = self.children[1].value
             product_ids_input = self.children[2].value.strip()
             nome_botao = self.children[3].value
             cor_hex = self.children[4].value.strip()
-            
-            print(f"Valores: {headline}, {descricao}, {nome_botao}, produtos: {product_ids_input}, {cor_hex}")
+
+            print("🔧 ========== VALORES RECEBIDOS ==========")
+            print(f"🔧 Headline: '{headline}'")
+            print(f"🔧 Descrição: '{descricao}'")
+            print(f"🔧 Product IDs Input: '{product_ids_input}'")
+            print(f"🔧 Nome Botão: '{nome_botao}'")
+            print(f"🔧 Cor Hex: '{cor_hex}'")
+            print(f"🔧 User permissions: {interaction.user.guild_permissions}")
+            print(f"🔧 User is admin: {interaction.user.guild_permissions.administrator}")
             
             # Processar IDs dos produtos
+            print("🔧 ========== PROCESSANDO PRODUTOS ==========")
             allowed_product_ids = None
             if product_ids_input:
                 try:
                     # Converter string "1,2,3" para lista de inteiros
                     allowed_product_ids = [int(pid.strip()) for pid in product_ids_input.split(',') if pid.strip()]
                     print(f"✅ Produtos filtrados: {allowed_product_ids}")
-                except ValueError:
+                except ValueError as e:
+                    print(f"❌ Erro ao converter IDs de produtos: {e}")
                     await interaction.response.send_message(
                         "❌ IDs de produtos inválidos! Use números separados por vírgula (ex: 1,2,3)",
                         ephemeral=True
                     )
                     return
-            
+            else:
+                print("🔧 Nenhum filtro de produtos - todos produtos disponíveis")
+
             # Salvar configuração no banco de dados
+            print("🔧 ========== SALVANDO NO BANCO ==========")
             from models.guild_config_model import GuildConfigModel
             guild_config = GuildConfigModel()
+
+            print(f"🔧 GuildConfigModel inicializado: {guild_config}")
+            print(f"🔧 Supabase URL: {guild_config.supabase._url}")
+            print(f"🔧 Table name: {guild_config.table_name}")
+
+            try:
+                print(f"🔧 Tentando salvar filtro de produtos para guild {interaction.guild_id}")
+                success = await guild_config.set_ticket_product_filter(
+                    guild_id=interaction.guild_id,
+                    product_ids=allowed_product_ids
+                )
+                print(f"🔧 Resultado do save: {success}")
+            except Exception as e:
+                print(f"❌ ERRO AO SALVAR NO BANCO: {e}")
+                import traceback
+                traceback.print_exc()
+                await interaction.response.send_message(
+                    f"❌ Erro interno do servidor. Verifique os logs.\n\nErro: {str(e)}",
+                    ephemeral=True
+                )
+                return
             
-            success = await guild_config.set_ticket_product_filter(
-                guild_id=interaction.guild_id,
-                product_ids=allowed_product_ids
-            )
-            
+            print("🔧 ========== VERIFICANDO RESULTADO DO SAVE ==========")
             if success:
                 if allowed_product_ids:
                     print(f"✅ Filtro de produtos salvo: {allowed_product_ids}")
                 else:
                     print(f"✅ Filtro removido - todos produtos disponíveis")
-            
+            else:
+                print(f"❌ FALHA AO SALVAR NO BANCO! Success = {success}")
+                await interaction.response.send_message(
+                    "❌ Erro ao salvar configuração no banco de dados. Verifique os logs.",
+                    ephemeral=True
+                )
+                return
+
             # Converter cor hex para int
+            print("🔧 ========== CONVERTENDO COR ==========")
             try:
                 # Limpar a string de cor
+                cor_hex_original = cor_hex
                 cor_hex = cor_hex.strip().lower()
-                
+
+                print(f"🔧 Cor original: '{cor_hex_original}'")
+                print(f"🔧 Cor após strip().lower(): '{cor_hex}'")
+
                 if cor_hex.startswith('#'):
                     cor_hex = cor_hex[1:]  # Remove #
+                    print(f"🔧 Removeu '#': '{cor_hex}'")
                 elif cor_hex.startswith('0x'):
                     cor_hex = cor_hex[2:]  # Remove 0x
-                
+                    print(f"🔧 Removeu '0x': '{cor_hex}'")
+
                 # Garantir que tem 6 caracteres
                 if len(cor_hex) == 3:
                     cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
-                
+                    print(f"🔧 Expandiu cor de 3 para 6 chars: '{cor_hex}'")
+
+                print(f"🔧 Convertendo '{cor_hex}' para int...")
                 cor_int = int(cor_hex, 16)
-                print(f"Cor convertida: {cor_int} (0x{cor_hex})")
+                print(f"✅ Cor convertida: {cor_int} (0x{cor_hex})")
             except (ValueError, IndexError) as e:
-                print(f"Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
+                print(f"❌ Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
                 cor_int = 0x0099ff  # Azul padrão
-            
+
             # Criar embed com as configurações
-            embed = discord.Embed(
-                title=headline,
-                description=descricao,
-                color=cor_int
-            )
-            
-            embed.add_field(
-                name="🚀 Como Funciona?",
-                value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
-                inline=False
-            )
-            
-            # Adicionar info sobre filtro de produtos
-            if allowed_product_ids:
+            print("🔧 ========== CRIANDO EMBED ==========")
+            try:
+                embed = discord.Embed(
+                    title=headline,
+                    description=descricao,
+                    color=cor_int
+                )
+                print(f"✅ Embed criado: title='{headline}', color={cor_int}")
+
                 embed.add_field(
-                    name="🔍 Produtos Filtrados",
-                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                    name="🚀 Como Funciona?",
+                    value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
                     inline=False
                 )
-            
-            embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
-            
-            # Criar view com botão personalizado
-            view = TicketView(nome_botao)
-            
-            await interaction.response.send_message(embed=embed, view=view)
-            print("Modal processado com sucesso")
+                print("✅ Field 'Como Funciona?' adicionado")
+
+                # Adicionar info sobre filtro de produtos
+                if allowed_product_ids:
+                    embed.add_field(
+                        name="🔍 Produtos Filtrados",
+                        value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                        inline=False
+                    )
+                    print(f"✅ Field 'Produtos Filtrados' adicionado: {allowed_product_ids}")
+
+                embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+                print("✅ Footer adicionado")
+
+                # Criar view com botão personalizado
+                print("🔧 ========== CRIANDO VIEW ==========")
+                view = TicketView(nome_botao)
+                print(f"✅ View criada com botão: '{nome_botao}'")
+
+                print("🔧 ========== ENVIANDO RESPOSTA ==========")
+                await interaction.response.send_message(embed=embed, view=view)
+                print("✅ Resposta enviada com sucesso!")
+                print("🎉 Modal processado completamente!")
+
+            except Exception as e:
+                print(f"❌ ERRO AO CRIAR EMBED/VIEW: {e}")
+                import traceback
+                traceback.print_exc()
+                await interaction.response.send_message(
+                    f"❌ Erro ao criar interface. Verifique os logs.\n\nErro: {str(e)}",
+                    ephemeral=True
+                )
+                return
             
         except Exception as e:
             print(f"Erro ao configurar sistema de tickets: {e}")

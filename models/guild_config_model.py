@@ -7,8 +7,19 @@ class GuildConfigModel:
     """Modelo para gerenciar configurações por servidor Discord"""
     
     def __init__(self):
-        self.supabase: Client = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
-        self.table_name = 'guild_config'
+        print(f"🔧 [GuildConfigModel] Inicializando...")
+        print(f"🔧 [GuildConfigModel] SUPABASE_URL: {Config.SUPABASE_URL[:20]}...")
+        print(f"🔧 [GuildConfigModel] SUPABASE_KEY: {Config.SUPABASE_KEY[:20]}...")
+        try:
+            self.supabase: Client = create_client(Config.SUPABASE_URL, Config.SUPABASE_KEY)
+            print(f"✅ [GuildConfigModel] Supabase client criado com sucesso")
+            self.table_name = 'guild_config'
+            print(f"✅ [GuildConfigModel] Table name: {self.table_name}")
+        except Exception as e:
+            print(f"❌ [GuildConfigModel] Erro ao criar Supabase client: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
     
     async def initialize(self):
         """Inicializa a tabela de configuração de servidores"""
@@ -22,23 +33,37 @@ class GuildConfigModel:
     async def get_config(self, guild_id: int) -> Optional[Dict]:
         """
         Busca a configuração de um servidor
-        
+
         Args:
             guild_id: ID do servidor Discord
-        
+
         Returns:
             Configuração do servidor ou None
         """
+        print(f"🔧 [GuildConfigModel] get_config chamado para guild_id: {guild_id}")
+
         try:
+            print(f"🔧 [GuildConfigModel] Executando query SELECT...")
             result = self.supabase.table(self.table_name)\
                 .select('*')\
                 .eq('guild_id', guild_id)\
                 .execute()
-            
-            return result.data[0] if result.data else None
-            
+
+            print(f"🔧 [GuildConfigModel] Query result: {result}")
+            print(f"🔧 [GuildConfigModel] Result data: {result.data}")
+            print(f"🔧 [GuildConfigModel] Result data length: {len(result.data) if result.data else 0}")
+
+            if result.data:
+                print(f"🔧 [GuildConfigModel] Config encontrada: {result.data[0]}")
+                return result.data[0]
+            else:
+                print(f"🔧 [GuildConfigModel] Nenhuma config encontrada para guild {guild_id}")
+                return None
+
         except Exception as e:
-            print(f"❌ Erro ao buscar configuração do servidor {guild_id}: {e}")
+            print(f"❌ [GuildConfigModel] Erro ao buscar configuração do servidor {guild_id}: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def create_or_update_config(
@@ -49,45 +74,63 @@ class GuildConfigModel:
     ) -> Optional[Dict]:
         """
         Cria ou atualiza configuração de um servidor
-        
+
         Args:
             guild_id: ID do servidor
             guild_name: Nome do servidor
             **config_data: Dados de configuração (pushinpay_api_key, split_percent, etc)
-        
+
         Returns:
             Configuração salva ou None em caso de erro
         """
+        print(f"🔧 [GuildConfigModel] create_or_update_config chamado")
+        print(f"🔧 [GuildConfigModel] guild_id: {guild_id}")
+        print(f"🔧 [GuildConfigModel] guild_name: {guild_name}")
+        print(f"🔧 [GuildConfigModel] config_data: {config_data}")
+
         try:
             # Verificar se já existe
+            print(f"🔧 [GuildConfigModel] Verificando se config já existe...")
             existing = await self.get_config(guild_id)
-            
+            print(f"🔧 [GuildConfigModel] Config existente: {existing is not None}")
+
             config = {
                 'guild_id': guild_id,
                 'guild_name': guild_name,
                 **config_data
             }
-            
+            print(f"🔧 [GuildConfigModel] Config final: {config}")
+
             if existing:
                 # Atualizar
+                print(f"🔧 [GuildConfigModel] Atualizando configuração existente...")
                 result = self.supabase.table(self.table_name)\
                     .update(config)\
                     .eq('guild_id', guild_id)\
                     .execute()
+                print(f"🔧 [GuildConfigModel] Update result: {result}")
             else:
                 # Criar
+                print(f"🔧 [GuildConfigModel] Criando nova configuração...")
                 result = self.supabase.table(self.table_name)\
                     .insert(config)\
                     .execute()
-            
+                print(f"🔧 [GuildConfigModel] Insert result: {result}")
+
+            print(f"🔧 [GuildConfigModel] Result data: {result.data}")
+            print(f"🔧 [GuildConfigModel] Result data length: {len(result.data) if result.data else 0}")
+
             if result.data:
-                print(f"✅ Configuração salva para servidor {guild_id}")
+                print(f"✅ [GuildConfigModel] Configuração salva para servidor {guild_id}")
+                print(f"✅ [GuildConfigModel] Data returned: {result.data[0]}")
                 return result.data[0]
-            
-            return None
-            
+            else:
+                print(f"⚠️ [GuildConfigModel] Nenhum dado retornado do banco")
+                print(f"⚠️ [GuildConfigModel] Result: {result}")
+                return None
+
         except Exception as e:
-            print(f"❌ Erro ao salvar configuração do servidor: {e}")
+            print(f"❌ [GuildConfigModel] Erro ao salvar configuração do servidor: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -247,22 +290,28 @@ class GuildConfigModel:
     ) -> bool:
         """
         Define filtro de produtos para tickets de compra
-        
+
         Args:
             guild_id: ID do servidor
             product_ids: Lista de IDs de produtos permitidos (None = todos)
-        
+
         Returns:
             True se salvou com sucesso
         """
+        print(f"🔧 [GuildConfigModel] set_ticket_product_filter chamado")
+        print(f"🔧 [GuildConfigModel] guild_id: {guild_id}")
+        print(f"🔧 [GuildConfigModel] product_ids: {product_ids}")
+
         try:
+            print(f"🔧 [GuildConfigModel] Chamando create_or_update_config...")
             result = await self.create_or_update_config(
                 guild_id=guild_id,
                 ticket_allowed_products=product_ids
             )
+            print(f"🔧 [GuildConfigModel] Resultado: {result}")
             return result is not None
         except Exception as e:
-            print(f"❌ Erro ao definir filtro de produtos: {e}")
+            print(f"❌ [GuildConfigModel] Erro ao definir filtro de produtos: {e}")
             import traceback
             traceback.print_exc()
             return False

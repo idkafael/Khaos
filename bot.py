@@ -41,38 +41,83 @@ async def teste_slash(ctx):
 async def setup_ticket_slash(ctx: discord.ApplicationContext):
     """Comando admin para configurar sistema de tickets via modal"""
     try:
-        print(f"Comando setup_ticket executado por {ctx.user.name}")
+        print("🔧 ========== SETUP TICKET COMMAND DEBUG ==========")
+        print(f"🔧 Comando setup_ticket executado por {ctx.user.name} (ID: {ctx.user.id})")
+        print(f"🔧 Guild: {ctx.guild.name} (ID: {ctx.guild_id})")
+        print(f"🔧 Channel: {ctx.channel.name} (ID: {ctx.channel_id})")
+        print(f"🔧 User permissions: {ctx.user.guild_permissions}")
+        print(f"🔧 User is admin: {ctx.user.guild_permissions.administrator}")
+        print(f"🔧 Bot permissions: {ctx.guild.me.guild_permissions}")
+        print(f"🔧 Bot can manage channels: {ctx.guild.me.guild_permissions.manage_channels}")
+        print(f"🔧 Bot can manage roles: {ctx.guild.me.guild_permissions.manage_roles}")
+
+        print("🔧 ========== IMPORTANDO MODAL ==========")
         print("Tentando importar SetupTicketModal...")
-        
-        from utils.ticket_views import SetupTicketModal
-        print("SetupTicketModal importado com sucesso!")
-        
+        try:
+            from utils.ticket_views import SetupTicketModal
+            print("✅ SetupTicketModal importado com sucesso!")
+        except ImportError as e:
+            print(f"❌ Erro de importação: {e}")
+            import traceback
+            traceback.print_exc()
+            embed = discord.Embed(
+                description="❌ Erro de importação no sistema de tickets.",
+                color=0x8B5CF6
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        print("🔧 ========== CRIANDO MODAL ==========")
         print("Criando instância do modal...")
-        modal = SetupTicketModal()
-        print("Modal criado com sucesso!")
-        
+        try:
+            modal = SetupTicketModal()
+            print("✅ Modal criado com sucesso!")
+            print(f"✅ Modal title: {modal.title}")
+            print(f"✅ Modal timeout: {modal.timeout}")
+            print(f"✅ Modal children count: {len(modal.children)}")
+            for i, child in enumerate(modal.children):
+                print(f"✅   Child {i}: {child.label} (type: {type(child).__name__})")
+        except Exception as e:
+            print(f"❌ Erro ao criar modal: {e}")
+            import traceback
+            traceback.print_exc()
+            embed = discord.Embed(
+                description="❌ Erro ao criar formulário.",
+                color=0x8B5CF6
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        print("🔧 ========== ENVIANDO MODAL ==========")
         print("Enviando modal...")
-        await ctx.response.send_modal(modal)
-        print("Modal enviado com sucesso!")
-        
-    except ImportError as e:
-        print(f"Erro de importação: {e}")
-        import traceback
-        traceback.print_exc()
-        embed = discord.Embed(
-            description="❌ Erro de importação no sistema de tickets.",
-            color=0x8B5CF6
-        )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        try:
+            await ctx.response.send_modal(modal)
+            print("✅ Modal enviado com sucesso!")
+        except Exception as e:
+            print(f"❌ Erro ao enviar modal: {e}")
+            import traceback
+            traceback.print_exc()
+            embed = discord.Embed(
+                description="❌ Erro ao abrir formulário.",
+                color=0x8B5CF6
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+            return
+
+        print("🎉 Comando setup_ticket executado completamente!")
+
     except Exception as e:
-        print(f"Erro no comando setup_ticket: {e}")
+        print(f"❌ Erro crítico no comando setup_ticket: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
-            description="❌ Erro ao configurar sistema de tickets.",
-            color=0x8B5CF6
-        )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        try:
+            embed = discord.Embed(
+                description="❌ Erro interno do servidor. Verifique os logs.",
+                color=0x8B5CF6
+            )
+            await ctx.response.send_message(embed=embed, ephemeral=True)
+        except:
+            print("❌ Não foi possível enviar mensagem de erro")
 
 @bot.slash_command(name="setup_msg", description="[ADMIN] Criar mensagem embed personalizada")
 @discord.default_permissions(administrator=True)
