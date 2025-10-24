@@ -5,8 +5,9 @@ Suporta múltiplos gateways (Mercado Pago, PushinPay) com fallback automático
 
 from typing import Optional, Dict
 from utils.mercadopago_manager import MercadoPagoManager
-from utils.payment_utils import create_pushinpay_charge
 from models.guild_config_model import GuildConfigModel
+import os
+import requests
 
 class GatewaySelector:
     """Seleciona gateway apropriado e realiza fallback se necessário"""
@@ -85,9 +86,8 @@ class GatewaySelector:
             return self.mp_manager.is_configured()
         
         elif gateway == 'pushinpay':
-            # PushinPay sempre está configurado se tiver API KEY no .env
-            import os
-            return bool(os.getenv('PUSHINPAY_API_KEY'))
+            # PushinPay temporariamente desabilitado (focus em Mercado Pago)
+            return False
         
         # Outros gateways
         return False
@@ -191,11 +191,10 @@ class GatewaySelector:
                 )
             
             elif gateway == 'pushinpay':
-                return await create_pushinpay_charge(
-                    amount=amount,
-                    description=description,
-                    transaction_id=transaction_id
-                )
+                # PushinPay temporariamente desabilitado para evitar importação circular
+                # Mercado Pago é o gateway principal agora
+                print(f"⚠️ PushinPay fallback desabilitado - Use Mercado Pago")
+                return None
             
             else:
                 print(f"❌ Gateway não implementado: {gateway}")
