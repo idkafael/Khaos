@@ -22,7 +22,7 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = discord.Bot(intents=intents)
+bot = discord.Bot(intents=intents, command_prefix='?')
 # Deploy: 24/10/2025 15:35 - Fix InputText
 
 # Adicionar comandos slash manualmente
@@ -3171,8 +3171,8 @@ async def on_message(message):
     if message.author.bot:
         return
     
-    # py-cord: discord.Bot não precisa de process_commands()
-    # await bot.process_commands(message)
+    # Processar comandos com prefixo (sistema híbrido)
+    await bot.process_commands(message)
     
     # Verificar se está esperando códigos de estoque
     if message.author.id in waiting_for_stock:
