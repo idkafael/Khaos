@@ -22,7 +22,7 @@ class SetupMessageModal(ui.Modal):
             label="Descrição", 
             placeholder="Escreva o conteúdo principal da mensagem...", 
             value="",
-            style=discord.TextStyle.long,
+            style=discord.InputTextStyle.paragraph,
             max_length=4000,
             required=True
         ))
@@ -124,7 +124,7 @@ class SetupTicketModal(ui.Modal):
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
             value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
-            style=discord.TextStyle.long,
+            style=discord.InputTextStyle.paragraph,
             max_length=1000
         ))
         self.add_item(ui.InputText(
@@ -631,7 +631,7 @@ class SetupSupportModal(ui.Modal):
             label="Opções Menu (EMOJI|Nome|Descrição)", 
             placeholder="Uma por linha", 
             value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
-            style=discord.TextStyle.long,
+            style=discord.InputTextStyle.paragraph,
             max_length=1000,
             required=True
         ))
