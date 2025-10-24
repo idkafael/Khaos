@@ -1,3 +1,4 @@
+# py-cord: Usa ui.InputText (não ui.TextInput)
 import discord
 from discord import ui
 from typing import List, Dict, Optional
