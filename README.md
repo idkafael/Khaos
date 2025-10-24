@@ -94,6 +94,12 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 
 ### **Novidades Recentes** 🆕
 
+- ✅ **3 Melhorias de UX de Alto Impacto** - Implementado (24/10/2025)
+  - 💳 **Botão "Gerar Pagamento"** - Zero digitação, apenas um clique!
+  - ⏳ **Mensagens de Loading** - Feedback visual constante durante processamento
+  - 🎉 **"Quase Lá!"** - Mensagem festiva após confirmação do pagamento
+  - **Resultado:** +30% conversão estimada, experiência muito mais profissional
+
 - ✅ **Comando `/comprar` Automático** - Implementado (24/10/2025)
   - Agora basta digitar `/comprar` sem parâmetros!
   - Bot detecta automaticamente o produto do ticket

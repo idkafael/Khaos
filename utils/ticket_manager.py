@@ -248,14 +248,15 @@ class TicketManager:
                   "+ Produto selecionado\n"
                   "+ Ticket criado\n"
                   "~ Gerando pagamento Pix...\n"
-                  "```",
+                  "```\n"
+                  "⏳ **Aguarde:** Estamos processando seu pedido...",
             inline=False
         )
         
         embed.add_field(
             name="⏳ Próximos Passos",
-            value="1️⃣ Aguarde a geração do QR Code\n"
-                  "2️⃣ Se falhar, use `/comprar` (detecta automaticamente!)\n"
+            value="1️⃣ Aguarde a geração automática do QR Code\n"
+                  "2️⃣ **OU** clique no botão 💳 **Gerar Pagamento** abaixo\n"
                   "3️⃣ Pague via Pix\n"
                   "4️⃣ Receba o produto automaticamente",
             inline=False

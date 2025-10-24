@@ -945,9 +945,163 @@ class SupportTicketView(ui.View):
         super().__init__(timeout=None)
         self.add_item(SupportTicketButton(nome_botao))
 
+class GeneratePaymentButton(ui.Button):
+    """Botão para gerar pagamento no ticket"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Gerar Pagamento",
+            style=discord.ButtonStyle.success,
+            emoji="💳",
+            custom_id="generate_payment_button"
+        )
+    
+    async def callback(self, interaction: discord.Interaction):
+        """Callback para gerar pagamento"""
+        try:
+            # Verificar se é canal de ticket
+            if not interaction.channel.name.startswith('ticket-'):
+                await interaction.response.send_message(
+                    "❌ Este comando só funciona em canais de ticket.",
+                    ephemeral=True
+                )
+                return
+            
+            # Buscar dados do ticket
+            import bot
+            ticket_data = bot.active_tickets.get(interaction.user.id)
+            
+            if not ticket_data or not ticket_data.get('product_id'):
+                await interaction.response.send_message(
+                    "❌ Não foi possível identificar o produto do ticket.",
+                    ephemeral=True
+                )
+                return
+            
+            # Mostrar mensagem de loading
+            await interaction.response.send_message(
+                "⏳ **Gerando pagamento...**\n"
+                "Por favor, aguarde alguns segundos.",
+                ephemeral=False
+            )
+            
+            # Buscar produto
+            from models.product_model import ProductModel
+            product_model = ProductModel()
+            product = await product_model.get_product_by_id(
+                ticket_data['product_id'], 
+                interaction.guild_id
+            )
+            
+            if not product:
+                await interaction.channel.send("❌ Produto não encontrado!")
+                return
+            
+            # Gerar pagamento
+            from utils.payment_utils import PaymentUtils
+            from models.transaction_model import TransactionModel
+            
+            transaction_model = TransactionModel()
+            
+            # Criar transação
+            transaction = await transaction_model.create_transaction(
+                user_id=interaction.user.id,
+                product_id=product['id'],
+                amount=product['price'],
+                status='pending',
+                delivery_channel_id=interaction.channel.id,
+                guild_id=interaction.guild_id
+            )
+            
+            if not transaction:
+                await interaction.channel.send("❌ Erro ao criar transação!")
+                return
+            
+            # Gerar Pix
+            payment_utils = PaymentUtils()
+            payment_data = await payment_utils.create_pix_payment(
+                amount=product['price'],
+                description=f"Compra: {product['name']}",
+                customer_email=f"{interaction.user.name.lower().replace(' ', '')}@khaos.com",
+                customer_name=interaction.user.display_name
+            )
+            
+            if payment_data:
+                # Atualizar transação
+                await transaction_model.update_transaction(transaction['id'], {
+                    'payment_id': payment_data.get('id'),
+                    'pix_code': payment_data.get('pix_code'),
+                    'qr_code': payment_data.get('qr_code'),
+                    'email': f"{interaction.user.name.lower().replace(' ', '')}@khaos.com"
+                })
+                
+                # Enviar pagamento
+                embed = discord.Embed(
+                    title="✅ Pagamento Gerado!",
+                    description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
+                    color=0x00ff00
+                )
+                
+                embed.add_field(
+                    name="📱 QR Code",
+                    value="Escaneie o QR Code abaixo com seu app de pagamento:",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="🔢 Código Pix",
+                    value=f"```{payment_data.get('pix_code', 'N/A')}```",
+                    inline=False
+                )
+                
+                embed.add_field(
+                    name="⏰ Validade",
+                    value="⏱️ **30 minutos** para efetuar o pagamento",
+                    inline=False
+                )
+                
+                embed.set_footer(text=f"ID: {transaction['id']} • Use /status para verificar")
+                
+                await interaction.channel.send(embed=embed)
+                
+                # Gerar QR Code
+                try:
+                    import qrcode
+                    import io
+                    
+                    qr = qrcode.QRCode(
+                        version=1,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4
+                    )
+                    qr.add_data(payment_data['qr_code'])
+                    qr.make(fit=True)
+                    
+                    img = qr.make_image(fill_color="black", back_color="white")
+                    img_buffer = io.BytesIO()
+                    img.save(img_buffer, format='PNG')
+                    img_buffer.seek(0)
+                    
+                    await interaction.channel.send(
+                        content=f"{interaction.user.mention} 📱 **Seu QR Code Pix:**",
+                        file=discord.File(img_buffer, filename='qrcode_pix.png')
+                    )
+                except Exception as qr_error:
+                    print(f"Erro ao gerar QR Code: {qr_error}")
+            else:
+                await interaction.channel.send("❌ Erro ao gerar pagamento Pix!")
+                
+        except Exception as e:
+            print(f"Erro ao gerar pagamento pelo botão: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.channel.send("❌ Erro ao processar pagamento. Tente novamente.")
+
 class TicketChannelView(ui.View):
-    """View para canais de ticket com botão de fechar"""
+    """View para canais de ticket com botões"""
     
     def __init__(self):
         super().__init__(timeout=None)
+        self.add_item(GeneratePaymentButton())
         self.add_item(CloseTicketButton())

@@ -1892,23 +1892,44 @@ async def monitor_payment(transaction_id, user_id):
                 # Atualizar transação como aprovada
                 await transaction_model.update_transaction(transaction_id, {'status': 'approved'})
                 
-                # Enviar confirmação
+                # Enviar mensagem "Quase lá!"
                 if user_id in active_tickets:
                     channel_id = active_tickets[user_id]['channel_id']
                     channel = bot.get_channel(channel_id)
                     
                     if channel:
+                        # Mensagem de confirmação de pagamento
+                        await channel.send(
+                            "🎉 **Pagamento Confirmado!**\n"
+                            "⏳ Processando entrega do produto...\n"
+                            "📦 Aguarde apenas alguns segundos!"
+                        )
+                        
+                        # Aguardar 3 segundos para criar expectativa
+                        await asyncio.sleep(3)
+                        
+                        # Entrega do produto
                         embed = discord.Embed(
-                            title="✅ Pagamento Aprovado!",
-                            description="Seu pagamento foi confirmado com sucesso!",
+                            title="✅ Produto Entregue!",
+                            description="🎊 Sua compra foi concluída com sucesso! 🎊",
                             color=0x00ff00
                         )
+                        
                         embed.add_field(
-                            name="🎉 Produto Entregue",
-                            value="Seu produto foi entregue digitalmente. Obrigado pela compra!",
+                            name="📦 Entrega Completa",
+                            value="Seu produto foi entregue digitalmente neste canal.\n"
+                                  "Verifique as mensagens acima para acessar seu produto!",
                             inline=False
                         )
-                        embed.set_footer(text="Use !status para verificar o histórico")
+                        
+                        embed.add_field(
+                            name="💚 Obrigado pela Compra!",
+                            value="Esperamos que aproveite seu produto.\n"
+                                  "Qualquer dúvida, entre em contato com o suporte!",
+                            inline=False
+                        )
+                        
+                        embed.set_footer(text="Use /status para verificar o histórico • Ticket será fechado em breve")
                         
                         await channel.send(embed=embed)
                         
