@@ -149,7 +149,7 @@ class LogEventsSelect(ui.Select):
 class PresetButton(ui.Button):
     """Botão para aplicar um preset de eventos"""
     
-    def __init__(self, label: str, emoji: str, events: list, row: int = 1):
+    def __init__(self, label: str, emoji: str, events: list, log_channel_id: int, guild_id: int, row: int = 1):
         super().__init__(
             label=label,
             emoji=emoji,
@@ -157,16 +157,101 @@ class PresetButton(ui.Button):
             row=row
         )
         self.events = events
+        self.log_channel_id = log_channel_id
+        self.guild_id = guild_id
     
     async def callback(self, interaction: discord.Interaction):
         """Aplicar preset"""
-        # Atualizar o select com os eventos do preset
-        view = self.view
-        select = view.children[0]  # O select é o primeiro item
-        select.values = self.events
-        
-        # Trigger o callback do select
-        await select.callback(interaction)
+        try:
+            selected_events = self.events
+            
+            # Salvar configuração
+            guild_config = GuildConfigModel()
+            
+            if not selected_events:
+                # Desabilitar logs
+                success = await guild_config.disable_logs(self.guild_id)
+                
+                if success:
+                    embed = discord.Embed(
+                        title="❌ Logs Desabilitados",
+                        description="O sistema de logs foi desabilitado para este servidor.",
+                        color=0xFF0000
+                    )
+                    await interaction.response.send_message(embed=embed, ephemeral=True)
+                else:
+                    await interaction.response.send_message(
+                        "❌ Erro ao desabilitar logs.",
+                        ephemeral=True
+                    )
+                return
+            
+            # Salvar eventos selecionados
+            success = await guild_config.set_log_config(
+                guild_id=self.guild_id,
+                log_channel_id=self.log_channel_id,
+                log_events=selected_events
+            )
+            
+            if success:
+                # Criar resumo dos eventos selecionados
+                events_list = []
+                for event_id in selected_events:
+                    event_data = LOG_EVENTS.get(event_id, {})
+                    emoji = event_data.get('emoji', '📋')
+                    name = event_data.get('name', event_id)
+                    events_list.append(f"{emoji} {name}")
+                
+                embed = discord.Embed(
+                    title="✅ Preset Aplicado!",
+                    description=f"Sistema de logs configurado com sucesso!\n"
+                                f"📺 **Canal:** <#{self.log_channel_id}>",
+                    color=0x00FF00
+                )
+                
+                embed.add_field(
+                    name=f"📊 Eventos Selecionados ({len(selected_events)})",
+                    value="\n".join(events_list),
+                    inline=False
+                )
+                
+                embed.set_footer(text="Os logs começarão a ser enviados imediatamente!")
+                
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                
+                # Enviar mensagem de teste no canal de logs
+                try:
+                    log_channel = interaction.guild.get_channel(self.log_channel_id)
+                    if log_channel:
+                        test_embed = discord.Embed(
+                            title="🎉 Sistema de Logs Ativado!",
+                            description=f"Logs configurados por {interaction.user.mention}",
+                            color=0x5865F2
+                        )
+                        test_embed.add_field(
+                            name="📊 Eventos Ativos",
+                            value=f"{len(selected_events)} eventos selecionados",
+                            inline=True
+                        )
+                        test_embed.set_footer(text="Este é um teste - os logs reais começam agora!")
+                        await log_channel.send(embed=test_embed)
+                except:
+                    pass  # Ignorar erro ao enviar mensagem de teste
+                
+            else:
+                await interaction.response.send_message(
+                    "❌ Erro ao salvar configuração de logs.",
+                    ephemeral=True
+                )
+                
+        except Exception as e:
+            print(f"Erro ao aplicar preset: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(
+                "❌ Erro ao processar preset.",
+                ephemeral=True
+            )
 
 class LogEventsSelectView(ui.View):
     """View com select menu e botões de preset"""
@@ -182,6 +267,8 @@ class LogEventsSelectView(ui.View):
             label="Apenas Vendas",
             emoji="🔥",
             events=['payment_confirmed', 'product_delivered'],
+            log_channel_id=log_channel_id,
+            guild_id=guild_id,
             row=1
         ))
         
@@ -189,6 +276,8 @@ class LogEventsSelectView(ui.View):
             label="Todos Tickets",
             emoji="🎫",
             events=['ticket_created', 'support_ticket_created', 'ticket_closed'],
+            log_channel_id=log_channel_id,
+            guild_id=guild_id,
             row=1
         ))
         
@@ -196,6 +285,8 @@ class LogEventsSelectView(ui.View):
             label="Completo",
             emoji="📊",
             events=list(LOG_EVENTS.keys()),
+            log_channel_id=log_channel_id,
+            guild_id=guild_id,
             row=1
         ))
         
@@ -204,6 +295,8 @@ class LogEventsSelectView(ui.View):
             label="Desabilitar Logs",
             emoji="❌",
             events=[],
+            log_channel_id=log_channel_id,
+            guild_id=guild_id,
             row=1
         ))
     
