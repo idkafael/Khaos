@@ -1,6 +1,6 @@
 """
 Seletor de Gateway de Pagamento
-Suporta múltiplos gateways (Mercado Pago, PushinPay) com fallback automático
+Sistema 100% Mercado Pago - PushinPay removido completamente
 """
 
 from typing import Optional, Dict
@@ -16,8 +16,8 @@ class GatewaySelector:
         self.mp_manager = MercadoPagoManager()
         self.guild_config_model = GuildConfigModel()
         
-        # Ordem de preferência padrão
-        self.default_priority = ['mercadopago', 'pushinpay']
+        # Ordem de preferência padrão - APENAS Mercado Pago
+        self.default_priority = ['mercadopago']
     
     async def get_preferred_gateway(self, guild_id: int) -> str:
         """
@@ -75,21 +75,17 @@ class GatewaySelector:
     def is_gateway_available(self, gateway: str) -> bool:
         """
         Verifica se gateway está configurado e disponível
-        
+
         Args:
             gateway: Nome do gateway
-            
+
         Returns:
             True se disponível
         """
         if gateway == 'mercadopago':
             return self.mp_manager.is_configured()
-        
-        elif gateway == 'pushinpay':
-            # PushinPay temporariamente desabilitado (focus em Mercado Pago)
-            return False
-        
-        # Outros gateways
+
+        # PushinPay e outros gateways DESABILITADOS - foco 100% Mercado Pago
         return False
     
     async def create_payment(
@@ -120,7 +116,7 @@ class GatewaySelector:
             if not preferred_gateway:
                 preferred_gateway = await self.get_preferred_gateway(guild_id)
             
-            # Tentar gateway preferido primeiro
+            # Sistema 100% Mercado Pago - sem fallback
             payment = await self._try_payment(
                 gateway=preferred_gateway,
                 amount=amount,
@@ -128,37 +124,15 @@ class GatewaySelector:
                 transaction_id=transaction_id,
                 user_email=user_email
             )
-            
+
             if payment:
                 payment['gateway_used'] = preferred_gateway
                 print(f"✅ Pagamento criado via {preferred_gateway}")
                 return payment
-            
-            # Fallback: tentar outros gateways
-            print(f"⚠️ Falha no {preferred_gateway}, tentando fallback...")
-            
-            for gateway in self.default_priority:
-                if gateway == preferred_gateway:
-                    continue  # Já tentamos
-                
-                if not self.is_gateway_available(gateway):
-                    continue
-                
-                payment = await self._try_payment(
-                    gateway=gateway,
-                    amount=amount,
-                    description=description,
-                    transaction_id=transaction_id,
-                    user_email=user_email
-                )
-                
-                if payment:
-                    payment['gateway_used'] = gateway
-                    print(f"✅ Pagamento criado via {gateway} (fallback)")
-                    return payment
-            
-            # Nenhum gateway funcionou
-            print("❌ Todos os gateways falharam")
+
+            # SEM FALLBACK - se Mercado Pago falhar, falha completamente
+            print(f"❌ Gateway {preferred_gateway} falhou - sem alternativas disponíveis")
+            print(f"💡 Sistema configurado para usar APENAS Mercado Pago")
             return None
             
         except Exception as e:
@@ -233,13 +207,13 @@ class GatewaySelector:
                 )
             
             elif gateway == 'pushinpay':
-                # PushinPay temporariamente desabilitado para evitar importação circular
-                # Mercado Pago é o gateway principal agora
-                print(f"⚠️ PushinPay fallback desabilitado - Use Mercado Pago")
+                # PushinPay REMOVIDO COMPLETAMENTE - foco 100% Mercado Pago
+                print(f"❌ PushinPay não está mais disponível - Sistema usa apenas Mercado Pago")
                 return None
-            
+
             else:
-                print(f"❌ Gateway não implementado: {gateway}")
+                # Gateway não implementado - apenas Mercado Pago é suportado
+                print(f"❌ Gateway não implementado: {gateway} - Use Mercado Pago")
                 return None
                 
         except Exception as e:
@@ -249,18 +223,20 @@ class GatewaySelector:
     def get_available_gateways(self) -> list:
         """
         Retorna lista de gateways disponíveis (configurados)
-        
+        Sistema 100% Mercado Pago - PushinPay removido
+
         Returns:
             Lista de nomes dos gateways
         """
         available = []
-        
+
         if self.is_gateway_available('mercadopago'):
             available.append('mercadopago')
-        
-        if self.is_gateway_available('pushinpay'):
-            available.append('pushinpay')
-        
+
+        # PushinPay removido completamente
+        # if self.is_gateway_available('pushinpay'):
+        #     available.append('pushinpay')
+
         return available
     
     def get_gateway_info(self, gateway: str) -> Dict:
@@ -283,10 +259,10 @@ class GatewaySelector:
             },
             'pushinpay': {
                 'name': 'PushinPay',
-                'icon': '🔵',
-                'description': 'Gateway alternativo - Pix rápido',
-                'features': ['Pix'],
-                'configured': self.is_gateway_available('pushinpay')
+                'icon': '❌',
+                'description': 'REMOVIDO - Sistema usa apenas Mercado Pago',
+                'features': [],
+                'configured': False
             },
             'asaas': {
                 'name': 'Asaas',

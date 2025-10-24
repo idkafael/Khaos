@@ -6,7 +6,7 @@ from utils.delivery_manager import DeliveryManager
 from models.transaction_model import TransactionModel
 
 class WebhookHandler:
-    """Servidor webhook para receber notificações da PushinPay"""
+    """Servidor webhook para receber notificações do Mercado Pago (100% foco)"""
     
     def __init__(self, bot, port: int = 8080):
         self.bot = bot
@@ -17,8 +17,8 @@ class WebhookHandler:
         self.delivery_manager = DeliveryManager(bot)
         self.transaction_model = TransactionModel()
         
-        # Configurar rotas
-        self.app.router.add_post('/webhook/pushinpay', self.handle_pushinpay_webhook)
+        # Configurar rotas - APENAS Mercado Pago (PushinPay removido)
+        # self.app.router.add_post('/webhook/pushinpay', self.handle_pushinpay_webhook)  # REMOVIDO
         self.app.router.add_post('/webhook/mercadopago', self.handle_mercadopago_webhook)
         self.app.router.add_get('/health', self.health_check)
     
@@ -30,9 +30,9 @@ class WebhookHandler:
             self.site = web.TCPSite(self.runner, '0.0.0.0', self.port)
             await self.site.start()
             print(f"🌐 Webhook server iniciado na porta {self.port}")
-            print(f"📍 Endpoints ativos:")
-            print(f"   • http://0.0.0.0:{self.port}/webhook/pushinpay (PushinPay)")
+            print(f"📍 Endpoint ativo:")
             print(f"   • http://0.0.0.0:{self.port}/webhook/mercadopago (Mercado Pago)")
+            print(f"💡 Sistema 100% Mercado Pago - PushinPay removido")
         except Exception as e:
             print(f"❌ Erro ao iniciar webhook server: {e}")
             import traceback
@@ -53,68 +53,11 @@ class WebhookHandler:
         """Endpoint de health check"""
         return web.json_response({'status': 'ok', 'service': 'webhook_handler'})
     
-    async def handle_pushinpay_webhook(self, request):
-        """Processa webhooks da PushinPay"""
-        try:
-            # Ler dados do webhook
-            data = await request.json()
-            
-            print(f"📨 Webhook recebido: {json.dumps(data, indent=2)}")
-            
-            # Extrair informações do webhook
-            payment_id = data.get('id')
-            status = data.get('status')
-            
-            if not payment_id:
-                print("⚠️ Webhook sem payment_id")
-                return web.json_response({'error': 'payment_id missing'}, status=400)
-            
-            # Buscar transação pelo payment_id
-            transaction = await self._find_transaction_by_payment_id(payment_id)
-            
-            if not transaction:
-                print(f"⚠️ Transação não encontrada para payment_id: {payment_id}")
-                return web.json_response({'error': 'transaction not found'}, status=404)
-            
-            print(f"📦 Webhook para transação #{transaction['id']} - Status: {status}")
-            
-            # Processar baseado no status
-            if status == 'paid':
-                # Pagamento confirmado - entregar produto
-                asyncio.create_task(
-                    self.delivery_manager.process_payment_confirmation(
-                        transaction['id'],
-                        payment_id
-                    )
-                )
-                print(f"✅ Processando entrega para transação #{transaction['id']}")
-                
-            elif status == 'expired' or status == 'failed':
-                # Pagamento expirado ou falhou
-                await self.transaction_model.update_transaction(
-                    transaction['id'],
-                    {'status': 'expired'}
-                )
-                print(f"⏰ Transação #{transaction['id']} marcada como expirada")
-                
-                # Liberar estoque se reservado
-                await self._release_reserved_stock(transaction['id'])
-            
-            # Retornar sucesso
-            return web.json_response({
-                'status': 'ok',
-                'transaction_id': transaction['id'],
-                'processed': True
-            })
-            
-        except json.JSONDecodeError:
-            print("❌ Webhook com JSON inválido")
-            return web.json_response({'error': 'invalid json'}, status=400)
-        except Exception as e:
-            print(f"❌ Erro ao processar webhook: {e}")
-            import traceback
-            traceback.print_exc()
-            return web.json_response({'error': str(e)}, status=500)
+    # REMOVIDO - PushinPay não é mais usado
+    # async def handle_pushinpay_webhook(self, request):
+    #     """Processa webhooks da PushinPay - REMOVIDO"""
+    #     print("❌ PushinPay webhook removido - Sistema usa apenas Mercado Pago")
+    #     return web.json_response({'error': 'pushinpay not supported'}, status=410)
     
     async def handle_mercadopago_webhook(self, request):
         """Processa webhooks do Mercado Pago"""

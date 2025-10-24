@@ -6,20 +6,20 @@ from typing import Dict, Optional
 import json
 
 class PaymentUtils:
-    """Utilitários para processamento de pagamentos via Pix usando Multi-Gateway (Mercado Pago + PushinPay)"""
+    """Utilitários para processamento de pagamentos via Pix usando Mercado Pago (100% foco)"""
     
     def __init__(self):
-        # Import do Gateway Selector (Mercado Pago + PushinPay)
+        # Import do Gateway Selector (100% Mercado Pago)
         from utils.gateway_selector import GatewaySelector
         self.gateway_selector = GatewaySelector()
-        
+
         # Debug: Verificar configuração
-        print(f"💳 PaymentUtils: Usando Multi-Gateway (Mercado Pago prioritário)")
+        print(f"💳 PaymentUtils: Usando Mercado Pago (gateway único)")
         gateways_disponiveis = self.gateway_selector.get_available_gateways()
-        print(f"✅ Gateways disponíveis: {', '.join(gateways_disponiveis)}")
+        print(f"✅ Gateway disponível: {', '.join(gateways_disponiveis)}")
     
     async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str, split_config: Optional[Dict] = None, guild_id: int = None, transaction_id: int = None) -> Optional[Dict]:
-        """Cria um pagamento via Pix usando Multi-Gateway (Mercado Pago prioritário, PushinPay fallback)
+        """Cria um pagamento via Pix usando Mercado Pago (100% foco, sem fallback)
         
         Args:
             amount: Valor do pagamento
@@ -40,8 +40,7 @@ class PaymentUtils:
                 print("❌ Valor mínimo é R$ 0,50")
                 return None
             
-            # Usar Gateway Selector para criar pagamento
-            # Prioridade: Mercado Pago → PushinPay (fallback automático)
+            # Usar Gateway Selector para criar pagamento (100% Mercado Pago)
             payment_data = await self.gateway_selector.create_payment(
                 guild_id=guild_id or 0,  # Se não tiver guild_id, usa 0 (vai usar Mercado Pago por padrão)
                 amount=amount,
@@ -81,8 +80,7 @@ class PaymentUtils:
                     'gateway_used': 'mercadopago'
                 }
             
-            elif gateway_used == 'pushinpay':
-                # PushinPay retorna estrutura diferente
+            # PushinPay removido - apenas Mercado Pago suportado
                 qr_code_data = payment_data.get('qr_code', '')
                 payment_id = payment_data.get('id', '')
                 
@@ -143,8 +141,8 @@ class PaymentUtils:
                     print(f"⚠️ [PaymentUtils] Pagamento não encontrado no MP")
                     return 'pending'
             else:
-                # PushinPay ou outros gateways desabilitados
-                print(f"⚠️ [PaymentUtils] Gateway {gateway_used} não suportado")
+                # Gateway não suportado (apenas Mercado Pago é aceito)
+                print(f"⚠️ [PaymentUtils] Gateway {gateway_used} não suportado - use Mercado Pago")
                 return 'pending'
                 
         except Exception as e:
@@ -179,19 +177,20 @@ class PaymentUtils:
             return None
     
     async def cancel_payment(self, payment_id: str) -> bool:
-        """Cancela um pagamento (PushinPay não tem endpoint de cancelamento)"""
+        """Cancela um pagamento (Mercado Pago não oferece cancelamento direto)"""
         try:
-            # PushinPay não oferece cancelamento via API
-            # O pagamento expira automaticamente após um tempo
-            print("⚠️ PushinPay não oferece cancelamento via API. O pagamento expirará automaticamente.")
+            # Mercado Pago não oferece cancelamento direto via API
+            # Os pagamentos expiram automaticamente após o tempo limite
+            print(f"⚠️ Cancelamento manual não disponível para Mercado Pago")
+            print(f"💡 O pagamento {payment_id} expirará automaticamente")
             return False
-            
+
         except Exception as e:
             print(f"Erro ao cancelar pagamento: {e}")
             return False
     
     async def get_payment_details(self, payment_id: str) -> Optional[Dict]:
-        """Obtém detalhes de um pagamento (usa Mercado Pago)"""
+        """Obtém detalhes de um pagamento via Mercado Pago (gateway único)"""
         try:
             from utils.mercadopago_manager import MercadoPagoManager
             mp_manager = MercadoPagoManager()
@@ -227,7 +226,7 @@ class PaymentUtils:
         return f"R$ {amount:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
     
     def get_qr_code_image_from_base64(self, qr_code_base64: str) -> Optional[io.BytesIO]:
-        """Converte QR Code base64 da PushinPay para BytesIO"""
+        """Converte QR Code base64 do Mercado Pago para BytesIO"""
         try:
             if not qr_code_base64:
                 return None

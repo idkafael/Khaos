@@ -1950,7 +1950,7 @@ async def buy_product(ctx, *, product_name):
             
             # Enviar QR Code como imagem se disponível
             if payment_data.get('qr_code_base64'):
-                # Usar QR Code base64 da PushinPay
+                # Usar QR Code base64 do Mercado Pago
                 qr_image = payment_utils.get_qr_code_image_from_base64(payment_data['qr_code_base64'])
                 if qr_image:
                     await ctx.send(file=discord.File(qr_image, filename='qrcode.png'))
