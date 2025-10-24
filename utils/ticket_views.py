@@ -10,14 +10,14 @@ class SetupMessageModal(ui.Modal):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(title="Criar Mensagem Embed", timeout=300)
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Título", 
             placeholder="Ex: Bem-vindo ao Servidor!", 
             default="",
             max_length=256,
             required=False
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Descrição", 
             placeholder="Escreva o conteúdo principal da mensagem...", 
             default="",
@@ -25,20 +25,20 @@ class SetupMessageModal(ui.Modal):
             max_length=4000,
             required=True
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="URL da Imagem", 
             placeholder="Cole o link da imagem (opcional)", 
             default="",
             required=False,
             max_length=500
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #0099ff ou 0x0099ff", 
             default="#0099ff",
             max_length=10
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Rodapé (Footer)", 
             placeholder="Texto no rodapé (opcional)", 
             default="",
@@ -113,33 +113,33 @@ class SetupTicketModal(ui.Modal):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(title="Configurar Sistema de Tickets", timeout=300)
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Headline", 
             placeholder="Ex: Sistema de Vendas Automatizado", 
             default="🛒 Sistema de Vendas Automatizado",
             max_length=100
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
             default="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
             style=discord.TextStyle.long,
             max_length=1000
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="IDs dos Produtos (vazio = todos)", 
             placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
             default="",
             required=False,
             max_length=200
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Nome do Botão", 
             placeholder="Ex: Criar Ticket de Compra", 
             default="Criar Ticket de Compra",
             max_length=80
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #0099ff ou 0x0099ff", 
             default="#0099ff",
@@ -251,7 +251,7 @@ class CouponInputModal(ui.Modal):
         self.guild = guild
         self.product = product
         
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Código do Cupom",
             placeholder="Digite o código do cupom ou deixe em branco",
             required=False,
@@ -510,21 +510,21 @@ class CreateCouponModal(ui.Modal):
     def __init__(self):
         super().__init__(title="Criar Novo Cupom", timeout=300)
         
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Código do Cupom",
             placeholder="Ex: PRIMEIRACOMPRA",
             max_length=50,
             required=True
         ))
         
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Desconto (%)",
             placeholder="Ex: 10 para 10%",
             max_length=5,
             required=True
         ))
         
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Limite de Usos (0 = ilimitado)",
             placeholder="Ex: 100",
             default="0",
@@ -532,7 +532,7 @@ class CreateCouponModal(ui.Modal):
             required=False
         ))
         
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Um uso por usuário? (sim/nao)",
             placeholder="sim ou nao",
             default="nao",
@@ -540,7 +540,7 @@ class CreateCouponModal(ui.Modal):
             required=False
         ))
         
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Data Expiração (DD/MM/YYYY ou vazio)",
             placeholder="31/12/2025",
             required=False,
@@ -614,19 +614,19 @@ class SetupSupportModal(ui.Modal):
     
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(title="Configurar Tickets de Suporte", timeout=300)
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Título da Mensagem", 
             placeholder="Ex: Central de Atendimento", 
             default="🎫 Central de Atendimento",
             max_length=100
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Descrição da Mensagem", 
             placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
             default="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
             max_length=1000
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Opções Menu (EMOJI|Nome|Descrição)", 
             placeholder="Uma por linha", 
             default="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
@@ -634,13 +634,13 @@ class SetupSupportModal(ui.Modal):
             max_length=1000,
             required=True
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Nome do Botão | Emoji (opcional)", 
             placeholder="Ex: Abrir Ticket | 🎫", 
             default="Abrir Ticket | 🎫",
             max_length=100
         ))
-        self.add_item(ui.TextInput(
+        self.add_item(ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #5865F2", 
             default="#5865F2",

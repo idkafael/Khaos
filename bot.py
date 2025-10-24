@@ -2801,7 +2801,7 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
     try:
         # Criar modal para saque
         class WithdrawalModal(discord.ui.Modal, title="💸 Solicitar Saque"):
-            amount_input = discord.ui.TextInput(
+            amount_input = discord.ui.InputText(
                 label="Valor a Sacar (R$)",
                 placeholder="Ex: 50.00",
                 required=True,
@@ -2809,14 +2809,14 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
                 max_length=10
             )
             
-            pix_key_input = discord.ui.TextInput(
+            pix_key_input = discord.ui.InputText(
                 label="Chave Pix",
                 placeholder="CPF, email, telefone, etc (ou deixe vazio para usar padrão)",
                 required=False,
                 max_length=255
             )
             
-            pix_type_input = discord.ui.TextInput(
+            pix_type_input = discord.ui.InputText(
                 label="Tipo da Chave Pix",
                 placeholder="cpf, cnpj, email, phone ou random",
                 required=False,
