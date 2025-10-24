@@ -1571,7 +1571,7 @@ async def on_ready():
             for guild in bot.guilds:
                 try:
                     print(f"🔄 Sincronizando na guild: {guild.name} (ID: {guild.id})")
-                    synced = await bot.tree.sync(guild=guild)
+                    synced = await bot.sync_commands(guild=guild)
                     print(f"✅ {len(synced)} comandos sincronizados na guild {guild.name}!")
                     
                     # Aguardar um pouco entre sincronizações
@@ -2154,7 +2154,7 @@ async def sync_commands(ctx):
             await ctx.send(f"❌ Erro na sincronização global: {e}")
             
             # Tentar sincronizar por guild
-            synced = await bot.tree.sync(guild=ctx.guild)
+            synced = await bot.sync_commands(guild=ctx.guild)
             await ctx.send(f"✅ {len(synced)} comandos sincronizados na guild!")
             
     except Exception as e:
