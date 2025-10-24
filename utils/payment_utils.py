@@ -113,7 +113,7 @@ class PaymentUtils:
             return None
     
     async def check_payment_status(self, transaction_id: str) -> str:
-        """Verifica o status de um pagamento"""
+        """Verifica o status de um pagamento (usa Mercado Pago)"""
         try:
             # Buscar transação no banco de dados primeiro
             from models.transaction_model import TransactionModel
@@ -124,35 +124,33 @@ class PaymentUtils:
                 return 'pending'
             
             payment_id = transaction['payment_id']
+            gateway_used = transaction.get('gateway_used', 'mercadopago')
             
-            # Verificar status na API PushinPay
-            response = requests.get(
-                f"{self.base_url}/api/transactions/{payment_id}",
-                headers=self.headers,
-                timeout=30
-            )
+            print(f"🔍 [PaymentUtils] Verificando pagamento {payment_id} via {gateway_used}")
             
-            if response.status_code == 200:
-                payment_info = response.json()
-                status = payment_info.get('status', 'created')
+            # Usar Mercado Pago Manager para verificar status
+            if gateway_used == 'mercadopago':
+                from utils.mercadopago_manager import MercadoPagoManager
+                mp_manager = MercadoPagoManager()
                 
-                # Mapear status da PushinPay para nosso sistema
-                status_mapping = {
-                    'created': 'pending',
-                    'paid': 'approved',
-                    'expired': 'failed'
-                }
+                payment_info = await mp_manager.check_payment_status(payment_id)
                 
-                return status_mapping.get(status, 'pending')
-            elif response.status_code == 404:
-                print("Transação não encontrada na PushinPay")
-                return 'failed'
+                if payment_info:
+                    status = payment_info.get('status', 'pending')
+                    print(f"✅ [PaymentUtils] Status MP: {status}")
+                    return status
+                else:
+                    print(f"⚠️ [PaymentUtils] Pagamento não encontrado no MP")
+                    return 'pending'
             else:
-                print(f"Erro ao verificar status: {response.status_code} - {response.text}")
+                # PushinPay ou outros gateways desabilitados
+                print(f"⚠️ [PaymentUtils] Gateway {gateway_used} não suportado")
                 return 'pending'
                 
         except Exception as e:
-            print(f"Erro ao verificar status do pagamento: {e}")
+            print(f"❌ [PaymentUtils] Erro ao verificar status: {e}")
+            import traceback
+            traceback.print_exc()
             return 'pending'
     
     def _generate_qr_code(self, data: str) -> Optional[io.BytesIO]:
@@ -193,24 +191,17 @@ class PaymentUtils:
             return False
     
     async def get_payment_details(self, payment_id: str) -> Optional[Dict]:
-        """Obtém detalhes de um pagamento"""
+        """Obtém detalhes de um pagamento (usa Mercado Pago)"""
         try:
-            response = requests.get(
-                f"{self.base_url}/api/transactions/{payment_id}",
-                headers=self.headers,
-                timeout=30
-            )
+            from utils.mercadopago_manager import MercadoPagoManager
+            mp_manager = MercadoPagoManager()
             
-            if response.status_code == 200:
-                return response.json()
-            elif response.status_code == 404:
-                return None
-            else:
-                print(f"Erro ao obter detalhes: {response.status_code} - {response.text}")
-                return None
+            payment_info = await mp_manager.check_payment_status(payment_id)
+            
+            return payment_info
                 
         except Exception as e:
-            print(f"Erro ao obter detalhes do pagamento: {e}")
+            print(f"❌ [PaymentUtils] Erro ao obter detalhes do pagamento: {e}")
             return None
     
     def format_pix_code(self, pix_code: str) -> str:

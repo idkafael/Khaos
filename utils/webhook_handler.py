@@ -30,7 +30,9 @@ class WebhookHandler:
             self.site = web.TCPSite(self.runner, '0.0.0.0', self.port)
             await self.site.start()
             print(f"🌐 Webhook server iniciado na porta {self.port}")
-            print(f"📍 Endpoint: http://0.0.0.0:{self.port}/webhook/pushinpay")
+            print(f"📍 Endpoints ativos:")
+            print(f"   • http://0.0.0.0:{self.port}/webhook/pushinpay (PushinPay)")
+            print(f"   • http://0.0.0.0:{self.port}/webhook/mercadopago (Mercado Pago)")
         except Exception as e:
             print(f"❌ Erro ao iniciar webhook server: {e}")
             import traceback
