@@ -263,8 +263,10 @@ class CouponInputModal(ui.Modal):
         try:
             coupon_code = self.children[0].value.strip() if self.children[0].value else None
             
-            # Criar ticket com cupom
-            ticket_manager = TicketManager()
+            # Buscar ticket_manager global (inicializado no bot.py)
+            import bot
+            ticket_manager = bot.ticket_manager
+            
             success, message = await ticket_manager.create_ticket(
                 self.user,
                 self.guild,
@@ -278,10 +280,17 @@ class CouponInputModal(ui.Modal):
                 await interaction.response.send_message(f"❌ {message}", ephemeral=True)
                 
         except Exception as e:
-            print(f"Erro ao processar cupom: {e}")
+            print(f"❌ ERRO CRÍTICO ao processar cupom: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.response.send_message("❌ Erro ao criar ticket.", ephemeral=True)
+            
+            # Mensagem de erro mais informativa
+            error_message = str(e) if str(e) else "Erro desconhecido ao criar ticket"
+            await interaction.response.send_message(
+                f"❌ **Algo deu errado, tente novamente.**\n\n"
+                f"Detalhes técnicos: {error_message[:100]}",
+                ephemeral=True
+            )
 
 class ProductSelect(ui.Select):
     """Select menu personalizado para escolher produto"""
