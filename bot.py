@@ -22,25 +22,25 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='?', intents=intents)
+bot = discord.Bot(intents=intents)
 
 # Adicionar comandos slash manualmente
-@bot.tree.command(name="teste", description="Comando de teste")
-async def teste_slash(interaction: discord.Interaction):
+@bot.slash_command(name="teste", description="Comando de teste")
+async def teste_slash(ctx):
     """Comando de teste simples"""
-    print(f"Comando /teste executado por {interaction.user.name} em {interaction.guild.name}")
+    print(f"Comando /teste executado por {ctx.user.name} em {ctx.guild.name}")
     embed = discord.Embed(
         description="✅ Comando de teste funcionando!",
         color=0x8B5CF6
     )
-    await interaction.response.send_message(embed=embed)
+    await ctx.response.send_message(embed=embed)
 
-@bot.tree.command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
-@discord.app_commands.default_permissions(administrator=True)
-async def setup_ticket_slash(interaction: discord.Interaction):
+@bot.slash_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
+@discord.default_permissions(administrator=True)
+async def setup_ticket_slash(ctx: discord.ApplicationContext):
     """Comando admin para configurar sistema de tickets via modal"""
     try:
-        print(f"Comando setup_ticket executado por {interaction.user.name}")
+        print(f"Comando setup_ticket executado por {ctx.user.name}")
         print("Tentando importar SetupTicketModal...")
         
         from utils.ticket_views import SetupTicketModal
@@ -51,7 +51,7 @@ async def setup_ticket_slash(interaction: discord.Interaction):
         print("Modal criado com sucesso!")
         
         print("Enviando modal...")
-        await interaction.response.send_modal(modal)
+        await ctx.response.send_modal(modal)
         print("Modal enviado com sucesso!")
         
     except ImportError as e:
@@ -62,7 +62,7 @@ async def setup_ticket_slash(interaction: discord.Interaction):
             description="❌ Erro de importação no sistema de tickets.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_ticket: {e}")
         import traceback
@@ -71,14 +71,14 @@ async def setup_ticket_slash(interaction: discord.Interaction):
             description="❌ Erro ao configurar sistema de tickets.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="setup_msg", description="[ADMIN] Criar mensagem embed personalizada")
-@discord.app_commands.default_permissions(administrator=True)
-async def setup_msg_slash(interaction: discord.Interaction):
+@bot.slash_command(name="setup_msg", description="[ADMIN] Criar mensagem embed personalizada")
+@discord.default_permissions(administrator=True)
+async def setup_msg_slash(ctx: discord.ApplicationContext):
     """Comando admin para criar mensagem embed via modal"""
     try:
-        print(f"Comando setup_msg executado por {interaction.user.name}")
+        print(f"Comando setup_msg executado por {ctx.user.name}")
         
         from utils.ticket_views import SetupMessageModal
         print("SetupMessageModal importado com sucesso!")
@@ -86,7 +86,7 @@ async def setup_msg_slash(interaction: discord.Interaction):
         modal = SetupMessageModal()
         print("Modal criado com sucesso!")
         
-        await interaction.response.send_modal(modal)
+        await ctx.response.send_modal(modal)
         print("Modal enviado com sucesso!")
         
     except ImportError as e:
@@ -97,7 +97,7 @@ async def setup_msg_slash(interaction: discord.Interaction):
             description="❌ Erro de importação no sistema de mensagens.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_msg: {e}")
         import traceback
@@ -106,14 +106,14 @@ async def setup_msg_slash(interaction: discord.Interaction):
             description="❌ Erro ao criar mensagem embed.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="setup_suporte", description="[ADMIN] Configurar sistema de tickets de suporte")
-@discord.app_commands.default_permissions(administrator=True)
-async def setup_suporte_slash(interaction: discord.Interaction):
+@bot.slash_command(name="setup_suporte", description="[ADMIN] Configurar sistema de tickets de suporte")
+@discord.default_permissions(administrator=True)
+async def setup_suporte_slash(ctx: discord.ApplicationContext):
     """Comando admin para configurar sistema de tickets de suporte via modal"""
     try:
-        print(f"Comando setup_suporte executado por {interaction.user.name}")
+        print(f"Comando setup_suporte executado por {ctx.user.name}")
         
         from utils.ticket_views import SetupSupportModal
         print("SetupSupportModal importado com sucesso!")
@@ -121,7 +121,7 @@ async def setup_suporte_slash(interaction: discord.Interaction):
         modal = SetupSupportModal()
         print("Modal de suporte criado com sucesso!")
         
-        await interaction.response.send_modal(modal)
+        await ctx.response.send_modal(modal)
         print("Modal de suporte enviado com sucesso!")
         
     except ImportError as e:
@@ -132,7 +132,7 @@ async def setup_suporte_slash(interaction: discord.Interaction):
             description="❌ Erro de importação no sistema de suporte.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_suporte: {e}")
         import traceback
@@ -141,14 +141,14 @@ async def setup_suporte_slash(interaction: discord.Interaction):
             description="❌ Erro ao configurar sistema de suporte.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="setlog", description="[ADMIN] Configurar sistema de logs do servidor")
-@discord.app_commands.default_permissions(administrator=True)
-async def setlog_slash(interaction: discord.Interaction, canal: discord.TextChannel):
+@bot.slash_command(name="setlog", description="[ADMIN] Configurar sistema de logs do servidor")
+@discord.default_permissions(administrator=True)
+async def setlog_slash(ctx: discord.ApplicationContext, canal: discord.TextChannel):
     """Comando admin para configurar logs do servidor"""
     try:
-        print(f"Comando setlog executado por {interaction.user.name} - Canal: {canal.name}")
+        print(f"Comando setlog executado por {ctx.user.name} - Canal: {canal.name}")
         
         # Criar embed explicativo
         embed = discord.Embed(
@@ -174,9 +174,9 @@ async def setlog_slash(interaction: discord.Interaction, canal: discord.TextChan
         
         # Importar View com Select Menu
         from utils.log_views import LogEventsSelectView
-        view = LogEventsSelectView(canal.id, interaction.guild_id)
+        view = LogEventsSelectView(canal.id, ctx.guild_id)
         
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
         print("View de seleção de eventos enviada com sucesso!")
         
     except ImportError as e:
@@ -187,7 +187,7 @@ async def setlog_slash(interaction: discord.Interaction, canal: discord.TextChan
             description="❌ Erro de importação no sistema de logs.",
             color=0xFF0000
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setlog: {e}")
         import traceback
@@ -196,7 +196,7 @@ async def setlog_slash(interaction: discord.Interaction, canal: discord.TextChan
             description="❌ Erro ao configurar sistema de logs.",
             color=0xFF0000
         )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
 
 @bot.command(name="setlog", aliases=["configurar_logs", "logs"])
 @commands.has_permissions(administrator=True)
@@ -284,28 +284,28 @@ async def clear_error(ctx, error):
     else:
         print(f"Erro no comando clear: {error}")
 
-@bot.tree.command(name="status", description="Ver status do seu pagamento")
-async def status_slash(interaction: discord.Interaction):
+@bot.slash_command(name="status", description="Ver status do seu pagamento")
+async def status_slash(ctx: discord.ApplicationContext):
     """Comando para ver status do pagamento"""
     try:
         # Verificar se está em canal de ticket
-        if not interaction.channel.name.startswith('ticket-'):
-            await interaction.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
+        if not ctx.channel.name.startswith('ticket-'):
+            await ctx.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
             return
         
         # Buscar transação do usuário neste canal
         transaction_model = TransactionModel()
-        transactions = await transaction_model.get_user_transactions(interaction.user.id)
+        transactions = await transaction_model.get_user_transactions(ctx.user.id)
         
         # Filtrar pela transação deste canal
         current_transaction = None
         for trans in transactions:
-            if trans.get('delivery_channel_id') == interaction.channel.id:
+            if trans.get('delivery_channel_id') == ctx.channel.id:
                 current_transaction = trans
                 break
         
         if not current_transaction:
-            await interaction.response.send_message("❌ Nenhuma transação encontrada neste canal.", ephemeral=True)
+            await ctx.response.send_message("❌ Nenhuma transação encontrada neste canal.", ephemeral=True)
             return
         
         # Buscar produto
@@ -361,9 +361,9 @@ async def status_slash(interaction: discord.Interaction):
                 img_bytes.seek(0)
                 qr_file = discord.File(img_bytes, filename="qrcode.png")
                 
-                await interaction.response.send_message(embed=embed, file=qr_file, ephemeral=True)
+                await ctx.response.send_message(embed=embed, file=qr_file, ephemeral=True)
             else:
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await ctx.response.send_message(embed=embed, ephemeral=True)
                 
         elif status == 'completed':
             # Pagamento confirmado e produto entregue
@@ -395,7 +395,7 @@ async def status_slash(interaction: discord.Interaction):
                     inline=False
                 )
             
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx.response.send_message(embed=embed, ephemeral=True)
             
         elif status == 'expired':
             embed = discord.Embed(
@@ -408,28 +408,28 @@ async def status_slash(interaction: discord.Interaction):
                 value="Clique no botão 'Criar Ticket' para gerar um novo pagamento.",
                 inline=False
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx.response.send_message(embed=embed, ephemeral=True)
         else:
             embed = discord.Embed(
                 title="📊 Status do Pagamento",
                 description=f"Status: **{status}**",
                 color=0x3498db
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx.response.send_message(embed=embed, ephemeral=True)
             
     except Exception as e:
         print(f"Erro no comando status: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao buscar status do pagamento.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao buscar status do pagamento.", ephemeral=True)
 
-@bot.tree.command(name="comprar", description="Comprar produto do ticket (automático)")
-async def comprar_slash(interaction: discord.Interaction, produto: str = None):
+@bot.slash_command(name="comprar", description="Comprar produto do ticket (automático)")
+async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
     """Comando para comprar produto no canal do ticket"""
     try:
         # Verificar se está em canal de ticket
-        if not interaction.channel.name.startswith('ticket-'):
-            await interaction.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
+        if not ctx.channel.name.startswith('ticket-'):
+            await ctx.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
             return
         
         # Buscar produto automaticamente do ticket ou pelo nome fornecido
@@ -438,13 +438,13 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
         
         # Se produto não foi fornecido, buscar do ticket ativo
         if not produto:
-            ticket_data = active_tickets.get(interaction.user.id)
+            ticket_data = active_tickets.get(ctx.user.id)
             if ticket_data and ticket_data.get('product_id'):
                 # Buscar produto pelo ID armazenado no ticket
-                product = await product_model.get_product_by_id(ticket_data['product_id'], interaction.guild_id)
+                product = await product_model.get_product_by_id(ticket_data['product_id'], ctx.guild_id)
                 print(f"🎯 Produto detectado automaticamente do ticket: {product['name'] if product else 'None'}")
             else:
-                await interaction.response.send_message(
+                await ctx.response.send_message(
                     "❌ Não foi possível identificar o produto automaticamente!\n"
                     "💡 Dica: Use `/comprar produto: Nome do Produto`",
                     ephemeral=True
@@ -452,10 +452,10 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
                 return
         else:
             # Buscar produto por nome (apenas no servidor atual)
-            product = await product_model.get_product_by_name(produto, interaction.guild_id)
+            product = await product_model.get_product_by_name(produto, ctx.guild_id)
         
         if not product:
-            await interaction.response.send_message(
+            await ctx.response.send_message(
                 f"❌ Produto '{produto}' não encontrado neste servidor!" if produto else "❌ Produto não encontrado!",
                 ephemeral=True
             )
@@ -469,7 +469,7 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
         split_config = None
         
         # Verificar se tem cupom no ticket
-        ticket_data = active_tickets.get(interaction.user.id)
+        ticket_data = active_tickets.get(ctx.user.id)
         if ticket_data and ticket_data.get('coupon_code'):
             coupon_code = ticket_data['coupon_code']
             
@@ -478,9 +478,9 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
             coupon_model = CouponModel()
             is_valid, message, coupon_data = await coupon_model.validate_coupon(
                 coupon_code,
-                interaction.user.id,
+                ctx.user.id,
                 product['price'],
-                interaction.guild_id
+                ctx.guild_id
             )
             
             if is_valid and coupon_data:
@@ -495,18 +495,18 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
                     }
                 
                 # Enviar mensagem informando desconto
-                await interaction.channel.send(
+                await ctx.channel.send(
                     f"🎉 Cupom **{coupon_code}** aplicado! Desconto de {coupon_data['discount_percent']}% = R$ {discount_amount:.2f}"
                 )
             else:
                 # Cupom inválido - informar e continuar sem desconto
-                await interaction.channel.send(f"⚠️ {message} - Continuando sem desconto.")
+                await ctx.channel.send(f"⚠️ {message} - Continuando sem desconto.")
                 coupon_data = None
         
         # Criar transação
         transaction_model = TransactionModel()
         transaction = await transaction_model.create_transaction(
-            user_id=interaction.user.id,
+            user_id=ctx.user.id,
             product_id=product['id'],
             amount=product['price'],
             discount_amount=discount_amount,
@@ -516,7 +516,7 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
         )
         
         if not transaction:
-            await interaction.response.send_message("❌ Erro ao criar transação!", ephemeral=True)
+            await ctx.response.send_message("❌ Erro ao criar transação!", ephemeral=True)
             return
         
         # Gerar pagamento Pix com valor final
@@ -524,8 +524,8 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
         payment_data = await payment_utils.create_pix_payment(
             amount=final_amount,  # Valor com desconto
             description=f"Compra: {product['name']}",
-            customer_email=f"{interaction.user.name.lower().replace(' ', '')}@khaos.com",
-            customer_name=interaction.user.display_name,
+            customer_email=f"{ctx.user.name.lower().replace(' ', '')}@khaos.com",
+            customer_name=ctx.user.display_name,
             split_config=split_config  # Passar split se houver
         )
         
@@ -535,7 +535,7 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
                 'payment_id': payment_data.get('id'),
                 'pix_code': payment_data.get('pix_code'),
                 'qr_code': payment_data.get('qr_code'),
-                'email': f"{interaction.user.name.lower().replace(' ', '')}@khaos.com"
+                'email': f"{ctx.user.name.lower().replace(' ', '')}@khaos.com"
             })
             
             # Registrar uso do cupom
@@ -544,7 +544,7 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
                 coupon_model = CouponModel()
                 await coupon_model.use_coupon(
                     coupon_data['id'],
-                    interaction.user.id,
+                    ctx.user.id,
                     transaction['id'],
                     discount_amount
                 )
@@ -590,7 +590,7 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
             
             embed.set_footer(text=f"ID da Transação: {transaction['id']}")
             
-            await interaction.response.send_message(embed=embed)
+            await ctx.response.send_message(embed=embed)
             
             # Gerar e enviar QR Code como imagem
             try:
@@ -611,34 +611,34 @@ async def comprar_slash(interaction: discord.Interaction, produto: str = None):
                 img.save(img_buffer, format='PNG')
                 img_buffer.seek(0)
                 
-                await interaction.channel.send(
-                    content=f"{interaction.user.mention} 📱 **QR Code do Pagamento**",
+                await ctx.channel.send(
+                    content=f"{ctx.user.mention} 📱 **QR Code do Pagamento**",
                     file=discord.File(img_buffer, filename='qrcode_pix.png')
                 )
             except Exception as qr_error:
                 print(f"Erro ao gerar QR Code: {qr_error}")
             
             # Atualizar dados do ticket
-            if interaction.user.id in active_tickets:
-                active_tickets[interaction.user.id]['transaction_id'] = transaction['id']
-                active_tickets[interaction.user.id]['product'] = product
+            if ctx.user.id in active_tickets:
+                active_tickets[ctx.user.id]['transaction_id'] = transaction['id']
+                active_tickets[ctx.user.id]['product'] = product
             
             # Salvar canal de entrega na transação
             await transaction_model.update_transaction(transaction['id'], {
-                'delivery_channel_id': interaction.channel.id
+                'delivery_channel_id': ctx.channel.id
             })
             
         else:
-            await interaction.response.send_message("❌ Erro ao gerar pagamento Pix!", ephemeral=True)
+            await ctx.response.send_message("❌ Erro ao gerar pagamento Pix!", ephemeral=True)
             
     except Exception as e:
         print(f"Erro no comando comprar: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao processar compra!", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao processar compra!", ephemeral=True)
 
-@bot.tree.command(name="ajuda", description="Exibe a lista de comandos disponíveis")
-async def ajuda_slash(interaction: discord.Interaction):
+@bot.slash_command(name="ajuda", description="Exibe a lista de comandos disponíveis")
+async def ajuda_slash(ctx: discord.ApplicationContext):
     """Exibe a lista de comandos disponíveis"""
     embed = discord.Embed(
         title="🛒 Comandos de Khaos",
@@ -701,38 +701,38 @@ async def ajuda_slash(interaction: discord.Interaction):
         color=0x8B5CF6
     )
     
-    await interaction.response.send_message(embeds=[embed, side_embed])
+    await ctx.response.send_message(embeds=[embed, side_embed])
 
 # ========================================
 # COMANDOS DE CUPONS (ADMIN)
 # ========================================
 
-@bot.tree.command(name="criar_cupom", description="[ADMIN] Criar novo cupom de desconto")
-@discord.app_commands.default_permissions(administrator=True)
-async def criar_cupom_slash(interaction: discord.Interaction):
+@bot.slash_command(name="criar_cupom", description="[ADMIN] Criar novo cupom de desconto")
+@discord.default_permissions(administrator=True)
+async def criar_cupom_slash(ctx: discord.ApplicationContext):
     """Comando admin para criar cupom via modal"""
     try:
         from utils.ticket_views import CreateCouponModal
         
         modal = CreateCouponModal()
-        await interaction.response.send_modal(modal)
+        await ctx.response.send_modal(modal)
         
     except Exception as e:
         print(f"Erro no comando criar_cupom: {e}")
-        await interaction.response.send_message("❌ Erro ao abrir modal de cupom.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao abrir modal de cupom.", ephemeral=True)
 
-@bot.tree.command(name="listar_cupons", description="[ADMIN] Listar todos os cupons")
-@discord.app_commands.default_permissions(administrator=True)
-async def listar_cupons_slash(interaction: discord.Interaction):
+@bot.slash_command(name="listar_cupons", description="[ADMIN] Listar todos os cupons")
+@discord.default_permissions(administrator=True)
+async def listar_cupons_slash(ctx: discord.ApplicationContext):
     """Lista todos os cupons ativos"""
     try:
         from models.coupon_model import CouponModel
         
         coupon_model = CouponModel()
-        coupons = await coupon_model.get_all_coupons(interaction.guild_id, active_only=True)
+        coupons = await coupon_model.get_all_coupons(ctx.guild_id, active_only=True)
         
         if not coupons:
-            await interaction.response.send_message("📋 Nenhum cupom cadastrado.", ephemeral=True)
+            await ctx.response.send_message("📋 Nenhum cupom cadastrado.", ephemeral=True)
             return
         
         embed = discord.Embed(
@@ -766,26 +766,26 @@ async def listar_cupons_slash(interaction: discord.Interaction):
         if len(coupons) > 10:
             embed.set_footer(text=f"Mostrando 10 de {len(coupons)} cupons")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando listar_cupons: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao listar cupons.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao listar cupons.", ephemeral=True)
 
-@bot.tree.command(name="cupom_stats", description="[ADMIN] Ver estatísticas de um cupom")
-@discord.app_commands.default_permissions(administrator=True)
-async def cupom_stats_slash(interaction: discord.Interaction, codigo: str):
+@bot.slash_command(name="cupom_stats", description="[ADMIN] Ver estatísticas de um cupom")
+@discord.default_permissions(administrator=True)
+async def cupom_stats_slash(ctx: discord.ApplicationContext, codigo: str):
     """Mostra estatísticas de uso de um cupom"""
     try:
         from models.coupon_model import CouponModel
         
         coupon_model = CouponModel()
-        stats = await coupon_model.get_coupon_stats(codigo, interaction.guild_id)
+        stats = await coupon_model.get_coupon_stats(codigo, ctx.guild_id)
         
         if not stats:
-            await interaction.response.send_message(f"❌ Cupom '{codigo}' não encontrado neste servidor.", ephemeral=True)
+            await ctx.response.send_message(f"❌ Cupom '{codigo}' não encontrado neste servidor.", ephemeral=True)
             return
         
         coupon = stats['coupon']
@@ -842,17 +842,17 @@ async def cupom_stats_slash(interaction: discord.Interaction, codigo: str):
         
         embed.set_footer(text=f"Criado por: {coupon.get('created_by', 'N/A')}")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando cupom_stats: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao buscar estatísticas.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao buscar estatísticas.", ephemeral=True)
 
-@bot.tree.command(name="deletar_cupom", description="[ADMIN] Desativar um cupom")
-@discord.app_commands.default_permissions(administrator=True)
-async def deletar_cupom_slash(interaction: discord.Interaction, codigo: str):
+@bot.slash_command(name="deletar_cupom", description="[ADMIN] Desativar um cupom")
+@discord.default_permissions(administrator=True)
+async def deletar_cupom_slash(ctx: discord.ApplicationContext, codigo: str):
     """Desativa um cupom"""
     try:
         from models.coupon_model import CouponModel
@@ -866,20 +866,20 @@ async def deletar_cupom_slash(interaction: discord.Interaction, codigo: str):
                 description=message,
                 color=0x00ff00
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx.response.send_message(embed=embed, ephemeral=True)
         else:
-            await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+            await ctx.response.send_message(f"❌ {message}", ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando deletar_cupom: {e}")
-        await interaction.response.send_message("❌ Erro ao deletar cupom.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao deletar cupom.", ephemeral=True)
 
 # ========================================
 # COMANDOS VIP (USUÁRIO)
 # ========================================
 
-@bot.tree.command(name="meu_vip", description="Ver status da sua assinatura VIP")
-async def meu_vip_slash(interaction: discord.Interaction):
+@bot.slash_command(name="meu_vip", description="Ver status da sua assinatura VIP")
+async def meu_vip_slash(ctx: discord.ApplicationContext):
     """Mostra informações da assinatura VIP do usuário"""
     try:
         from models.vip_model import VipModel
@@ -887,8 +887,8 @@ async def meu_vip_slash(interaction: discord.Interaction):
         
         vip_model = VipModel()
         subscription = await vip_model.get_user_subscription(
-            interaction.user.id,
-            interaction.guild.id
+            ctx.user.id,
+            ctx.guild.id
         )
         
         if not subscription:
@@ -902,7 +902,7 @@ async def meu_vip_slash(interaction: discord.Interaction):
                 value="Use `/renovar_vip` para ver os planos disponíveis!",
                 inline=False
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx.response.send_message(embed=embed, ephemeral=True)
             return
         
         # Calcular informações
@@ -910,7 +910,7 @@ async def meu_vip_slash(interaction: discord.Interaction):
         
         embed = discord.Embed(
             title="👑 Sua Assinatura VIP",
-            description=f"Olá {interaction.user.mention}! Aqui estão os detalhes da sua assinatura VIP.",
+            description=f"Olá {ctx.user.mention}! Aqui estão os detalhes da sua assinatura VIP.",
             color=discord.Color.gold(),
             timestamp=datetime.now()
         )
@@ -965,31 +965,31 @@ async def meu_vip_slash(interaction: discord.Interaction):
         
         embed.set_footer(
             text=f"VIP desde {started_at.strftime('%d/%m/%Y')}",
-            icon_url=interaction.user.display_avatar.url if interaction.user.display_avatar else None
+            icon_url=ctx.user.display_avatar.url if ctx.user.display_avatar else None
         )
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando meu_vip: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao buscar informações VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao buscar informações VIP.", ephemeral=True)
 
-@bot.tree.command(name="renovar_vip", description="Ver planos VIP disponíveis para renovação")
-async def renovar_vip_slash(interaction: discord.Interaction):
+@bot.slash_command(name="renovar_vip", description="Ver planos VIP disponíveis para renovação")
+async def renovar_vip_slash(ctx: discord.ApplicationContext):
     """Mostra os planos VIP disponíveis"""
     try:
         from models.product_model import ProductModel
         
         product_model = ProductModel()
-        all_products = await product_model.get_products_by_guild(interaction.guild_id)
+        all_products = await product_model.get_products_by_guild(ctx.guild_id)
         
         # Filtrar apenas produtos VIP
         vip_products = [p for p in all_products if p.get('category') == 'VIP']
         
         if not vip_products:
-            await interaction.response.send_message("❌ Nenhum plano VIP disponível no momento.", ephemeral=True)
+            await ctx.response.send_message("❌ Nenhum plano VIP disponível no momento.", ephemeral=True)
             return
         
         embed = discord.Embed(
@@ -1052,16 +1052,16 @@ async def renovar_vip_slash(interaction: discord.Interaction):
         
         embed.set_footer(text="Invista no seu futuro VIP! 💎")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando renovar_vip: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao carregar planos VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao carregar planos VIP.", ephemeral=True)
 
-@bot.tree.command(name="historico_vip", description="Ver histórico de assinaturas VIP")
-async def historico_vip_slash(interaction: discord.Interaction):
+@bot.slash_command(name="historico_vip", description="Ver histórico de assinaturas VIP")
+async def historico_vip_slash(ctx: discord.ApplicationContext):
     """Mostra o histórico completo de assinaturas VIP do usuário"""
     try:
         from models.vip_model import VipModel
@@ -1069,8 +1069,8 @@ async def historico_vip_slash(interaction: discord.Interaction):
         
         vip_model = VipModel()
         history = await vip_model.get_subscription_history(
-            interaction.user.id,
-            interaction.guild.id
+            ctx.user.id,
+            ctx.guild.id
         )
         
         if not history:
@@ -1084,12 +1084,12 @@ async def historico_vip_slash(interaction: discord.Interaction):
                 value="Use `/renovar_vip` para ver os planos disponíveis!",
                 inline=False
             )
-            await interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx.response.send_message(embed=embed, ephemeral=True)
             return
         
         embed = discord.Embed(
             title="📋 Seu Histórico VIP",
-            description=f"Histórico completo de assinaturas de {interaction.user.mention}",
+            description=f"Histórico completo de assinaturas de {ctx.user.mention}",
             color=discord.Color.blue(),
             timestamp=datetime.now()
         )
@@ -1126,21 +1126,21 @@ async def historico_vip_slash(interaction: discord.Interaction):
         else:
             embed.set_footer(text=f"Total: {len(history)} assinatura(s)")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando historico_vip: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao buscar histórico VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao buscar histórico VIP.", ephemeral=True)
 
 # ========================================
 # COMANDOS VIP (ADMIN)
 # ========================================
 
-@bot.tree.command(name="listar_vips", description="[ADMIN] Listar todos os VIPs ativos do servidor")
-@discord.app_commands.default_permissions(administrator=True)
-async def listar_vips_slash(interaction: discord.Interaction):
+@bot.slash_command(name="listar_vips", description="[ADMIN] Listar todos os VIPs ativos do servidor")
+@discord.default_permissions(administrator=True)
+async def listar_vips_slash(ctx: discord.ApplicationContext):
     """Lista todos os membros VIP ativos"""
     try:
         from models.vip_model import VipModel
@@ -1148,12 +1148,12 @@ async def listar_vips_slash(interaction: discord.Interaction):
         
         vip_model = VipModel()
         subscriptions = await vip_model.get_all_subscriptions(
-            interaction.guild.id,
+            ctx.guild.id,
             status='active'
         )
         
         if not subscriptions:
-            await interaction.response.send_message("📋 Nenhum VIP ativo no servidor.", ephemeral=True)
+            await ctx.response.send_message("📋 Nenhum VIP ativo no servidor.", ephemeral=True)
             return
         
         embed = discord.Embed(
@@ -1176,7 +1176,7 @@ async def listar_vips_slash(interaction: discord.Interaction):
             users_text = ""
             
             for sub in subs[:10]:  # Limitar 10 por role
-                user = interaction.guild.get_member(sub['user_id'])
+                user = ctx.guild.get_member(sub['user_id'])
                 user_mention = user.mention if user else f"ID: {sub['user_id']}"
                 
                 if sub['duration_days'] is None:
@@ -1199,16 +1199,16 @@ async def listar_vips_slash(interaction: discord.Interaction):
         
         embed.set_footer(text="Use /vip_stats para ver estatísticas completas")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando listar_vips: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao listar VIPs.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao listar VIPs.", ephemeral=True)
 
-@bot.tree.command(name="adicionar_vip", description="[ADMIN] Adicionar VIP manualmente a um usuário")
-@discord.app_commands.default_permissions(administrator=True)
+@bot.slash_command(name="adicionar_vip", description="[ADMIN] Adicionar VIP manualmente a um usuário")
+@discord.default_permissions(administrator=True)
 async def adicionar_vip_slash(
     interaction: discord.Interaction,
     membro: discord.Member,
@@ -1226,7 +1226,7 @@ async def adicionar_vip_slash(
         # Adicionar role
         role = await vip_manager.grant_vip_role(membro, role_vip)
         if not role:
-            await interaction.response.send_message(
+            await ctx.response.send_message(
                 f"❌ Erro ao adicionar role {role_vip}. Verifique se o bot tem permissões adequadas.",
                 ephemeral=True
             )
@@ -1235,7 +1235,7 @@ async def adicionar_vip_slash(
         # Criar assinatura no banco
         subscription = await vip_model.create_subscription(
             user_id=membro.id,
-            guild_id=interaction.guild.id,
+            guild_id=ctx.guild.id,
             role_id=role.id,
             role_name=role_vip,
             product_id=0,  # 0 indica adição manual
@@ -1244,7 +1244,7 @@ async def adicionar_vip_slash(
         )
         
         if not subscription:
-            await interaction.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
+            await ctx.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
             return
         
         # Criar embed de confirmação
@@ -1273,11 +1273,11 @@ async def adicionar_vip_slash(
         
         embed.add_field(
             name="👤 Admin",
-            value=interaction.user.mention,
+            value=ctx.user.mention,
             inline=True
         )
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
         # Enviar DM para o usuário (criar produto fictício para a mensagem)
         fake_product = {
@@ -1291,11 +1291,11 @@ async def adicionar_vip_slash(
         print(f"Erro no comando adicionar_vip: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
 
-@bot.tree.command(name="remover_vip", description="[ADMIN] Remover VIP de um usuário")
-@discord.app_commands.default_permissions(administrator=True)
-async def remover_vip_slash(interaction: discord.Interaction, membro: discord.Member):
+@bot.slash_command(name="remover_vip", description="[ADMIN] Remover VIP de um usuário")
+@discord.default_permissions(administrator=True)
+async def remover_vip_slash(ctx: discord.ApplicationContext, membro: discord.Member):
     """Remove VIP de um usuário"""
     try:
         from models.vip_model import VipModel
@@ -1307,11 +1307,11 @@ async def remover_vip_slash(interaction: discord.Interaction, membro: discord.Me
         # Buscar assinatura ativa
         subscription = await vip_model.get_user_subscription(
             membro.id,
-            interaction.guild.id
+            ctx.guild.id
         )
         
         if not subscription:
-            await interaction.response.send_message(
+            await ctx.response.send_message(
                 f"❌ {membro.mention} não possui VIP ativo.",
                 ephemeral=True
             )
@@ -1337,27 +1337,27 @@ async def remover_vip_slash(interaction: discord.Interaction, membro: discord.Me
         
         embed.add_field(
             name="👤 Admin",
-            value=interaction.user.mention,
+            value=ctx.user.mention,
             inline=True
         )
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando remover_vip: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao remover VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao remover VIP.", ephemeral=True)
 
-@bot.tree.command(name="vip_stats", description="[ADMIN] Ver estatísticas de VIPs do servidor")
-@discord.app_commands.default_permissions(administrator=True)
-async def vip_stats_slash(interaction: discord.Interaction):
+@bot.slash_command(name="vip_stats", description="[ADMIN] Ver estatísticas de VIPs do servidor")
+@discord.default_permissions(administrator=True)
+async def vip_stats_slash(ctx: discord.ApplicationContext):
     """Mostra estatísticas detalhadas dos VIPs"""
     try:
         from models.vip_model import VipModel
         
         vip_model = VipModel()
-        stats = await vip_model.get_vip_stats(interaction.guild.id)
+        stats = await vip_model.get_vip_stats(ctx.guild.id)
         
         embed = discord.Embed(
             title="📊 Estatísticas VIP do Servidor",
@@ -1398,30 +1398,30 @@ async def vip_stats_slash(interaction: discord.Interaction):
         
         embed.set_footer(text="Use /listar_vips para ver a lista completa")
         
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando vip_stats: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.response.send_message("❌ Erro ao buscar estatísticas VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao buscar estatísticas VIP.", ephemeral=True)
 
 # ========================================
 # COMANDOS DE PRODUTOS
 # ========================================
 
-@bot.tree.command(name="produtos", description="Ver produtos disponíveis")
-async def produtos_slash(interaction: discord.Interaction):
+@bot.slash_command(name="produtos", description="Ver produtos disponíveis")
+async def produtos_slash(ctx: discord.ApplicationContext):
     """Exibe os produtos disponíveis via slash command"""
     try:
-        products = await product_model.get_products_by_guild(interaction.guild_id)
+        products = await product_model.get_products_by_guild(ctx.guild_id)
         
         if not products:
             embed = discord.Embed(
                 description="❌ Nenhum produto disponível no momento.",
                 color=0x8B5CF6
             )
-            await interaction.response.send_message(embed=embed)
+            await ctx.response.send_message(embed=embed)
             return
         
         # Criar embed principal
@@ -1468,7 +1468,7 @@ async def produtos_slash(interaction: discord.Interaction):
         
         embed.set_footer(text=f"📊 {len(products)} produtos disponíveis • Powered by Khaos")
         
-        await interaction.response.send_message(embed=embed)
+        await ctx.response.send_message(embed=embed)
         
     except Exception as e:
         print(f"Erro no comando /produtos: {e}")
@@ -1476,7 +1476,7 @@ async def produtos_slash(interaction: discord.Interaction):
             description="❌ Erro ao carregar produtos. Tente novamente em alguns instantes.",
             color=0x8B5CF6
         )
-        await interaction.response.send_message(embed=embed)
+        await ctx.response.send_message(embed=embed)
 
 # Inicializar modelos
 product_model = ProductModel()
@@ -1549,7 +1549,7 @@ async def on_ready():
         await asyncio.sleep(2)
         
         # Listar comandos registrados antes da sincronização
-        commands = bot.tree.get_commands()
+        commands = bot.pending_application_commands
         print(f"📋 Comandos registrados no bot: {len(commands)}")
         for cmd in commands:
             print(f"  - /{cmd.name}: {cmd.description}")
@@ -1557,7 +1557,7 @@ async def on_ready():
         # Tentar sincronizar globalmente
         try:
             print("🌍 Tentando sincronização global...")
-            synced = await bot.tree.sync()
+            synced = await bot.sync_commands()
             print(f"✅ {len(synced)} comandos sincronizados globalmente!")
             
             # Aguardar um pouco para a sincronização se propagar
@@ -1586,7 +1586,7 @@ async def on_ready():
         print("🔍 Verificando comandos disponíveis...")
         try:
             # Tentar acessar os comandos do bot
-            app_commands = bot.tree.get_commands()
+            app_commands = bot.pending_application_commands
             print(f"📊 Total de comandos app_commands: {len(app_commands)}")
             
             # Verificar se o bot tem as permissões necessárias
@@ -2141,14 +2141,14 @@ async def sync_commands(ctx):
         print(f"🔄 Comando de sincronização executado por {ctx.author.name}")
         
         # Listar comandos registrados
-        commands = bot.tree.get_commands()
+        commands = bot.pending_application_commands
         await ctx.send(f"📋 Comandos registrados: {len(commands)}")
         for cmd in commands:
             await ctx.send(f"  - /{cmd.name}: {cmd.description}")
         
         # Tentar sincronizar globalmente
         try:
-            synced = await bot.tree.sync()
+            synced = await bot.sync_commands()
             await ctx.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
         except Exception as e:
             await ctx.send(f"❌ Erro na sincronização global: {e}")
@@ -2422,9 +2422,9 @@ async def setup_ticket_with_image(ctx, *, args=""):
 # COMANDOS ADMIN MULTI-SERVIDOR
 # ========================================
 
-@bot.tree.command(name="admin_criar_produto", description="[ADMIN] Criar um produto no servidor")
-@discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(
+@bot.slash_command(name="admin_criar_produto", description="[ADMIN] Criar um produto no servidor")
+@discord.default_permissions(administrator=True)
+# @discord.app_commands.describe(
     nome="Nome do produto",
     preco="Preço em R$",
     descricao="Descrição do produto",
@@ -2441,7 +2441,7 @@ async def admin_criar_produto(
 ):
     """Criar produto que atualiza diretamente no Supabase"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         product_data = {
             'name': nome,
@@ -2451,7 +2451,7 @@ async def admin_criar_produto(
             'unlimited_stock': estoque_ilimitado
         }
         
-        product = await product_model.create_product(interaction.guild_id, product_data)
+        product = await product_model.create_product(ctx.guild_id, product_data)
         
         if product:
             embed = discord.Embed(
@@ -2464,22 +2464,22 @@ async def admin_criar_produto(
             embed.add_field(name="Categoria", value=categoria, inline=True)
             embed.add_field(name="Estoque", value="♾️ Ilimitado" if estoque_ilimitado else "📦 Gerenciado", inline=True)
             
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed, ephemeral=True)
         else:
-            await interaction.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
+            await ctx.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao criar produto: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
-@discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(product_ids="IDs dos produtos separados por vírgula (ex: 1,2,3)")
-async def admin_deletar_produto(interaction: discord.Interaction, product_ids: str):
+@bot.slash_command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
+@discord.default_permissions(administrator=True)
+# @discord.app_commands.describe(product_ids="IDs dos produtos separados por vírgula (ex: 1,2,3)")
+async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: str):
     """Deletar um ou mais produtos do Supabase"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         # Parse dos IDs (aceita vírgula ou espaço)
         ids_str = product_ids.replace(',', ' ').split()
@@ -2487,11 +2487,11 @@ async def admin_deletar_produto(interaction: discord.Interaction, product_ids: s
         try:
             ids = [int(id_str.strip()) for id_str in ids_str if id_str.strip().isdigit()]
         except ValueError:
-            await interaction.followup.send("❌ IDs inválidos. Use números separados por vírgula (ex: 1,2,3)", ephemeral=True)
+            await ctx.followup.send("❌ IDs inválidos. Use números separados por vírgula (ex: 1,2,3)", ephemeral=True)
             return
         
         if not ids:
-            await interaction.followup.send("❌ Nenhum ID válido fornecido.", ephemeral=True)
+            await ctx.followup.send("❌ Nenhum ID válido fornecido.", ephemeral=True)
             return
         
         # Deletar cada produto
@@ -2501,14 +2501,14 @@ async def admin_deletar_produto(interaction: discord.Interaction, product_ids: s
         
         for product_id in ids:
             # Buscar produto para confirmar
-            product = await product_model.get_product_by_id(product_id, interaction.guild_id)
+            product = await product_model.get_product_by_id(product_id, ctx.guild_id)
             
             if not product:
                 not_found.append(product_id)
                 continue
             
             # Deletar do Supabase
-            success = await product_model.delete_product(product_id, interaction.guild_id)
+            success = await product_model.delete_product(product_id, ctx.guild_id)
             
             if success:
                 deleted.append(f"**{product['name']}** (ID: {product_id})")
@@ -2542,24 +2542,24 @@ async def admin_deletar_produto(interaction: discord.Interaction, product_ids: s
                 inline=False
             )
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await ctx.followup.send(embed=embed, ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao deletar produtos: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="admin_listar_produtos", description="[ADMIN] Listar todos os produtos do servidor")
-@discord.app_commands.default_permissions(administrator=True)
-async def admin_listar_produtos(interaction: discord.Interaction):
+@bot.slash_command(name="admin_listar_produtos", description="[ADMIN] Listar todos os produtos do servidor")
+@discord.default_permissions(administrator=True)
+async def admin_listar_produtos(ctx: discord.ApplicationContext):
     """Listar produtos do Supabase"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
-        products = await product_model.get_products_by_guild(interaction.guild_id)
+        products = await product_model.get_products_by_guild(ctx.guild_id)
         
         if not products:
-            await interaction.followup.send("📦 Nenhum produto cadastrado neste servidor no Supabase.", ephemeral=True)
+            await ctx.followup.send("📦 Nenhum produto cadastrado neste servidor no Supabase.", ephemeral=True)
             return
         
         # Separar por categoria
@@ -2597,16 +2597,16 @@ async def admin_listar_produtos(interaction: discord.Interaction):
         if len(products) > 20:
             embed.set_footer(text=f"Mostrando 20 de {len(products)} produtos")
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await ctx.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao listar produtos: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="admin_criar_vip", description="[ADMIN] Criar produto VIP no servidor")
-@discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(
+@bot.slash_command(name="admin_criar_vip", description="[ADMIN] Criar produto VIP no servidor")
+@discord.default_permissions(administrator=True)
+# @discord.app_commands.describe(
     nome="Nome do produto VIP (ex: VIP Gold - 30 Dias)",
     preco="Preço em R$",
     role_name="Nome da role Discord (ex: VIP Gold)",
@@ -2623,7 +2623,7 @@ async def admin_criar_vip(
 ):
     """Criar produto VIP no Supabase"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         # Configuração VIP
         vip_config = {
@@ -2640,7 +2640,7 @@ async def admin_criar_vip(
             'unlimited_stock': True  # VIPs sempre têm estoque ilimitado
         }
         
-        product = await product_model.create_product(interaction.guild_id, product_data)
+        product = await product_model.create_product(ctx.guild_id, product_data)
         
         if product:
             duracao_text = f"{duracao_dias} dias" if duracao_dias > 0 else "Vitalício"
@@ -2655,36 +2655,36 @@ async def admin_criar_vip(
             embed.add_field(name="Role", value=role_name, inline=True)
             embed.add_field(name="Duração", value=duracao_text, inline=True)
             
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed, ephemeral=True)
         else:
-            await interaction.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
+            await ctx.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao criar VIP: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # =============================================
 # COMANDOS MICRO SAAS - CARTEIRA VIRTUAL
 # =============================================
 
-@bot.tree.command(name="saldo", description="Ver saldo disponível e estatísticas da carteira")
-@discord.app_commands.default_permissions(administrator=True)
-async def saldo_cmd(interaction: discord.Interaction):
+@bot.slash_command(name="saldo", description="Ver saldo disponível e estatísticas da carteira")
+@discord.default_permissions(administrator=True)
+async def saldo_cmd(ctx: discord.ApplicationContext):
     """Ver saldo e estatísticas da carteira do servidor"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         from models.wallet_model import WalletModel
         wallet_model = WalletModel()
         
         # Buscar estatísticas
-        stats = await wallet_model.get_wallet_stats(interaction.guild_id)
+        stats = await wallet_model.get_wallet_stats(ctx.guild_id)
         
         # Criar embed
         embed = discord.Embed(
             title="💰 Carteira do Servidor",
-            description=f"Estatísticas financeiras de **{interaction.guild.name}**",
+            description=f"Estatísticas financeiras de **{ctx.guild.name}**",
             color=discord.Color.green()
         )
         
@@ -2746,32 +2746,32 @@ async def saldo_cmd(interaction: discord.Interaction):
         
         embed.set_footer(text=f"Use /solicitar_saque para sacar • Mínimo: R$ 10,00")
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await ctx.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao buscar saldo: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.followup.send(f"❌ Erro ao buscar saldo: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro ao buscar saldo: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="configurar_pix", description="Cadastrar chave Pix padrão para saques")
-@discord.app_commands.default_permissions(administrator=True)
-@discord.app_commands.describe(
+@bot.slash_command(name="configurar_pix", description="Cadastrar chave Pix padrão para saques")
+@discord.default_permissions(administrator=True)
+# @discord.app_commands.describe(
     chave_pix="Sua chave Pix (CPF, email, telefone, etc)",
     tipo="Tipo da chave Pix"
 )
-@discord.app_commands.choices(tipo=[
-    discord.app_commands.Choice(name="CPF", value="cpf"),
-    discord.app_commands.Choice(name="CNPJ", value="cnpj"),
-    discord.app_commands.Choice(name="Email", value="email"),
-    discord.app_commands.Choice(name="Telefone (+5511999999999)", value="phone"),
-    discord.app_commands.Choice(name="Chave Aleatória", value="random")
+# @discord.app_commands.choices(tipo=[
+    discord.OptionChoice(name="CPF", value="cpf"),
+    discord.OptionChoice(name="CNPJ", value="cnpj"),
+    discord.OptionChoice(name="Email", value="email"),
+    discord.OptionChoice(name="Telefone (+5511999999999)", value="phone"),
+    discord.OptionChoice(name="Chave Aleatória", value="random")
 ])
-async def configurar_pix_cmd(interaction: discord.Interaction, chave_pix: str, tipo: str):
+async def configurar_pix_cmd(ctx: discord.ApplicationContext, chave_pix: str, tipo: str):
     """Cadastrar chave Pix padrão"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         from models.wallet_model import WalletModel
         from utils.withdrawal_manager import WithdrawalManager
@@ -2783,11 +2783,11 @@ async def configurar_pix_cmd(interaction: discord.Interaction, chave_pix: str, t
         valid, result = withdrawal_manager.validate_pix_key(chave_pix, tipo)
         
         if not valid:
-            await interaction.followup.send(result, ephemeral=True)
+            await ctx.followup.send(result, ephemeral=True)
             return
         
         # Salvar
-        success = await wallet_model.save_pix_key(interaction.guild_id, result, tipo)
+        success = await wallet_model.save_pix_key(ctx.guild_id, result, tipo)
         
         if success:
             # Mascarar chave para exibir
@@ -2810,18 +2810,18 @@ async def configurar_pix_cmd(interaction: discord.Interaction, chave_pix: str, t
             embed.add_field(name="Chave", value=masked, inline=True)
             embed.set_footer(text="Esta chave será usada como padrão nos saques")
             
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed, ephemeral=True)
         else:
-            await interaction.followup.send("❌ Erro ao salvar chave Pix", ephemeral=True)
+            await ctx.followup.send("❌ Erro ao salvar chave Pix", ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao configurar Pix: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="solicitar_saque", description="Solicitar saque via Pix")
-@discord.app_commands.default_permissions(administrator=True)
-async def solicitar_saque_cmd(interaction: discord.Interaction):
+@bot.slash_command(name="solicitar_saque", description="Solicitar saque via Pix")
+@discord.default_permissions(administrator=True)
+async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
     """Solicitar saque via modal"""
     try:
         # Criar modal para saque
@@ -2849,7 +2849,7 @@ async def solicitar_saque_cmd(interaction: discord.Interaction):
             )
             
             async def on_submit(self, interaction: discord.Interaction):
-                await interaction.response.defer(ephemeral=True)
+                await ctx.response.defer(ephemeral=True)
                 
                 try:
                     from decimal import Decimal
@@ -2863,7 +2863,7 @@ async def solicitar_saque_cmd(interaction: discord.Interaction):
                     try:
                         amount = Decimal(self.amount_input.value.replace(',', '.'))
                     except:
-                        await interaction.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
+                        await ctx.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
                         return
                     
                     # Buscar chave Pix (usar padrão se não informada)
@@ -2872,9 +2872,9 @@ async def solicitar_saque_cmd(interaction: discord.Interaction):
                     
                     if not pix_key:
                         # Usar chave padrão
-                        wallet = await wallet_model.get_wallet(interaction.guild_id)
+                        wallet = await wallet_model.get_wallet(ctx.guild_id)
                         if not wallet or not wallet.get('pix_key'):
-                            await interaction.followup.send(
+                            await ctx.followup.send(
                                 "❌ Nenhuma chave Pix cadastrada. Use `/configurar_pix` primeiro ou informe a chave no formulário.",
                                 ephemeral=True
                             )
@@ -2885,20 +2885,20 @@ async def solicitar_saque_cmd(interaction: discord.Interaction):
                     
                     # Validar tipo
                     if pix_type not in ['cpf', 'cnpj', 'email', 'phone', 'random']:
-                        await interaction.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
+                        await ctx.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
                         return
                     
                     # Criar solicitação
                     withdrawal = await withdrawal_manager.create_withdrawal_request(
-                        guild_id=interaction.guild_id,
-                        user_id=interaction.user.id,
+                        guild_id=ctx.guild_id,
+                        user_id=ctx.user.id,
                         amount=amount,
                         pix_key=pix_key,
                         pix_type=pix_type
                     )
                     
                     if not withdrawal:
-                        await interaction.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
+                        await ctx.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
                         return
                     
                     # Calcular taxas
@@ -2917,7 +2917,7 @@ async def solicitar_saque_cmd(interaction: discord.Interaction):
                     embed.add_field(name="Status", value="⏳ Processando...", inline=True)
                     embed.set_footer(text=f"ID: #{withdrawal['id']}")
                     
-                    await interaction.followup.send(embed=embed, ephemeral=True)
+                    await ctx.followup.send(embed=embed, ephemeral=True)
                     
                     # Processar saque imediatamente em background
                     import asyncio
@@ -2927,31 +2927,31 @@ async def solicitar_saque_cmd(interaction: discord.Interaction):
                     print(f"Erro ao processar saque: {e}")
                     import traceback
                     traceback.print_exc()
-                    await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+                    await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
         
         # Mostrar modal
-        await interaction.response.send_modal(WithdrawalModal())
+        await ctx.response.send_modal(WithdrawalModal())
         
     except Exception as e:
         print(f"Erro ao abrir modal de saque: {e}")
-        await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.response.send_message(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="historico_vendas", description="Ver histórico de vendas e movimentações")
-@discord.app_commands.default_permissions(administrator=True)
-async def historico_vendas_cmd(interaction: discord.Interaction):
+@bot.slash_command(name="historico_vendas", description="Ver histórico de vendas e movimentações")
+@discord.default_permissions(administrator=True)
+async def historico_vendas_cmd(ctx: discord.ApplicationContext):
     """Ver histórico de transações da carteira"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         from models.wallet_model import WalletModel
         wallet_model = WalletModel()
         
         # Buscar histórico
-        history = await wallet_model.get_wallet_history(interaction.guild_id, limit=10)
+        history = await wallet_model.get_wallet_history(ctx.guild_id, limit=10)
         
         if not history:
-            await interaction.followup.send("📭 Nenhuma movimentação encontrada.", ephemeral=True)
+            await ctx.followup.send("📭 Nenhuma movimentação encontrada.", ephemeral=True)
             return
         
         # Criar embed
@@ -2988,28 +2988,28 @@ async def historico_vendas_cmd(interaction: discord.Interaction):
                 inline=False
             )
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await ctx.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao buscar histórico: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
-@bot.tree.command(name="historico_saques", description="Ver histórico de saques processados")
-@discord.app_commands.default_permissions(administrator=True)
-async def historico_saques_cmd(interaction: discord.Interaction):
+@bot.slash_command(name="historico_saques", description="Ver histórico de saques processados")
+@discord.default_permissions(administrator=True)
+async def historico_saques_cmd(ctx: discord.ApplicationContext):
     """Ver histórico de saques"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         from utils.withdrawal_manager import WithdrawalManager
         withdrawal_manager = WithdrawalManager()
         
         # Buscar histórico
-        history = await withdrawal_manager.get_withdrawal_history(interaction.guild_id, limit=10)
+        history = await withdrawal_manager.get_withdrawal_history(ctx.guild_id, limit=10)
         
         if not history:
-            await interaction.followup.send("📭 Nenhum saque encontrado.", ephemeral=True)
+            await ctx.followup.send("📭 Nenhum saque encontrado.", ephemeral=True)
             return
         
         # Criar embed
@@ -3043,18 +3043,18 @@ async def historico_saques_cmd(interaction: discord.Interaction):
                 inline=False
             )
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await ctx.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao buscar saques: {e}")
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
-@bot.tree.command(name="verificar_pagamentos", description="[ADMIN] Verificar pagamentos pendentes manualmente")
-@discord.app_commands.default_permissions(administrator=True)
-async def verificar_pagamentos_cmd(interaction: discord.Interaction):
+@bot.slash_command(name="verificar_pagamentos", description="[ADMIN] Verificar pagamentos pendentes manualmente")
+@discord.default_permissions(administrator=True)
+async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
     """Verificar pagamentos pendentes manualmente (enquanto webhook não está configurado)"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         from models.transaction_model import TransactionModel
         from utils.mercadopago_manager import MercadoPagoManager
@@ -3067,12 +3067,12 @@ async def verificar_pagamentos_cmd(interaction: discord.Interaction):
         delivery_manager = DeliveryManager(bot)
         
         # Buscar transações pendentes deste servidor
-        print(f"🔍 Verificando pagamentos pendentes do servidor {interaction.guild_id}")
+        print(f"🔍 Verificando pagamentos pendentes do servidor {ctx.guild_id}")
         
         # Query manual para buscar transações pendentes
         result = transaction_model.supabase.table('transactions')\
             .select('*')\
-            .eq('guild_id', interaction.guild_id)\
+            .eq('guild_id', ctx.guild_id)\
             .eq('status', 'pending')\
             .order('created_at', desc=True)\
             .limit(10)\
@@ -3081,7 +3081,7 @@ async def verificar_pagamentos_cmd(interaction: discord.Interaction):
         pending_transactions = result.data if result.data else []
         
         if not pending_transactions:
-            await interaction.followup.send("✅ Nenhum pagamento pendente encontrado!", ephemeral=True)
+            await ctx.followup.send("✅ Nenhum pagamento pendente encontrado!", ephemeral=True)
             return
         
         # Verificar cada transação
@@ -3115,7 +3115,7 @@ async def verificar_pagamentos_cmd(interaction: discord.Interaction):
                 net_amount = amount - platform_fee
                 
                 await wallet_model.credit_wallet(
-                    guild_id=interaction.guild_id,
+                    guild_id=ctx.guild_id,
                     amount=net_amount,
                     transaction_id=transaction['id'],
                     platform_fee=platform_fee,
@@ -3152,13 +3152,13 @@ async def verificar_pagamentos_cmd(interaction: discord.Interaction):
         
         embed.set_footer(text="Use /saldo para ver o saldo atualizado")
         
-        await interaction.followup.send(embed=embed, ephemeral=True)
+        await ctx.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"❌ Erro ao verificar pagamentos: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # Sistema de espera para adicionar estoque
@@ -3236,15 +3236,15 @@ async def on_message(message):
                 del waiting_for_stock[message.author.id]
 
 
-@bot.tree.command(name="adicionar_estoque", description="[ADMIN] Adicionar códigos/keys ao estoque")
-@discord.app_commands.default_permissions(administrator=True)
-async def adicionar_estoque(interaction: discord.Interaction):
+@bot.slash_command(name="adicionar_estoque", description="[ADMIN] Adicionar códigos/keys ao estoque")
+@discord.default_permissions(administrator=True)
+async def adicionar_estoque(ctx: discord.ApplicationContext):
     """Adicionar códigos ao estoque de produtos"""
     try:
-        await interaction.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         # Buscar produtos do servidor (exceto VIPs e ilimitados)
-        products = await product_model.get_products_by_guild(interaction.guild_id)
+        products = await product_model.get_products_by_guild(ctx.guild_id)
         
         # Filtrar apenas produtos que precisam de estoque
         products_with_stock = [
@@ -3263,7 +3263,7 @@ async def adicionar_estoque(interaction: discord.Interaction):
                 value="Use `/admin_criar_produto` com `estoque_ilimitado: False` para criar produtos que precisam de estoque.",
                 inline=False
             )
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed, ephemeral=True)
             return
         
         # Criar Select Menu com produtos
@@ -3287,10 +3287,10 @@ async def adicionar_estoque(interaction: discord.Interaction):
                     
                     if product:
                         # Registrar que está esperando códigos deste usuário
-                        waiting_for_stock[interaction.user.id] = {
+                        waiting_for_stock[ctx.user.id] = {
                             'product': product,
-                            'guild_id': interaction.guild_id,
-                            'channel_id': interaction.channel_id
+                            'guild_id': ctx.guild_id,
+                            'channel_id': ctx.channel_id
                         }
                         
                         embed = discord.Embed(
@@ -3307,14 +3307,14 @@ async def adicionar_estoque(interaction: discord.Interaction):
                         )
                         embed.set_footer(text="Você tem 5 minutos para enviar os códigos")
                         
-                        await interaction.response.send_message(embed=embed, ephemeral=True)
+                        await ctx.response.send_message(embed=embed, ephemeral=True)
                     else:
-                        await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
+                        await ctx.response.send_message("❌ Produto não encontrado.", ephemeral=True)
                 except Exception as e:
                     print(f"Erro no select callback: {e}")
                     import traceback
                     traceback.print_exc()
-                    await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+                    await ctx.response.send_message(f"❌ Erro: {e}", ephemeral=True)
         
         class ProductSelectView(discord.ui.View):
             def __init__(self, products):
@@ -3330,13 +3330,13 @@ async def adicionar_estoque(interaction: discord.Interaction):
         )
         
         view = ProductSelectView(products_with_stock)
-        await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        await ctx.followup.send(embed=embed, view=view, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando /adicionar_estoque: {e}")
         import traceback
         traceback.print_exc()
-        await interaction.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # Executar o bot
