@@ -263,9 +263,9 @@ class CouponInputModal(ui.Modal):
         try:
             coupon_code = self.children[0].value.strip() if self.children[0].value else None
             
-            # Buscar ticket_manager global (inicializado no bot.py)
-            import bot
-            ticket_manager = bot.ticket_manager
+            # Importar TicketManager e criar instância com bot
+            from utils.ticket_manager import TicketManager
+            ticket_manager = TicketManager(interaction.client)
             
             success, message = await ticket_manager.create_ticket(
                 self.user,
