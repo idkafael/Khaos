@@ -1211,7 +1211,7 @@ async def listar_vips_slash(ctx: discord.ApplicationContext):
 @bot.slash_command(name="adicionar_vip", description="[ADMIN] Adicionar VIP manualmente a um usuário")
 @discord.default_permissions(administrator=True)
 async def adicionar_vip_slash(
-    interaction: discord.Interaction,
+    ctx: discord.ApplicationContext,
     membro: discord.Member,
     role_vip: str,
     duracao_dias: int = None
