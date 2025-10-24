@@ -142,6 +142,103 @@ async def setup_suporte_slash(interaction: discord.Interaction):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@bot.tree.command(name="setlog", description="[ADMIN] Configurar sistema de logs do servidor")
+@discord.app_commands.default_permissions(administrator=True)
+async def setlog_slash(interaction: discord.Interaction, canal: discord.TextChannel):
+    """Comando admin para configurar logs do servidor"""
+    try:
+        print(f"Comando setlog executado por {interaction.user.name} - Canal: {canal.name}")
+        
+        # Criar embed explicativo
+        embed = discord.Embed(
+            title="📊 Configurar Sistema de Logs",
+            description=f"Configure quais eventos você deseja registrar no canal {canal.mention}.",
+            color=0x5865F2
+        )
+        
+        embed.add_field(
+            name="📋 Como Funciona",
+            value="Use o menu abaixo para **selecionar** quais eventos você quer que sejam logados.\n"
+                  "Você pode escolher **quantos quiser**!",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💡 Presets Recomendados",
+            value="🔥 **Apenas Vendas:** payment_confirmed + product_delivered\n"
+                  "🎫 **Tickets:** ticket_created + support_ticket_created + ticket_closed\n"
+                  "📊 **Completo:** Todos os eventos",
+            inline=False
+        )
+        
+        # Importar View com Select Menu
+        from utils.log_views import LogEventsSelectView
+        view = LogEventsSelectView(canal.id, interaction.guild_id)
+        
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        print("View de seleção de eventos enviada com sucesso!")
+        
+    except ImportError as e:
+        print(f"Erro de importação: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro de importação no sistema de logs.",
+            color=0xFF0000
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    except Exception as e:
+        print(f"Erro no comando setlog: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = discord.Embed(
+            description="❌ Erro ao configurar sistema de logs.",
+            color=0xFF0000
+        )
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@bot.command(name="setlog", aliases=["configurar_logs", "logs"])
+@commands.has_permissions(administrator=True)
+async def setlog_prefix(ctx, canal: discord.TextChannel):
+    """Comando prefixado para configurar logs do servidor"""
+    try:
+        print(f"Comando ?setlog executado por {ctx.author.name} - Canal: {canal.name}")
+        
+        # Criar embed explicativo
+        embed = discord.Embed(
+            title="📊 Configurar Sistema de Logs",
+            description=f"Configure quais eventos você deseja registrar no canal {canal.mention}.",
+            color=0x5865F2
+        )
+        
+        embed.add_field(
+            name="📋 Como Funciona",
+            value="Use o menu abaixo para **selecionar** quais eventos você quer que sejam logados.\n"
+                  "Você pode escolher **quantos quiser**!",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="💡 Presets Recomendados",
+            value="🔥 **Apenas Vendas:** payment_confirmed + product_delivered\n"
+                  "🎫 **Tickets:** ticket_created + support_ticket_created + ticket_closed\n"
+                  "📊 **Completo:** Todos os eventos",
+            inline=False
+        )
+        
+        # Importar View com Select Menu
+        from utils.log_views import LogEventsSelectView
+        view = LogEventsSelectView(canal.id, ctx.guild.id)
+        
+        await ctx.send(embed=embed, view=view)
+        print("View de seleção de eventos enviada com sucesso!")
+        
+    except Exception as e:
+        print(f"Erro no comando ?setlog: {e}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send("❌ Erro ao configurar sistema de logs.")
+
 @bot.command(name="clear", aliases=["limpar", "apagar"])
 @commands.has_permissions(manage_messages=True)
 async def clear_messages(ctx, amount: int = 10):

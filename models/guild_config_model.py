@@ -283,4 +283,75 @@ class GuildConfigModel:
             return None  # Todos produtos disponíveis
         
         return config.get('ticket_allowed_products')
+    
+    async def set_log_config(
+        self,
+        guild_id: int,
+        log_channel_id: int,
+        log_events: Optional[List[str]] = None
+    ) -> bool:
+        """
+        Define configuração de logs do servidor
+        
+        Args:
+            guild_id: ID do servidor
+            log_channel_id: ID do canal de logs
+            log_events: Lista de eventos para logar (None = todos)
+        
+        Returns:
+            True se salvou com sucesso
+        """
+        try:
+            result = await self.create_or_update_config(
+                guild_id=guild_id,
+                log_channel_id=log_channel_id,
+                log_events=log_events
+            )
+            return result is not None
+        except Exception as e:
+            print(f"❌ Erro ao definir configuração de logs: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    async def get_log_config(self, guild_id: int) -> Optional[Dict]:
+        """
+        Retorna configuração de logs do servidor
+        
+        Args:
+            guild_id: ID do servidor
+        
+        Returns:
+            Dict com log_channel_id e log_events ou None
+        """
+        config = await self.get_config(guild_id)
+        
+        if not config or not config.get('log_channel_id'):
+            return None
+        
+        return {
+            'log_channel_id': config.get('log_channel_id'),
+            'log_events': config.get('log_events', [])  # Array de eventos
+        }
+    
+    async def disable_logs(self, guild_id: int) -> bool:
+        """
+        Desabilita logs do servidor
+        
+        Args:
+            guild_id: ID do servidor
+        
+        Returns:
+            True se desabilitou com sucesso
+        """
+        try:
+            result = await self.create_or_update_config(
+                guild_id=guild_id,
+                log_channel_id=None,
+                log_level=None
+            )
+            return result is not None
+        except Exception as e:
+            print(f"❌ Erro ao desabilitar logs: {e}")
+            return False
 
