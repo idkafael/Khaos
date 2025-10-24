@@ -77,9 +77,16 @@ class MercadoPagoManager:
                 "payer": {
                     "email": payer_email
                 },
-                "external_reference": str(transaction_id),  # Para rastrear
-                "notification_url": f"{os.getenv('WEBHOOK_URL', '')}/webhook/mercadopago"
+                "external_reference": str(transaction_id)  # Para rastrear
             }
+            
+            # Adicionar notification_url apenas se WEBHOOK_URL estiver configurado
+            webhook_url = os.getenv('WEBHOOK_URL', '').strip()
+            if webhook_url and webhook_url.startswith('http'):
+                payment_data["notification_url"] = f"{webhook_url}/webhook/mercadopago"
+                print(f"🔔 [MP] Webhook configurado: {payment_data['notification_url']}")
+            else:
+                print(f"⚠️ [MP] WEBHOOK_URL não configurado - pagamentos serão verificados manualmente")
             
             print(f"📤 [MP] Enviando dados para API Mercado Pago...")
             print(f"💰 [MP] Valor: R$ {payment_data['transaction_amount']}")
