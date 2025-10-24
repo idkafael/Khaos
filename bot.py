@@ -2425,15 +2425,8 @@ async def setup_ticket_with_image(ctx, *, args=""):
 
 @bot.slash_command(name="admin_criar_produto", description="[ADMIN] Criar um produto no servidor")
 @discord.default_permissions(administrator=True)
-# @discord.app_commands.describe(
-    nome="Nome do produto",
-    preco="Preço em R$",
-    descricao="Descrição do produto",
-    categoria="Categoria (produto, vip, etc)",
-    estoque_ilimitado="Estoque infinito? (True para VIPs/roles)"
-)
 async def admin_criar_produto(
-    interaction: discord.Interaction,
+    ctx: discord.ApplicationContext,
     nome: str,
     preco: float,
     descricao: str,
@@ -2476,7 +2469,6 @@ async def admin_criar_produto(
 
 @bot.slash_command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
 @discord.default_permissions(administrator=True)
-# @discord.app_commands.describe(product_ids="IDs dos produtos separados por vírgula (ex: 1,2,3)")
 async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: str):
     """Deletar um ou mais produtos do Supabase"""
     try:
@@ -2607,15 +2599,8 @@ async def admin_listar_produtos(ctx: discord.ApplicationContext):
 
 @bot.slash_command(name="admin_criar_vip", description="[ADMIN] Criar produto VIP no servidor")
 @discord.default_permissions(administrator=True)
-# @discord.app_commands.describe(
-    nome="Nome do produto VIP (ex: VIP Gold - 30 Dias)",
-    preco="Preço em R$",
-    role_name="Nome da role Discord (ex: VIP Gold)",
-    descricao="Descrição do produto VIP",
-    duracao_dias="Duração em dias (deixe vazio para vitalício)"
-)
 async def admin_criar_vip(
-    interaction: discord.Interaction,
+    ctx: discord.ApplicationContext,
     nome: str,
     preco: float,
     role_name: str,
@@ -2758,17 +2743,6 @@ async def saldo_cmd(ctx: discord.ApplicationContext):
 
 @bot.slash_command(name="configurar_pix", description="Cadastrar chave Pix padrão para saques")
 @discord.default_permissions(administrator=True)
-# @discord.app_commands.describe(
-    chave_pix="Sua chave Pix (CPF, email, telefone, etc)",
-    tipo="Tipo da chave Pix"
-)
-# @discord.app_commands.choices(tipo=[
-    discord.OptionChoice(name="CPF", value="cpf"),
-    discord.OptionChoice(name="CNPJ", value="cnpj"),
-    discord.OptionChoice(name="Email", value="email"),
-    discord.OptionChoice(name="Telefone (+5511999999999)", value="phone"),
-    discord.OptionChoice(name="Chave Aleatória", value="random")
-])
 async def configurar_pix_cmd(ctx: discord.ApplicationContext, chave_pix: str, tipo: str):
     """Cadastrar chave Pix padrão"""
     try:
