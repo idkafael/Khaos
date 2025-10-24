@@ -1115,3 +1115,4 @@ class TicketChannelView(ui.View):
         super().__init__(timeout=None)
         self.add_item(GeneratePaymentButton())
         self.add_item(CloseTicketButton())
+# Force redeploy - fix InputText default to value
