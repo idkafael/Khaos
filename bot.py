@@ -233,7 +233,7 @@ async def setlog_slash(ctx: discord.ApplicationContext, canal: discord.TextChann
         )
         await ctx.response.send_message(embed=embed, ephemeral=True)
 
-@prefix_bot.command(name="setlog", aliases=["configurar_logs", "logs"])
+@bot.command(name="setlog", aliases=["configurar_logs", "logs"])
 @commands.has_permissions(administrator=True)
 async def setlog_prefix(ctx, canal: discord.TextChannel):
     """Comando prefixado para configurar logs do servidor"""
@@ -1879,7 +1879,7 @@ async def load_sample_products():
     print(f"✅ {len(sample_products)} produtos digitais carregados com sucesso!")
 
 
-@prefix_bot.command(name='products')
+@bot.command(name='products')
 async def show_products(ctx):
     """Exibe os produtos disponíveis"""
     try:
@@ -1920,7 +1920,7 @@ async def show_products(ctx):
 
 # ==================== COMANDOS DE PREFIXO (COMPATIBILIDADE) ====================
 
-@prefix_bot.command(name='buy')
+@bot.command(name='buy')
 async def buy_product(ctx, *, product_name):
     """Inicia o processo de compra de um produto"""
     try:
@@ -2152,14 +2152,14 @@ async def monitor_payment(transaction_id, user_id):
 
 
 # Comando de teste via prefixo
-@prefix_bot.command(name='teste')
+@bot.command(name='teste')
 async def teste_prefix(ctx):
     """Comando de teste via prefixo"""
     print(f"🔧 Comando ?teste executado por {ctx.author.name} em {ctx.guild.name}")
     await ctx.send("✅ Comando ?teste funcionando via prefixo!")
 
 # Comando para forçar sincronização de slash commands
-@prefix_bot.command(name='sync')
+@bot.command(name='sync')
 @commands.has_permissions(administrator=True)
 async def sync_commands(ctx):
     """Força a sincronização dos comandos slash"""
@@ -2189,7 +2189,7 @@ async def sync_commands(ctx):
         traceback.print_exc()
 
 # Comando para recarregar produtos
-@prefix_bot.command(name='reload_products')
+@bot.command(name='reload_products')
 @commands.has_permissions(administrator=True)
 async def reload_products(ctx):
     """Recarrega os produtos no banco de dados"""
@@ -2202,7 +2202,7 @@ async def reload_products(ctx):
                   "`/admin_deletar_produto` - Deletar produtos")
 
 # Comando para adicionar estoque via prefixo
-@prefix_bot.command(name='adicionar_estoque', aliases=['add_stock'])
+@bot.command(name='adicionar_estoque', aliases=['add_stock'])
 @commands.has_permissions(administrator=True)
 async def add_stock_prefix(ctx):
     """Adicionar itens ao estoque de um produto (versão prefixo)"""
