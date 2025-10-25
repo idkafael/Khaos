@@ -2155,8 +2155,8 @@ async def monitor_payment(transaction_id, user_id):
 @bot.command(name='teste')
 async def teste_prefix(ctx):
     """Comando de teste via prefixo"""
-    print(f"Comando !teste executado por {ctx.author.name} em {ctx.guild.name}")
-    await respond_with_side_embed(ctx, "✅ Comando de teste funcionando via prefixo!")
+    print(f"🔧 Comando ?teste executado por {ctx.author.name} em {ctx.guild.name}")
+    await ctx.send("✅ Comando ?teste funcionando via prefixo!")
 
 # Comando para forçar sincronização de slash commands
 @bot.command(name='sync')
@@ -3171,6 +3171,11 @@ async def on_message(message):
     if message.author.bot:
         return
     
+    # Debug: Log de mensagens que começam com ?
+    if message.content.startswith('?'):
+        print(f"🔧 DEBUG: Mensagem com prefixo detectada: {message.content[:50]}...")
+        print(f"🔧 DEBUG: Autor: {message.author.name}, Canal: {message.channel.name}")
+    
     # Processar comandos com prefixo (sistema híbrido)
     await bot.process_commands(message)
     
@@ -3342,8 +3347,14 @@ async def adicionar_estoque(ctx: discord.ApplicationContext):
 # Executar o bot
 if __name__ == "__main__":
     try:
+        print("🚀 Iniciando bot com sistema híbrido (slash + prefixo)...")
+        print(f"🔧 Prefixo configurado: {bot.command_prefix}")
+        print(f"🔧 Comandos registrados: {len(bot.commands)} comandos com prefixo")
+        print(f"🔧 Slash commands: {len(bot.application_commands)} comandos slash")
         bot.run(Config.DISCORD_TOKEN)
     except Exception as e:
         print(f"Erro ao iniciar o bot: {e}")
+        import traceback
+        traceback.print_exc()
 # Force deploy - 10/24/2025 17:16:33
 # Force deploy - debug logs 10/24/2025 17:26:13
