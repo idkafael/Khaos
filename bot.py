@@ -41,7 +41,7 @@ async def teste_slash(inter: disnake.ApplicationCommandInteraction):
     await inter.response.send_message(embed=embed)
 
 @bot.slash_command(name="teste_modal", description="[ADMIN] Testar funcionamento dos modais")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def teste_modal_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para testar se os modais estão funcionando"""
     try:
@@ -76,7 +76,7 @@ async def teste_modal_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para configurar sistema de tickets via interface interativa"""
     try:
@@ -113,7 +113,7 @@ async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_msg", description="[ADMIN] Criar mensagem embed personalizada")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def setup_msg_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para criar mensagem embed via modal"""
     try:
@@ -148,7 +148,7 @@ async def setup_msg_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_suporte", description="[ADMIN] Configurar sistema de tickets de suporte")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def setup_suporte_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para configurar sistema de tickets de suporte via modal"""
     try:
@@ -183,7 +183,7 @@ async def setup_suporte_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setlog", description="[ADMIN] Configurar sistema de logs do servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def setlog_slash(inter: disnake.ApplicationCommandInteraction, canal: disnake.TextChannel):
     """Comando admin para configurar logs do servidor"""
     try:
@@ -747,7 +747,7 @@ async def ajuda_slash(inter: disnake.ApplicationCommandInteraction):
 # ========================================
 
 @bot.slash_command(name="criar_cupom", description="[ADMIN] Criar novo cupom de desconto")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def criar_cupom_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para criar cupom via modal"""
     try:
@@ -761,7 +761,7 @@ async def criar_cupom_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message("❌ Erro ao abrir modal de cupom.", ephemeral=True)
 
 @bot.slash_command(name="listar_cupons", description="[ADMIN] Listar todos os cupons")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def listar_cupons_slash(inter: disnake.ApplicationCommandInteraction):
     """Lista todos os cupons ativos"""
     try:
@@ -814,7 +814,7 @@ async def listar_cupons_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message("❌ Erro ao listar cupons.", ephemeral=True)
 
 @bot.slash_command(name="cupom_stats", description="[ADMIN] Ver estatísticas de um cupom")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def cupom_stats_slash(inter: disnake.ApplicationCommandInteraction, codigo: str):
     """Mostra estatísticas de uso de um cupom"""
     try:
@@ -890,7 +890,7 @@ async def cupom_stats_slash(inter: disnake.ApplicationCommandInteraction, codigo
         await inter.response.send_message("❌ Erro ao buscar estatísticas.", ephemeral=True)
 
 @bot.slash_command(name="deletar_cupom", description="[ADMIN] Desativar um cupom")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def deletar_cupom_slash(inter: disnake.ApplicationCommandInteraction, codigo: str):
     """Desativa um cupom"""
     try:
@@ -1178,7 +1178,7 @@ async def historico_vip_slash(inter: disnake.ApplicationCommandInteraction):
 # ========================================
 
 @bot.slash_command(name="listar_vips", description="[ADMIN] Listar todos os VIPs ativos do servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def listar_vips_slash(inter: disnake.ApplicationCommandInteraction):
     """Lista todos os membros VIP ativos"""
     try:
@@ -1247,7 +1247,7 @@ async def listar_vips_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message("❌ Erro ao listar VIPs.", ephemeral=True)
 
 @bot.slash_command(name="adicionar_vip", description="[ADMIN] Adicionar VIP manualmente a um usuário")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def adicionar_vip_slash(
     ctx: disnake.ApplicationCommandInteraction,
     membro: disnake.Member,
@@ -1333,7 +1333,7 @@ async def adicionar_vip_slash(
         await inter.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
 
 @bot.slash_command(name="remover_vip", description="[ADMIN] Remover VIP de um usuário")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def remover_vip_slash(inter: disnake.ApplicationCommandInteraction, membro: disnake.Member):
     """Remove VIP de um usuário"""
     try:
@@ -1389,7 +1389,7 @@ async def remover_vip_slash(inter: disnake.ApplicationCommandInteraction, membro
         await inter.response.send_message("❌ Erro ao remover VIP.", ephemeral=True)
 
 @bot.slash_command(name="vip_stats", description="[ADMIN] Ver estatísticas de VIPs do servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def vip_stats_slash(inter: disnake.ApplicationCommandInteraction):
     """Mostra estatísticas detalhadas dos VIPs"""
     try:
@@ -2489,7 +2489,7 @@ async def setup_ticket_with_image(ctx, *, args=""):
 # ========================================
 
 @bot.slash_command(name="admin_criar_produto", description="[ADMIN] Criar um produto no servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def admin_criar_produto(
     ctx: disnake.ApplicationCommandInteraction,
     nome: str,
@@ -2533,7 +2533,7 @@ async def admin_criar_produto(
 
 
 @bot.slash_command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def admin_deletar_produto(inter: disnake.ApplicationCommandInteraction, product_ids: str):
     """Deletar um ou mais produtos do Supabase"""
     try:
@@ -2608,7 +2608,7 @@ async def admin_deletar_produto(inter: disnake.ApplicationCommandInteraction, pr
 
 
 @bot.slash_command(name="admin_listar_produtos", description="[ADMIN] Listar todos os produtos do servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def admin_listar_produtos(inter: disnake.ApplicationCommandInteraction):
     """Listar produtos do Supabase"""
     try:
@@ -2663,7 +2663,7 @@ async def admin_listar_produtos(inter: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name="admin_criar_vip", description="[ADMIN] Criar produto VIP no servidor")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def admin_criar_vip(
     ctx: disnake.ApplicationCommandInteraction,
     nome: str,
@@ -2720,7 +2720,7 @@ async def admin_criar_vip(
 # =============================================
 
 @bot.slash_command(name="saldo", description="Ver saldo disponível e estatísticas da carteira")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def saldo_cmd(inter: disnake.ApplicationCommandInteraction):
     """Ver saldo e estatísticas da carteira do servidor"""
     try:
@@ -2807,7 +2807,7 @@ async def saldo_cmd(inter: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name="configurar_pix", description="Cadastrar chave Pix padrão para saques")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def configurar_pix_cmd(inter: disnake.ApplicationCommandInteraction, chave_pix: str, tipo: str):
     """Cadastrar chave Pix padrão"""
     try:
@@ -2860,7 +2860,7 @@ async def configurar_pix_cmd(inter: disnake.ApplicationCommandInteraction, chave
 
 
 @bot.slash_command(name="solicitar_saque", description="Solicitar saque via Pix")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
     """Solicitar saque via modal"""
     try:
@@ -2978,7 +2978,7 @@ async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name="historico_vendas", description="Ver histórico de vendas e movimentações")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def historico_vendas_cmd(inter: disnake.ApplicationCommandInteraction):
     """Ver histórico de transações da carteira"""
     try:
@@ -3036,7 +3036,7 @@ async def historico_vendas_cmd(inter: disnake.ApplicationCommandInteraction):
 
 
 @bot.slash_command(name="historico_saques", description="Ver histórico de saques processados")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def historico_saques_cmd(inter: disnake.ApplicationCommandInteraction):
     """Ver histórico de saques"""
     try:
@@ -3090,7 +3090,7 @@ async def historico_saques_cmd(inter: disnake.ApplicationCommandInteraction):
         await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 @bot.slash_command(name="verificar_pagamentos", description="[ADMIN] Verificar pagamentos pendentes manualmente")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def verificar_pagamentos_cmd(inter: disnake.ApplicationCommandInteraction):
     """Verificar pagamentos pendentes manualmente (enquanto webhook não está configurado)"""
     try:
@@ -3303,7 +3303,7 @@ async def on_message(message):
 
 
 @bot.slash_command(name="adicionar_estoque", description="[ADMIN] Adicionar códigos/keys ao estoque")
-@disnake.default_permissions(administrator=True)
+@commands.has_permissions(administrator=True)
 async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
     """Adicionar códigos ao estoque de produtos"""
     try:
