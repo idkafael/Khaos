@@ -53,36 +53,41 @@ class RoleSelect(ui.Select):
         # Desabilitar select
         self.disabled = True
         
-        # Atualizar mensagem
+        # Atualizar mensagem mostrando progresso
         role_mention = "Nenhum cargo" if selected_value == "none" else f"<@&{self.view.selected_role}>"
-        embed = disnake.Embed(
-            title="⚙️ Configuração de Ticket",
-            description=f"**Cargo selecionado:** {role_mention}\n\n✅ Prosseguindo...",
-            color=0x0099ff
-        )
-        await interaction.response.edit_message(embed=embed, view=self.view)
         
         # Se for tipo payment, prosseguir para seleção de produtos
         if self.ticket_type == 'payment':
-            await asyncio.sleep(1)
-            # Criar select de produtos
-            product_select = ProductSelectionSelect(self.ticket_type, self.view.selected_role)
-            role_view = ui.View(timeout=300)
-            role_view.selected_role = self.view.selected_role
-            role_view.add_item(product_select)
-            
             embed = disnake.Embed(
-                title="🛍️ Seleção de Produtos",
-                description="Escolha os produtos que estarão disponíveis neste ticket:",
+                title="⚙️ Configuração de Ticket",
+                description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {role_mention}\n\n✅ Prosseguindo para seleção de produtos...",
                 color=0x0099ff
             )
-            await interaction.followup.send(embed=embed, view=role_view, ephemeral=True)
+            
+            # Criar select de produtos
+            product_select = ProductSelectionSelect(self.ticket_type, self.view.selected_role)
+            view_with_product = ui.View(timeout=300)
+            view_with_product.selected_role = self.view.selected_role
+            view_with_product.add_item(product_select)
+            
+            await interaction.response.edit_message(embed=embed, view=view_with_product)
         else:
             # Para outros tipos, ir direto para configuração detalhada
-            await asyncio.sleep(1)
+            embed = disnake.Embed(
+                title="⚙️ Configuração de Ticket",
+                description=f"**Objetivo:** {'🎫 Tickets Manuais' if self.ticket_type == 'manual' else '❓ Somente Suporte'}\n**Cargo:** {role_mention}\n\n✅ Prosseguindo para configurações detalhadas...",
+                color=0x0099ff
+            )
+            await interaction.response.edit_message(embed=embed, view=self.view)
+            
+            # Aguardar um momento para visualização
+            await asyncio.sleep(1.5)
+            
+            # Abrir configuração detalhada
             ticket_config_view = TicketConfigView(interaction.guild_id, ticket_type=self.ticket_type, mention_role=self.view.selected_role)
             new_embed = ticket_config_view._create_embed()
-            await interaction.followup.send(embed=new_embed, view=ticket_config_view, ephemeral=True)
+            
+            await interaction.edit_original_message(embed=new_embed, view=ticket_config_view)
 
 class ProductSelectionSelect(ui.Select):
     """Select menu para escolher produtos disponíveis"""
@@ -127,6 +132,17 @@ class ProductSelectionSelect(ui.Select):
         
         # Se selecionou "todos os produtos"
         if selected_value == "all":
+            # Mostrar progresso
+            embed = disnake.Embed(
+                title="⚙️ Configuração de Ticket",
+                description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {'Nenhum' if not self.mention_role else f'<@&{self.mention_role}>'}\n**Produtos:** Todos os produtos\n\n✅ Prosseguindo para configurações detalhadas...",
+                color=0x0099ff
+            )
+            await interaction.response.edit_message(embed=embed, view=self.view)
+            
+            # Aguardar um momento
+            await asyncio.sleep(1.5)
+            
             # Ir direto para configuração detalhada
             ticket_config_view = TicketConfigView(
                 interaction.guild_id, 
@@ -135,15 +151,7 @@ class ProductSelectionSelect(ui.Select):
                 product_ids=None
             )
             new_embed = ticket_config_view._create_embed()
-            
-            embed = disnake.Embed(
-                title="⚙️ Configuração",
-                description="**Produtos:** Todos os produtos\n\n✅ Prosseguindo para configurações detalhadas...",
-                color=0x0099ff
-            )
-            await interaction.response.edit_message(embed=embed, view=self.view)
-            await asyncio.sleep(1)
-            await interaction.followup.send(embed=new_embed, view=ticket_config_view, ephemeral=True)
+            await interaction.edit_original_message(embed=new_embed, view=ticket_config_view)
         else:
             # Abrir modal para inserir IDs dos produtos
             modal = ProductFilterModalForSetup()
@@ -183,22 +191,33 @@ class ProductFilterModalForSetup(ui.Modal):
         
         # Buscar dados do setup
         setup_data = getattr(interaction.client, '_setup_data', {})
+        mention_role = setup_data.get('mention_role')
         
-        # Criar view de configuração detalhada
-        ticket_config_view = TicketConfigView(
-            interaction.guild_id,
-            ticket_type=setup_data.get('ticket_type', 'payment'),
-            mention_role=setup_data.get('mention_role'),
-            product_ids=product_ids
+        # Mostrar progresso
+        progress_embed = disnake.Embed(
+            title="⚙️ Configuração de Ticket",
+            description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {'Nenhum' if not mention_role else f'<@&{mention_role}>'}\n**Produtos:** {', '.join(map(str, product_ids))}\n\n✅ Prosseguindo para configurações detalhadas...",
+            color=0x0099ff
         )
-        new_embed = ticket_config_view._create_embed()
+        await interaction.followup.send(embed=progress_embed, ephemeral=True)
         
-        await interaction.followup.send(
-            f"✅ **Produtos configurados:** {', '.join(map(str, product_ids))}\n\nProsseguindo para configurações detalhadas...",
-            embed=new_embed,
-            view=ticket_config_view,
-            ephemeral=True
-        )
+        # Aguardar um momento
+        await asyncio.sleep(1.5)
+        
+        # Buscar a mensagem original (última do bot)
+        channel = interaction.channel
+        async for message in channel.history(limit=5):
+            if message.author.id == interaction.client.user.id and message.embeds:
+                # Criar view de configuração detalhada
+                ticket_config_view = TicketConfigView(
+                    interaction.guild_id,
+                    ticket_type=setup_data.get('ticket_type', 'payment'),
+                    mention_role=mention_role,
+                    product_ids=product_ids
+                )
+                new_embed = ticket_config_view._create_embed()
+                await message.edit(embed=new_embed, view=ticket_config_view)
+                break
 
 class ObjectiveSelect(ui.Select):
     """Select menu para escolher o objetivo do ticket"""
@@ -240,31 +259,23 @@ class ObjectiveSelect(ui.Select):
                 selected_label = option.label
                 break
         
-        # Desabilitar o select após seleção
-        self.disabled = True
-        
-        # Atualizar mensagem inicial
-        embed = disnake.Embed(
-            title="⚙️ Configuração de Ticket",
-            description=f"**Objetivo selecionado:** {selected_label}\n\n✅ Prosseguindo para seleção de cargo...",
-            color=0x0099ff
-        )
-        await interaction.response.edit_message(embed=embed, view=self.view)
-        
-        # Aguardar um momento
-        await asyncio.sleep(1)
-        
         # Criar select de cargo
         role_select = RoleSelect(selected_type, interaction.guild)
+        
+        # Criar novo embed com progresso e o select de cargo
+        embed = disnake.Embed(
+            title="⚙️ Configuração de Ticket",
+            description=f"**Objetivo:** {selected_label}\n\n👤 **Escolha o cargo que será mencionado quando o ticket for criado:**",
+            color=0x0099ff
+        )
+        
+        # Criar view com o select de cargo
         role_view = ui.View(timeout=300)
         role_view.add_item(role_select)
         
-        embed = disnake.Embed(
-            title="👤 Seleção de Cargo",
-            description="Escolha o cargo que será mencionado quando o ticket for criado:",
-            color=0x0099ff
-        )
-        await interaction.followup.send(embed=embed, view=role_view, ephemeral=True)
+        # Desabilitar o select de objetivo e editar mensagem
+        self.disabled = True
+        await interaction.response.edit_message(embed=embed, view=role_view)
 
 class ObjectiveSelectionView(ui.View):
     """View inicial para selecionar o objetivo do ticket"""
