@@ -1,5 +1,5 @@
-import discord
-from discord.ext import commands
+import disnake
+from disnake.ext import commands
 import asyncio
 import os
 from datetime import datetime
@@ -17,7 +17,7 @@ from utils.log_system import LogSystem
 from config.config import Config
 
 # Configuração do bot
-intents = discord.Intents.default()
+intents = disnake.Intents.default()
 intents.message_content = True
 intents.guilds = True
 intents.members = True
@@ -31,21 +31,21 @@ bot = commands.Bot(
 
 # Adicionar comandos slash manualmente
 @bot.slash_command(name="teste", description="Comando de teste")
-async def teste_slash(ctx):
+async def teste_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando de teste simples"""
-    print(f"Comando /teste executado por {ctx.user.name} em {ctx.guild.name}")
-    embed = discord.Embed(
+    print(f"Comando /teste executado por {inter.user.name} em {inter.guild.name}")
+    embed = disnake.Embed(
         description="✅ Comando de teste funcionando!",
         color=0x8B5CF6
     )
-    await ctx.response.send_message(embed=embed)
+    await inter.response.send_message(embed=embed)
 
 @bot.slash_command(name="teste_modal", description="[ADMIN] Testar funcionamento dos modais")
-@discord.default_permissions(administrator=True)
-async def teste_modal_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def teste_modal_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para testar se os modais estão funcionando"""
     try:
-        print(f"🔧 Comando teste_modal executado por {ctx.user.name}")
+        print(f"🔧 Comando teste_modal executado por {inter.user.name}")
         
         from utils.ticket_views import SetupMessageModal
         print("✅ SetupMessageModal importado com sucesso!")
@@ -53,27 +53,27 @@ async def teste_modal_slash(ctx: discord.ApplicationContext):
         modal = SetupMessageModal()
         print("✅ Modal de teste criado com sucesso!")
         
-        await ctx.response.send_modal(modal)
+        await inter.response.send_modal(modal)
         print("✅ Modal de teste enviado com sucesso!")
         
     except ImportError as e:
         print(f"❌ Erro de importação: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro de importação no sistema de modais.",
             color=0xff0000
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"❌ Erro no comando teste_modal: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro ao testar modais.",
             color=0xff0000
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
 @discord.default_permissions(administrator=True)

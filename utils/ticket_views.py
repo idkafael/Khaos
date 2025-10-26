@@ -1,6 +1,6 @@
-# py-cord: Usa ui.InputText (não ui.TextInput)
-import discord
-from discord import ui
+# disnake: Usa ui.TextInput com sintaxe superior para modais
+import disnake
+from disnake import ui
 from typing import List, Dict, Optional
 from models.product_model import ProductModel
 from utils.ticket_manager import TicketManager
@@ -11,7 +11,7 @@ import time
 waiting_for_input = {}
 # Formato: {user_id: {'type': str, 'guild_id': int, 'channel_id': int, 'extra_data': dict}}
 
-async def process_user_input(message: discord.Message, input_data: dict):
+async def process_user_input(message: disnake.Message, input_data: dict):
     """Processa input do usuário baseado no tipo aguardado"""
     try:
         input_type = input_data['type']
@@ -121,65 +121,66 @@ async def process_user_input(message: discord.Message, input_data: dict):
         )
 
 class SetupMessageModal(ui.Modal):
-    """Modal para criar mensagens embed personalizadas sem botões"""
+    """Modal para criar mensagens embed personalizadas - DISNAKE"""
     
     def __init__(self):
-        super().__init__(title="Criar Mensagem Embed")
-        
-        self.add_item(ui.InputText(
+        components = [
+            ui.TextInput(
             label="Título", 
             placeholder="Ex: Bem-vindo ao Servidor!", 
-            value="",
+                custom_id="titulo",
+                required=False,
             max_length=256,
-            required=False
-        ))
-        
-        self.add_item(ui.InputText(
+                style=disnake.TextInputStyle.short
+            ),
+            ui.TextInput(
             label="Descrição", 
             placeholder="Escreva o conteúdo principal da mensagem...", 
-            value="",
-            style=discord.InputTextStyle.paragraph,
+                custom_id="descricao",
+                required=True,
             max_length=4000,
-            required=True
-        ))
-        
-        self.add_item(ui.InputText(
+                style=disnake.TextInputStyle.paragraph
+            ),
+            ui.TextInput(
             label="URL da Imagem", 
             placeholder="Cole o link da imagem (opcional)", 
-            value="",
+                custom_id="url_imagem",
             required=False,
-            max_length=500
-        ))
-        
-        self.add_item(ui.InputText(
+                max_length=500,
+                style=disnake.TextInputStyle.short
+            ),
+            ui.TextInput(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #0099ff ou 0x0099ff", 
+                custom_id="cor_hex",
             value="#0099ff",
-            max_length=10
-        ))
-        
-        self.add_item(ui.InputText(
+                max_length=10,
+                style=disnake.TextInputStyle.short
+            ),
+            ui.TextInput(
             label="Rodapé (Footer)", 
             placeholder="Texto no rodapé (opcional)", 
-            value="",
+                custom_id="rodape",
             required=False,
-            max_length=100
-        ))
+                max_length=100,
+                style=disnake.TextInputStyle.short
+            )
+        ]
+        super().__init__(title="Criar Mensagem Embed", components=components)
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.ModalInteraction):
         """Processa a criação da mensagem embed"""
         await interaction.response.defer(ephemeral=True)
         
         try:
-            import time
             start_time = time.time()
             
-            # Acessar valores via children com validação
-            titulo = self.children[0].value.strip() if self.children[0].value else ""
-            descricao = self.children[1].value.strip() if self.children[1].value else ""
-            url_imagem = self.children[2].value.strip() if self.children[2].value else ""
-            cor_hex = self.children[3].value.strip() if self.children[3].value else "#0099ff"
-            rodape = self.children[4].value.strip() if self.children[4].value else ""
+            # Acessar valores via text_values - muito mais robusto
+            titulo = interaction.text_values.get("titulo", "").strip()
+            descricao = interaction.text_values.get("descricao", "").strip()
+            url_imagem = interaction.text_values.get("url_imagem", "").strip()
+            cor_hex = interaction.text_values.get("cor_hex", "#0099ff").strip()
+            rodape = interaction.text_values.get("rodape", "").strip()
             
             # Converter cor hex para int
             try:
@@ -195,7 +196,7 @@ class SetupMessageModal(ui.Modal):
                 cor_int = 0x0099ff
             
             # Criar embed
-            embed = discord.Embed(description=descricao, color=cor_int)
+            embed = disnake.Embed(description=descricao, color=cor_int)
             if titulo:
                 embed.title = titulo
             if url_imagem and url_imagem.startswith(('http://', 'https://')):
@@ -203,14 +204,14 @@ class SetupMessageModal(ui.Modal):
             if rodape:
                 embed.set_footer(text=rodape)
             
-            await interaction.followup.send(embed=embed, ephemeral=True)
+            await interaction.followup.send("✅ **Embed criado com sucesso!**", embed=embed, ephemeral=True)
             print(f"⏱️ SetupMessageModal processado em {time.time() - start_time:.2f}s")
             
         except Exception as e:
             print(f"❌ Erro ao criar mensagem embed: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.followup.send(f"❌ Erro: {str(e)[:100]}", ephemeral=True)
+            await interaction.followup.send(f"❌ Erro: {str(e)[:200]}", ephemeral=True)
 
 # Sistema de gerenciamento de views ativas
 active_config_views = {}
@@ -283,7 +284,7 @@ class TicketConfigView(ui.View):
     
     def _create_embed(self):
         """Cria o embed baseado na configuração"""
-        embed = discord.Embed(
+            embed = discord.Embed(
             title=self.config['title'],
             description=self.config['description'],
             color=self.config['color']
@@ -758,8 +759,8 @@ class SetupTicketModal(ui.Modal):
             try:
                 success = await asyncio.wait_for(
                     guild_config.set_ticket_product_filter(
-                        guild_id=interaction.guild_id,
-                        product_ids=allowed_product_ids
+                    guild_id=interaction.guild_id,
+                    product_ids=allowed_product_ids
                     ),
                     timeout=15.0
                 )
@@ -786,30 +787,30 @@ class SetupTicketModal(ui.Modal):
             
             # Criar embed
             embed = discord.Embed(title=headline, description=descricao, color=cor_int)
-            embed.add_field(
-                name="🚀 Como Funciona?",
-                value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
-                inline=False
-            )
-            if allowed_product_ids:
                 embed.add_field(
-                    name="🔍 Produtos Filtrados",
-                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                    name="🚀 Como Funciona?",
+                    value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
                     inline=False
                 )
-            embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+                if allowed_product_ids:
+                    embed.add_field(
+                        name="🔍 Produtos Filtrados",
+                        value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                        inline=False
+                    )
+                embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
 
             # Criar view com botão
-            view = TicketView(nome_botao)
+                view = TicketView(nome_botao)
             await interaction.followup.send(
                 "✅ **Sistema configurado com sucesso!**\nCopie e cole abaixo:",
                 embed=embed,
                 view=view,
-                ephemeral=True
-            )
+                    ephemeral=True
+                )
             
             print(f"⏱️ SetupTicketModal processado em {time.time() - start_time:.2f}s")
-
+            
         except Exception as e:
             print(f"❌ Erro ao configurar sistema de tickets: {e}")
             import traceback
@@ -817,32 +818,34 @@ class SetupTicketModal(ui.Modal):
             await interaction.followup.send(f"❌ Erro: {str(e)[:200]}", ephemeral=True)
 
 class CouponInputModal(ui.Modal):
-    """Modal para coletar código de cupom (opcional)"""
+    """Modal para coletar código de cupom (opcional) - DISNAKE"""
     
     def __init__(self, user, guild, product):
-        super().__init__(title="Cupom de Desconto (Opcional)")
         self.user = user
         self.guild = guild
         self.product = product
         
-        self.coupon_code = ui.InputText(
+        components = [
+            ui.TextInput(
             label="Código do Cupom",
             placeholder="Digite o código do cupom ou deixe em branco",
+                custom_id="coupon_code",
             required=False,
-            max_length=50
-        )
-        
-        self.add_item(self.coupon_code)
+                max_length=50,
+                style=disnake.TextInputStyle.short
+            )
+        ]
+        super().__init__(title="Cupom de Desconto (Opcional)", components=components)
     
-    async def on_submit(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.ModalInteraction):
         """Processa o cupom e cria o ticket"""
         await interaction.response.defer(ephemeral=True)
         
         try:
             start_time = time.time()
             
-            # Acessar valor via atributo
-            coupon_code = self.coupon_code.value.strip() if self.coupon_code.value else None
+            # Acessar valor via text_values - mais robusto
+            coupon_code = interaction.text_values.get("coupon_code", "").strip() or None
             
             from utils.ticket_manager import TicketManager
             ticket_manager = TicketManager(interaction.client)
@@ -870,7 +873,7 @@ class CouponInputModal(ui.Modal):
                 ephemeral=True
             )
     
-    async def on_error(self, error: Exception, interaction: discord.Interaction):
+    async def on_error(self, error: Exception, interaction: disnake.ModalInteraction):
         """Handler de erros do modal"""
         print(f"❌ Erro no CouponInputModal: {error}")
         import traceback

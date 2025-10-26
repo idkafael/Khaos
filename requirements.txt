@@ -1,5 +1,5 @@
 # Discord Bot
-py-cord>=2.4.0
+disnake>=2.9.0
 
 # Banco de dados
 supabase>=1.0.0
