@@ -1471,12 +1471,10 @@ class CouponInputModal(ui.Modal):
         print(f"🔧 MODAL SUBMIT: CouponInputModal iniciado por {interaction.user.name}")
         
         try:
-            # Verificar se interaction ainda é válida
-            if interaction.response.is_done():
-                print("❌ Interaction já foi respondida!")
-                return
-                
             coupon_code = self.children[0].value.strip() if self.children[0].value else None
+            
+            # SEMPRE deferir primeiro para evitar "interaction failed"
+            await interaction.response.defer(ephemeral=True)
             
             # Importar TicketManager e criar instância com bot
             from utils.ticket_manager import TicketManager
@@ -1490,9 +1488,9 @@ class CouponInputModal(ui.Modal):
             )
             
             if success:
-                await interaction.response.send_message(f"✅ {message}", ephemeral=True)
+                await interaction.followup.send(f"✅ {message}", ephemeral=True)
             else:
-                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                await interaction.followup.send(f"❌ {message}", ephemeral=True)
                 
         except Exception as e:
             print(f"❌ ERRO CRÍTICO ao processar cupom: {e}")
@@ -1502,20 +1500,13 @@ class CouponInputModal(ui.Modal):
             # Mensagem de erro mais informativa
             error_message = str(e) if str(e) else "Erro desconhecido ao criar ticket"
             
-            # Tentar enviar mensagem de erro
+            # Sempre usar followup aqui porque já fizemos defer
             try:
-                if not interaction.response.is_done():
-                    await interaction.response.send_message(
-                        f"❌ **Algo deu errado, tente novamente.**\n\n"
-                        f"Detalhes técnicos: {error_message[:100]}",
-                        ephemeral=True
-                    )
-                else:
-                    await interaction.followup.send(
-                        f"❌ **Algo deu errado, tente novamente.**\n\n"
-                        f"Detalhes técnicos: {error_message[:100]}",
-                        ephemeral=True
-                    )
+                await interaction.followup.send(
+                    f"❌ **Algo deu errado, tente novamente.**\n\n"
+                    f"Detalhes técnicos: {error_message[:100]}",
+                    ephemeral=True
+                )
             except Exception as e2:
                 print(f"❌ Falha ao enviar mensagem de erro: {e2}")
     
