@@ -1598,7 +1598,13 @@ async def on_ready():
         print(f"📋 Prefix commands (?): {len(prefix_cmds)}")
         for cmd_name in prefix_cmds:
             cmd = bot.all_commands[cmd_name]
-            print(f"  - ?{cmd_name}: {cmd.help or 'Sem descrição'}")
+            # Verificar se é um Command (prefix) ou SlashCommand
+            if hasattr(cmd, 'help'):
+                print(f"  - ?{cmd_name}: {cmd.help or 'Sem descrição'}")
+            else:
+                # Se não tiver help (é um SlashCommand), pegar a description
+                desc = getattr(cmd, 'description', 'Sem descrição')
+                print(f"  - ?{cmd_name}: {desc}")
         
         # Tentar sincronizar globalmente
         try:

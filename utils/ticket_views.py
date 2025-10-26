@@ -227,6 +227,86 @@ class TicketConfigView(ui.View):
             import traceback
             traceback.print_exc()
 
+    async def finish_configuration(self, interaction: discord.Interaction):
+        """Finaliza a configuração e salva no banco"""
+        try:
+            print(f"🔧 Finalizando configuração para guild {self.guild_id}")
+            
+            # Salvar configuração no banco de dados
+            from models.guild_config_model import GuildConfigModel
+            guild_config = GuildConfigModel()
+            
+            success = await guild_config.set_ticket_product_filter(
+                guild_id=self.guild_id,
+                product_ids=self.config['product_ids']
+            )
+            
+            if not success:
+                await interaction.response.send_message(
+                    "❌ Erro ao salvar configuração no banco de dados.",
+                    ephemeral=True
+                )
+                return
+            
+            # Criar embed final
+            embed = discord.Embed(
+                title=self.config['title'],
+                description=self.config['description'],
+                color=self.config['color']
+            )
+            
+            # Adicionar autor se configurado
+            if self.config['author']:
+                embed.set_author(name=self.config['author'])
+            
+            # Adicionar thumbnail se configurado
+            if self.config['thumbnail']:
+                embed.set_thumbnail(url=self.config['thumbnail'])
+            
+            # Adicionar imagem se configurada
+            if self.config['image']:
+                embed.set_image(url=self.config['image'])
+            
+            # Adicionar campos se configurados
+            for field in self.config['fields']:
+                embed.add_field(
+                    name=field['name'],
+                    value=field['value'],
+                    inline=field.get('inline', False)
+                )
+            
+            # Adicionar rodapé se configurado
+            if self.config['footer']:
+                embed.set_footer(text=self.config['footer'])
+            
+            # Adicionar informações sobre filtro de produtos
+            if self.config['product_ids']:
+                embed.add_field(
+                    name="🔍 Produtos Filtrados",
+                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
+                    inline=False
+                )
+            
+            # Criar view com botão de ticket
+            ticket_view = TicketView(self.config['button_name'])
+            
+            # Enviar mensagem final
+            await interaction.response.send_message(embed=embed, view=ticket_view)
+            print("✅ Configuração finalizada com sucesso!")
+            
+            # Remover view das ativas
+            if self.guild_id in active_config_views:
+                del active_config_views[self.guild_id]
+            
+        except Exception as e:
+            print(f"❌ Erro ao finalizar configuração: {e}")
+            import traceback
+            traceback.print_exc()
+            await interaction.response.send_message(
+                "❌ Erro ao finalizar configuração.",
+                ephemeral=True
+            )
+
 class TitleButton(ui.Button):
     """Botão para editar título"""
     
@@ -694,86 +774,6 @@ class ProductFilterModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar filtro de produtos: {e}")
             await interaction.response.send_message("❌ Erro ao editar filtro de produtos.", ephemeral=True)
-
-    async def finish_configuration(self, interaction: discord.Interaction):
-        """Finaliza a configuração e salva no banco"""
-        try:
-            print(f"🔧 Finalizando configuração para guild {self.guild_id}")
-            
-            # Salvar configuração no banco de dados
-            from models.guild_config_model import GuildConfigModel
-            guild_config = GuildConfigModel()
-            
-            success = await guild_config.set_ticket_product_filter(
-                guild_id=self.guild_id,
-                product_ids=self.config['product_ids']
-            )
-            
-            if not success:
-                await interaction.response.send_message(
-                    "❌ Erro ao salvar configuração no banco de dados.",
-                    ephemeral=True
-                )
-                return
-            
-            # Criar embed final
-            embed = discord.Embed(
-                title=self.config['title'],
-                description=self.config['description'],
-                color=self.config['color']
-            )
-            
-            # Adicionar autor se configurado
-            if self.config['author']:
-                embed.set_author(name=self.config['author'])
-            
-            # Adicionar thumbnail se configurado
-            if self.config['thumbnail']:
-                embed.set_thumbnail(url=self.config['thumbnail'])
-            
-            # Adicionar imagem se configurada
-            if self.config['image']:
-                embed.set_image(url=self.config['image'])
-            
-            # Adicionar campos se configurados
-            for field in self.config['fields']:
-                embed.add_field(
-                    name=field['name'],
-                    value=field['value'],
-                    inline=field.get('inline', False)
-                )
-            
-            # Adicionar rodapé se configurado
-            if self.config['footer']:
-                embed.set_footer(text=self.config['footer'])
-            
-            # Adicionar informações sobre filtro de produtos
-            if self.config['product_ids']:
-                embed.add_field(
-                    name="🔍 Produtos Filtrados",
-                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
-                    inline=False
-                )
-            
-            # Criar view com botão de ticket
-            ticket_view = TicketView(self.config['button_name'])
-            
-            # Enviar mensagem final
-            await interaction.response.send_message(embed=embed, view=ticket_view)
-            print("✅ Configuração finalizada com sucesso!")
-            
-            # Remover view das ativas
-            if self.guild_id in active_config_views:
-                del active_config_views[self.guild_id]
-            
-        except Exception as e:
-            print(f"❌ Erro ao finalizar configuração: {e}")
-            import traceback
-            traceback.print_exc()
-            await interaction.response.send_message(
-                "❌ Erro ao finalizar configuração.",
-                ephemeral=True
-            )
 
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
