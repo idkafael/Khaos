@@ -176,56 +176,65 @@ class TicketConfigView(ui.View):
     async def update_preview(self, interaction: discord.Interaction):
         """Atualiza o preview do embed"""
         try:
-            embed = discord.Embed(
-                title=self.config['title'],
-                description=self.config['description'],
-                color=self.config['color']
-            )
+            print(f"🔧 update_preview chamado para guild {self.guild_id}")
             
-            # Adicionar autor se configurado
-            if self.config['author']:
-                embed.set_author(name=self.config['author'])
-            
-            # Adicionar thumbnail se configurado
-            if self.config['thumbnail']:
-                embed.set_thumbnail(url=self.config['thumbnail'])
-            
-            # Adicionar imagem se configurada
-            if self.config['image']:
-                embed.set_image(url=self.config['image'])
-            
-            # Adicionar campos se configurados
-            for field in self.config['fields']:
-                embed.add_field(
-                    name=field['name'],
-                    value=field['value'],
-                    inline=field.get('inline', False)
-                )
-            
-            # Adicionar rodapé se configurado
-            if self.config['footer']:
-                embed.set_footer(text=self.config['footer'])
-            
-            # Adicionar informações sobre filtro de produtos
-            if self.config['product_ids']:
-                embed.add_field(
-                    name="🔍 Produtos Filtrados",
-                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
-                    inline=False
-                )
-            
-            # Criar view com botão de ticket
-            ticket_view = TicketView(self.config['button_name'])
-            
-            if self.message:
-                await self.message.edit(embed=embed, view=self)
+            # Se interaction já foi respondida, apenas editar a mensagem
+            if interaction.response.is_done():
+                print("🔧 Interaction já respondida, editando mensagem...")
+                if self.message:
+                    await self.message.edit(embed=self._create_embed(), view=self)
+                else:
+                    print("❌ self.message é None, não é possível editar")
             else:
-                self.message = await interaction.response.send_message(embed=embed, view=self)
+                print("🔧 Enviando nova mensagem...")
+                self.message = await interaction.response.send_message(embed=self._create_embed(), view=self)
                 
         except Exception as e:
-            print(f"Erro ao atualizar preview: {e}")
+            print(f"❌ Erro ao atualizar preview: {e}")
             import traceback
             traceback.print_exc()
+    
+    def _create_embed(self):
+        """Cria o embed baseado na configuração"""
+        embed = discord.Embed(
+            title=self.config['title'],
+            description=self.config['description'],
+            color=self.config['color']
+        )
+        
+        # Adicionar autor se configurado
+        if self.config['author']:
+            embed.set_author(name=self.config['author'])
+        
+        # Adicionar thumbnail se configurado
+        if self.config['thumbnail']:
+            embed.set_thumbnail(url=self.config['thumbnail'])
+        
+        # Adicionar imagem se configurada
+        if self.config['image']:
+            embed.set_image(url=self.config['image'])
+        
+        # Adicionar campos se configurados
+        for field in self.config['fields']:
+            embed.add_field(
+                name=field['name'],
+                value=field['value'],
+                inline=field.get('inline', False)
+            )
+        
+        # Adicionar rodapé se configurado
+        if self.config['footer']:
+            embed.set_footer(text=self.config['footer'])
+        
+        # Adicionar informações sobre filtro de produtos
+        if self.config['product_ids']:
+            embed.add_field(
+                name="🔍 Produtos Filtrados",
+                value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
+                inline=False
+            )
+        
+        return embed
 
     async def finish_configuration(self, interaction: discord.Interaction):
         """Finaliza a configuração e salva no banco"""
@@ -486,19 +495,37 @@ class TitleModal(ui.Modal):
         ))
     
     async def on_submit(self, interaction: discord.Interaction):
+        print(f"🔧 MODAL SUBMIT: TitleModal por {interaction.user.name}")
         try:
+            # Verificar se interaction ainda é válida
+            if interaction.response.is_done():
+                print("❌ Interaction já foi respondida!")
+                return
+                
             title = self.children[0].value.strip()
+            print(f"🔧 Título recebido: {title}")
             
             # Buscar a view ativa
             view = active_config_views.get(interaction.guild_id)
             if view:
                 view.config['title'] = title
+                print(f"🔧 View encontrada, atualizando preview...")
                 await view.update_preview(interaction)
+                print("✅ Preview atualizado com sucesso")
             else:
+                print(f"❌ View não encontrada para guild {interaction.guild_id}")
                 await interaction.response.send_message("❌ Sessão de configuração expirada. Use /setup_ticket novamente.", ephemeral=True)
         except Exception as e:
-            print(f"Erro ao editar título: {e}")
-            await interaction.response.send_message("❌ Erro ao editar título.", ephemeral=True)
+            print(f"❌ Erro ao editar título: {e}")
+            import traceback
+            traceback.print_exc()
+            try:
+                if not interaction.response.is_done():
+                    await interaction.response.send_message("❌ Erro ao editar título.", ephemeral=True)
+                else:
+                    await interaction.followup.send("❌ Erro ao editar título.", ephemeral=True)
+            except Exception as e2:
+                print(f"❌ Erro ao enviar mensagem de erro: {e2}")
 
 class DescriptionModal(ui.Modal):
     """Modal para editar descrição"""
