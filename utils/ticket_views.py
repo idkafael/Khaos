@@ -300,7 +300,7 @@ class TitleModal(ui.Modal):
                 label="Título do Embed",
                 placeholder="Ex: 🛒 Sistema de Vendas Automatizado",
                 custom_id="title_input",
-                default=current_title,
+                value=current_title,
                 max_length=256
             )
         ]
@@ -347,7 +347,7 @@ class DescriptionModal(ui.Modal):
                 label="Descrição do Embed",
                 placeholder="Clique no botão abaixo para criar um ticket!",
                 custom_id="description_input",
-                default=current_description,
+                value=current_description,
                 style=disnake.TextInputStyle.paragraph,
                 max_length=4000
             )
@@ -394,7 +394,7 @@ class ColorModal(ui.Modal):
                 label="Cor do Embed (Hex)",
                 placeholder="Ex: #0099ff ou 0099ff",
                 custom_id="color_input",
-                default="#0099ff",
+                value="#0099ff",
                 max_length=10
             )
         ]
@@ -451,7 +451,7 @@ class AuthorModal(ui.Modal):
                 label="Nome do Autor (opcional)",
                 placeholder="Deixe vazio para remover",
                 custom_id="author_input",
-                default=current_author or "",
+                value=current_author or "",
                 required=False,
                 max_length=100
             )
@@ -504,7 +504,7 @@ class FieldsModal(ui.Modal):
                 label="Campos (um por linha)",
                 placeholder="Nome|Valor|inline",
                 custom_id="fields_input",
-                default=fields_text.strip(),
+                value=fields_text.strip(),
                 style=disnake.TextInputStyle.paragraph,
                 max_length=2000,
                 required=False
@@ -568,7 +568,7 @@ class ImageModal(ui.Modal):
                 label="URLs das Imagens",
                 placeholder="Linha 1: imagem principal\nLinha 2: thumbnail",
                 custom_id="images_input",
-                default=images_text.strip(),
+                value=images_text.strip(),
                 style=disnake.TextInputStyle.paragraph,
                 max_length=1000,
                 required=False
@@ -622,7 +622,7 @@ class FooterModal(ui.Modal):
                 label="Texto do Rodapé (opcional)",
                 placeholder="Deixe vazio para remover",
                 custom_id="footer_input",
-                default=current_footer or "",
+                value=current_footer or "",
                 required=False,
                 max_length=100
             )
@@ -669,7 +669,7 @@ class ButtonNameModal(ui.Modal):
                 label="Nome do Botão",
                 placeholder="Ex: Criar Ticket de Compra",
                 custom_id="button_name_input",
-                default=current_button_name,
+                value=current_button_name,
                 max_length=80
             )
         ]
@@ -719,7 +719,7 @@ class ProductFilterModal(ui.Modal):
                 label="IDs dos Produtos (opcional)",
                 placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
                 custom_id="product_ids_input",
-                default=product_ids_text,
+                value=product_ids_text,
                 required=False,
                 max_length=200
             )
@@ -806,14 +806,14 @@ class SetupTicketModal(ui.Modal):
                 label="Headline",
                 placeholder="Ex: Sistema de Vendas Automatizado",
                 custom_id="headline",
-                default="🛒 Sistema de Vendas Automatizado",
+                value="🛒 Sistema de Vendas Automatizado",
                 max_length=100
             ),
             ui.TextInput(
                 label="Descrição",
                 placeholder="Ex: Clique no botão abaixo para criar um ticket de compra",
                 custom_id="descricao",
-                default="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+                value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
                 style=disnake.TextInputStyle.paragraph,
                 max_length=1000
             ),
@@ -821,7 +821,7 @@ class SetupTicketModal(ui.Modal):
                 label="IDs dos Produtos (vazio = todos)",
                 placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
                 custom_id="product_ids",
-                default="",
+                value="",
                 required=False,
                 max_length=200
             ),
@@ -829,14 +829,14 @@ class SetupTicketModal(ui.Modal):
                 label="Nome do Botão",
                 placeholder="Ex: Criar Ticket de Compra",
                 custom_id="nome_botao",
-                default="Criar Ticket de Compra",
+                value="Criar Ticket de Compra",
                 max_length=80
             ),
             ui.TextInput(
                 label="Cor do Embed (Hex)",
                 placeholder="Ex: #0099ff ou 0x0099ff",
                 custom_id="cor",
-                default="#0099ff",
+                value="#0099ff",
                 max_length=10
             )
         ]
@@ -1236,7 +1236,7 @@ class CreateCouponModal(ui.Modal):
                 label="Limite de Usos (0 = ilimitado)",
                 placeholder="Ex: 100",
                 custom_id="max_uses",
-                default="0",
+                value="0",
                 max_length=10,
                 required=False
             ),
@@ -1244,7 +1244,7 @@ class CreateCouponModal(ui.Modal):
                 label="Um uso por usuário? (sim/nao)",
                 placeholder="sim ou nao",
                 custom_id="one_per_user",
-                default="nao",
+                value="nao",
                 max_length=3,
                 required=False
             ),
@@ -1350,21 +1350,21 @@ class SetupSupportModal(ui.Modal):
                 label="Título da Mensagem",
                 placeholder="Ex: Central de Atendimento",
                 custom_id="titulo",
-                default="🎫 Central de Atendimento",
+                value="🎫 Central de Atendimento",
                 max_length=100
             ),
             ui.TextInput(
                 label="Descrição da Mensagem",
                 placeholder="Ex: Clique no botão abaixo para abrir um ticket",
                 custom_id="descricao",
-                default="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
+                value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
                 max_length=1000
             ),
             ui.TextInput(
                 label="Opções Menu (EMOJI|Nome|Descrição)",
                 placeholder="Uma por linha",
                 custom_id="opcoes",
-                default="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
+                value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
                 style=disnake.TextInputStyle.paragraph,
                 max_length=1000,
                 required=True
@@ -1373,14 +1373,14 @@ class SetupSupportModal(ui.Modal):
                 label="Nome do Botão | Emoji (opcional)",
                 placeholder="Ex: Abrir Ticket | 🎫",
                 custom_id="botao",
-                default="Abrir Ticket | 🎫",
+                value="Abrir Ticket | 🎫",
                 max_length=100
             ),
             ui.TextInput(
                 label="Cor do Embed (Hex)",
                 placeholder="Ex: #5865F2",
                 custom_id="cor",
-                default="#5865F2",
+                value="#5865F2",
                 max_length=10
             )
         ]
