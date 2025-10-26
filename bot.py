@@ -76,48 +76,48 @@ async def teste_modal_slash(inter: disnake.ApplicationCommandInteraction):
         await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
-@discord.default_permissions(administrator=True)
-async def setup_ticket_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para configurar sistema de tickets via interface interativa"""
     try:
-        print(f"🔧 Comando setup_ticket executado por {ctx.user.name}")
+        print(f"🔧 Comando setup_ticket executado por {inter.user.name}")
         
         from utils.ticket_views import TicketConfigView
         print("✅ TicketConfigView importado com sucesso!")
         
         # Criar view interativa
-        view = TicketConfigView(ctx.guild_id)
+        view = TicketConfigView(inter.guild_id)
         print("✅ View interativa criada com sucesso!")
         
         # Enviar preview inicial
-        await view.update_preview(ctx)
+        await view.update_preview(inter)
         print("✅ Preview inicial enviado com sucesso!")
         
     except ImportError as e:
         print(f"❌ Erro de importação: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro de importação no sistema de tickets.",
             color=0xff0000
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"❌ Erro no comando setup_ticket: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro ao configurar sistema de tickets.",
             color=0xff0000
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_msg", description="[ADMIN] Criar mensagem embed personalizada")
-@discord.default_permissions(administrator=True)
-async def setup_msg_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def setup_msg_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para criar mensagem embed via modal"""
     try:
-        print(f"Comando setup_msg executado por {ctx.user.name}")
+        print(f"Comando setup_msg executado por {inter.user.name}")
         
         from utils.ticket_views import SetupMessageModal
         print("SetupMessageModal importado com sucesso!")
@@ -125,34 +125,34 @@ async def setup_msg_slash(ctx: discord.ApplicationContext):
         modal = SetupMessageModal()
         print("Modal criado com sucesso!")
         
-        await ctx.response.send_modal(modal)
+        await inter.response.send_modal(modal)
         print("Modal enviado com sucesso!")
         
     except ImportError as e:
         print(f"Erro de importação: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro de importação no sistema de mensagens.",
             color=0x8B5CF6
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_msg: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro ao criar mensagem embed.",
             color=0x8B5CF6
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setup_suporte", description="[ADMIN] Configurar sistema de tickets de suporte")
-@discord.default_permissions(administrator=True)
-async def setup_suporte_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def setup_suporte_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para configurar sistema de tickets de suporte via modal"""
     try:
-        print(f"Comando setup_suporte executado por {ctx.user.name}")
+        print(f"Comando setup_suporte executado por {inter.user.name}")
         
         from utils.ticket_views import SetupSupportModal
         print("SetupSupportModal importado com sucesso!")
@@ -160,37 +160,37 @@ async def setup_suporte_slash(ctx: discord.ApplicationContext):
         modal = SetupSupportModal()
         print("Modal de suporte criado com sucesso!")
         
-        await ctx.response.send_modal(modal)
+        await inter.response.send_modal(modal)
         print("Modal de suporte enviado com sucesso!")
         
     except ImportError as e:
         print(f"Erro de importação: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro de importação no sistema de suporte.",
             color=0x8B5CF6
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setup_suporte: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro ao configurar sistema de suporte.",
             color=0x8B5CF6
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.slash_command(name="setlog", description="[ADMIN] Configurar sistema de logs do servidor")
-@discord.default_permissions(administrator=True)
-async def setlog_slash(ctx: discord.ApplicationContext, canal: discord.TextChannel):
+@disnake.default_permissions(administrator=True)
+async def setlog_slash(inter: disnake.ApplicationCommandInteraction, canal: disnake.TextChannel):
     """Comando admin para configurar logs do servidor"""
     try:
-        print(f"Comando setlog executado por {ctx.user.name} - Canal: {canal.name}")
+        print(f"Comando setlog executado por {inter.user.name} - Canal: {canal.name}")
         
         # Criar embed explicativo
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📊 Configurar Sistema de Logs",
             description=f"Configure quais eventos você deseja registrar no canal {canal.mention}.",
             color=0x5865F2
@@ -213,39 +213,39 @@ async def setlog_slash(ctx: discord.ApplicationContext, canal: discord.TextChann
         
         # Importar View com Select Menu
         from utils.log_views import LogEventsSelectView
-        view = LogEventsSelectView(canal.id, ctx.guild_id)
+        view = LogEventsSelectView(canal.id, inter.guild_id)
         
-        await ctx.response.send_message(embed=embed, view=view, ephemeral=True)
+        await inter.response.send_message(embed=embed, view=view, ephemeral=True)
         print("View de seleção de eventos enviada com sucesso!")
         
     except ImportError as e:
         print(f"Erro de importação: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro de importação no sistema de logs.",
             color=0xFF0000
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
     except Exception as e:
         print(f"Erro no comando setlog: {e}")
         import traceback
         traceback.print_exc()
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro ao configurar sistema de logs.",
             color=0xFF0000
         )
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
 
 @bot.command(name="setlog", aliases=["configurar_logs", "logs"])
 @commands.has_permissions(administrator=True)
-async def setlog_prefix(ctx, canal: discord.TextChannel):
+async def setlog_prefix(ctx, canal: disnake.TextChannel):
     """Comando prefixado para configurar logs do servidor"""
     try:
-        print(f"Comando ?setlog executado por {ctx.author.name} - Canal: {canal.name}")
+        print(f"Comando ?setlog executado por {inter.author.name} - Canal: {canal.name}")
         
         # Criar embed explicativo
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📊 Configurar Sistema de Logs",
             description=f"Configure quais eventos você deseja registrar no canal {canal.mention}.",
             color=0x5865F2
@@ -268,16 +268,16 @@ async def setlog_prefix(ctx, canal: discord.TextChannel):
         
         # Importar View com Select Menu
         from utils.log_views import LogEventsSelectView
-        view = LogEventsSelectView(canal.id, ctx.guild.id)
+        view = LogEventsSelectView(canal.id, inter.guild.id)
         
-        await ctx.send(embed=embed, view=view)
+        await inter.send(embed=embed, view=view)
         print("View de seleção de eventos enviada com sucesso!")
         
     except Exception as e:
         print(f"Erro no comando ?setlog: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.send("❌ Erro ao configurar sistema de logs.")
+        await inter.send("❌ Erro ao configurar sistema de logs.")
 
 @bot.command(name="clear", aliases=["limpar", "apagar"])
 @commands.has_permissions(manage_messages=True)
@@ -290,61 +290,61 @@ async def clear_messages(ctx, amount: int = 10):
     try:
         # Validar o número de mensagens
         if amount < 1:
-            await ctx.send("❌ O número deve ser maior que 0!", delete_after=5)
+            await inter.send("❌ O número deve ser maior que 0!", delete_after=5)
             return
         
         # Apagar mensagens (incluindo o comando)
         # Nota: Discord só permite apagar mensagens com menos de 14 dias em massa
-        deleted = await ctx.channel.purge(limit=amount + 1)
+        deleted = await inter.channel.purge(limit=amount + 1)
         
         # Enviar mensagem de confirmação (que será apagada após 5 segundos)
-        confirm_msg = await ctx.send(
-            f"🗑️ {len(deleted) - 1} mensagens foram apagadas por {ctx.author.mention}",
+        confirm_msg = await inter.send(
+            f"🗑️ {len(deleted) - 1} mensagens foram apagadas por {inter.author.mention}",
             delete_after=5
         )
         
-        print(f"✅ {ctx.author.name} apagou {len(deleted) - 1} mensagens em #{ctx.channel.name}")
+        print(f"✅ {inter.author.name} apagou {len(deleted) - 1} mensagens em #{inter.channel.name}")
         
-    except discord.Forbidden:
-        await ctx.send("❌ Não tenho permissão para apagar mensagens neste canal!", delete_after=5)
-    except discord.HTTPException as e:
-        await ctx.send(f"❌ Erro ao apagar mensagens: {e}", delete_after=5)
+    except disnake.Forbidden:
+        await inter.send("❌ Não tenho permissão para apagar mensagens neste canal!", delete_after=5)
+    except disnake.HTTPException as e:
+        await inter.send(f"❌ Erro ao apagar mensagens: {e}", delete_after=5)
     except Exception as e:
         print(f"Erro no comando ?clear: {e}")
-        await ctx.send("❌ Ocorreu um erro ao apagar as mensagens.", delete_after=5)
+        await inter.send("❌ Ocorreu um erro ao apagar as mensagens.", delete_after=5)
 
 @clear_messages.error
 async def clear_error(ctx, error):
     """Handler de erros do comando clear"""
     if isinstance(error, commands.MissingPermissions):
-        await ctx.send("❌ Você não tem permissão para usar este comando! (Necessário: Gerenciar Mensagens)", delete_after=5)
+        await inter.send("❌ Você não tem permissão para usar este comando! (Necessário: Gerenciar Mensagens)", delete_after=5)
     elif isinstance(error, commands.BadArgument):
-        await ctx.send("❌ Uso correto: `?clear [número]` - Exemplo: `?clear 50`", delete_after=5)
+        await inter.send("❌ Uso correto: `?clear [número]` - Exemplo: `?clear 50`", delete_after=5)
     else:
         print(f"Erro no comando clear: {error}")
 
 @bot.slash_command(name="status", description="Ver status do seu pagamento")
-async def status_slash(ctx: discord.ApplicationContext):
+async def status_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando para ver status do pagamento"""
     try:
         # Verificar se está em canal de ticket
-        if not ctx.channel.name.startswith('ticket-'):
-            await ctx.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
+        if not inter.channel.name.startswith('ticket-'):
+            await inter.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
             return
         
         # Buscar transação do usuário neste canal
         transaction_model = TransactionModel()
-        transactions = await transaction_model.get_user_transactions(ctx.user.id)
+        transactions = await transaction_model.get_user_transactions(inter.user.id)
         
         # Filtrar pela transação deste canal
         current_transaction = None
         for trans in transactions:
-            if trans.get('delivery_channel_id') == ctx.channel.id:
+            if trans.get('delivery_channel_id') == inter.channel.id:
                 current_transaction = trans
                 break
         
         if not current_transaction:
-            await ctx.response.send_message("❌ Nenhuma transação encontrada neste canal.", ephemeral=True)
+            await inter.response.send_message("❌ Nenhuma transação encontrada neste canal.", ephemeral=True)
             return
         
         # Buscar produto
@@ -356,7 +356,7 @@ async def status_slash(ctx: discord.ApplicationContext):
         # Criar embed baseado no status
         if status == 'pending':
             # Pagamento pendente
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="⏳ Pagamento Pendente",
                 description=f"Aguardando pagamento do produto **{product['name']}**",
                 color=0xffa500
@@ -398,15 +398,15 @@ async def status_slash(ctx: discord.ApplicationContext):
                 img_bytes = io.BytesIO()
                 img.save(img_bytes, format='PNG')
                 img_bytes.seek(0)
-                qr_file = discord.File(img_bytes, filename="qrcode.png")
+                qr_file = disnake.File(img_bytes, filename="qrcode.png")
                 
-                await ctx.response.send_message(embed=embed, file=qr_file, ephemeral=True)
+                await inter.response.send_message(embed=embed, file=qr_file, ephemeral=True)
             else:
-                await ctx.response.send_message(embed=embed, ephemeral=True)
+                await inter.response.send_message(embed=embed, ephemeral=True)
                 
         elif status == 'completed':
             # Pagamento confirmado e produto entregue
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Produto Entregue",
                 description=f"Seu pagamento foi confirmado e o produto foi entregue.",
                 color=0x00ff00
@@ -434,10 +434,10 @@ async def status_slash(ctx: discord.ApplicationContext):
                     inline=False
                 )
             
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+            await inter.response.send_message(embed=embed, ephemeral=True)
             
         elif status == 'expired':
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="⏰ Pagamento Expirado",
                 description=f"O prazo para pagamento expirou.",
                 color=0xff0000
@@ -447,28 +447,28 @@ async def status_slash(ctx: discord.ApplicationContext):
                 value="Clique no botão 'Criar Ticket' para gerar um novo pagamento.",
                 inline=False
             )
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+            await inter.response.send_message(embed=embed, ephemeral=True)
         else:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="📊 Status do Pagamento",
                 description=f"Status: **{status}**",
                 color=0x3498db
             )
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+            await inter.response.send_message(embed=embed, ephemeral=True)
             
     except Exception as e:
         print(f"Erro no comando status: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao buscar status do pagamento.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao buscar status do pagamento.", ephemeral=True)
 
 @bot.slash_command(name="comprar", description="Comprar produto do ticket (automático)")
-async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
+async def comprar_slash(inter: disnake.ApplicationCommandInteraction, produto: str = None):
     """Comando para comprar produto no canal do ticket"""
     try:
         # Verificar se está em canal de ticket
-        if not ctx.channel.name.startswith('ticket-'):
-            await ctx.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
+        if not inter.channel.name.startswith('ticket-'):
+            await inter.response.send_message("❌ Este comando só funciona em canais de ticket!", ephemeral=True)
             return
         
         # Buscar produto automaticamente do ticket ou pelo nome fornecido
@@ -477,13 +477,13 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
         
         # Se produto não foi fornecido, buscar do ticket ativo
         if not produto:
-            ticket_data = active_tickets.get(ctx.user.id)
+            ticket_data = active_tickets.get(inter.user.id)
             if ticket_data and ticket_data.get('product_id'):
                 # Buscar produto pelo ID armazenado no ticket
-                product = await product_model.get_product_by_id(ticket_data['product_id'], ctx.guild_id)
+                product = await product_model.get_product_by_id(ticket_data['product_id'], inter.guild_id)
                 print(f"🎯 Produto detectado automaticamente do ticket: {product['name'] if product else 'None'}")
             else:
-                await ctx.response.send_message(
+                await inter.response.send_message(
                     "❌ Não foi possível identificar o produto automaticamente!\n"
                     "💡 Dica: Use `/comprar produto: Nome do Produto`",
                     ephemeral=True
@@ -491,10 +491,10 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
                 return
         else:
             # Buscar produto por nome (apenas no servidor atual)
-            product = await product_model.get_product_by_name(produto, ctx.guild_id)
+            product = await product_model.get_product_by_name(produto, inter.guild_id)
         
         if not product:
-            await ctx.response.send_message(
+            await inter.response.send_message(
                 f"❌ Produto '{produto}' não encontrado neste servidor!" if produto else "❌ Produto não encontrado!",
                 ephemeral=True
             )
@@ -508,7 +508,7 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
         split_config = None
         
         # Verificar se tem cupom no ticket
-        ticket_data = active_tickets.get(ctx.user.id)
+        ticket_data = active_tickets.get(inter.user.id)
         if ticket_data and ticket_data.get('coupon_code'):
             coupon_code = ticket_data['coupon_code']
             
@@ -517,9 +517,9 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
             coupon_model = CouponModel()
             is_valid, message, coupon_data = await coupon_model.validate_coupon(
                 coupon_code,
-                ctx.user.id,
+                inter.user.id,
                 product['price'],
-                ctx.guild_id
+                inter.guild_id
             )
             
             if is_valid and coupon_data:
@@ -534,18 +534,18 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
                     }
                 
                 # Enviar mensagem informando desconto
-                await ctx.channel.send(
+                await inter.channel.send(
                     f"🎉 Cupom **{coupon_code}** aplicado! Desconto de {coupon_data['discount_percent']}% = R$ {discount_amount:.2f}"
                 )
             else:
                 # Cupom inválido - informar e continuar sem desconto
-                await ctx.channel.send(f"⚠️ {message} - Continuando sem desconto.")
+                await inter.channel.send(f"⚠️ {message} - Continuando sem desconto.")
                 coupon_data = None
         
         # Criar transação
         transaction_model = TransactionModel()
         transaction = await transaction_model.create_transaction(
-            user_id=ctx.user.id,
+            user_id=inter.user.id,
             product_id=product['id'],
             amount=product['price'],
             discount_amount=discount_amount,
@@ -555,7 +555,7 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
         )
         
         if not transaction:
-            await ctx.response.send_message("❌ Erro ao criar transação!", ephemeral=True)
+            await inter.response.send_message("❌ Erro ao criar transação!", ephemeral=True)
             return
         
         # Gerar pagamento Pix com valor final
@@ -563,8 +563,8 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
         payment_data = await payment_utils.create_pix_payment(
             amount=final_amount,  # Valor com desconto
             description=f"Compra: {product['name']}",
-            customer_email=f"{ctx.user.name.lower().replace(' ', '')}@khaos.com",
-            customer_name=ctx.user.display_name,
+            customer_email=f"{inter.user.name.lower().replace(' ', '')}@khaos.com",
+            customer_name=inter.user.display_name,
             split_config=split_config  # Passar split se houver
         )
         
@@ -574,7 +574,7 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
                 'payment_id': payment_data.get('id'),
                 'pix_code': payment_data.get('pix_code'),
                 'qr_code': payment_data.get('qr_code'),
-                'email': f"{ctx.user.name.lower().replace(' ', '')}@khaos.com"
+                'email': f"{inter.user.name.lower().replace(' ', '')}@khaos.com"
             })
             
             # Registrar uso do cupom
@@ -583,13 +583,13 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
                 coupon_model = CouponModel()
                 await coupon_model.use_coupon(
                     coupon_data['id'],
-                    ctx.user.id,
+                    inter.user.id,
                     transaction['id'],
                     discount_amount
                 )
             
             # Enviar pagamento
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="💳 Pagamento Pix Gerado!",
                 description=f"**Produto:** {product['name']}",
                 color=0x00ff00
@@ -629,7 +629,7 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
             
             embed.set_footer(text=f"ID da Transação: {transaction['id']}")
             
-            await ctx.response.send_message(embed=embed)
+            await inter.response.send_message(embed=embed)
             
             # Gerar e enviar QR Code como imagem
             try:
@@ -650,36 +650,36 @@ async def comprar_slash(ctx: discord.ApplicationContext, produto: str = None):
                 img.save(img_buffer, format='PNG')
                 img_buffer.seek(0)
                 
-                await ctx.channel.send(
-                    content=f"{ctx.user.mention} 📱 **QR Code do Pagamento**",
-                    file=discord.File(img_buffer, filename='qrcode_pix.png')
+                await inter.channel.send(
+                    content=f"{inter.user.mention} 📱 **QR Code do Pagamento**",
+                    file=disnake.File(img_buffer, filename='qrcode_pix.png')
                 )
             except Exception as qr_error:
                 print(f"Erro ao gerar QR Code: {qr_error}")
             
             # Atualizar dados do ticket
-            if ctx.user.id in active_tickets:
-                active_tickets[ctx.user.id]['transaction_id'] = transaction['id']
-                active_tickets[ctx.user.id]['product'] = product
+            if inter.user.id in active_tickets:
+                active_tickets[inter.user.id]['transaction_id'] = transaction['id']
+                active_tickets[inter.user.id]['product'] = product
             
             # Salvar canal de entrega na transação
             await transaction_model.update_transaction(transaction['id'], {
-                'delivery_channel_id': ctx.channel.id
+                'delivery_channel_id': inter.channel.id
             })
             
         else:
-            await ctx.response.send_message("❌ Erro ao gerar pagamento Pix!", ephemeral=True)
+            await inter.response.send_message("❌ Erro ao gerar pagamento Pix!", ephemeral=True)
             
     except Exception as e:
         print(f"Erro no comando comprar: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao processar compra!", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao processar compra!", ephemeral=True)
 
 @bot.slash_command(name="ajuda", description="Exibe a lista de comandos disponíveis")
-async def ajuda_slash(ctx: discord.ApplicationContext):
+async def ajuda_slash(inter: disnake.ApplicationCommandInteraction):
     """Exibe a lista de comandos disponíveis"""
-    embed = discord.Embed(
+    embed = disnake.Embed(
         title="🛒 Comandos de Khaos",
         description="Sistema completo de vendas com tickets e pagamentos via Pix",
         color=0xe91e63
@@ -735,46 +735,46 @@ async def ajuda_slash(ctx: discord.ApplicationContext):
     
     embed.set_footer(text="Sistema de vendas automatizado • Powered by Khaos")
     
-    side_embed = discord.Embed(
+    side_embed = disnake.Embed(
         description="📋 Lista de comandos disponíveis:",
         color=0x8B5CF6
     )
     
-    await ctx.response.send_message(embeds=[embed, side_embed])
+    await inter.response.send_message(embeds=[embed, side_embed])
 
 # ========================================
 # COMANDOS DE CUPONS (ADMIN)
 # ========================================
 
 @bot.slash_command(name="criar_cupom", description="[ADMIN] Criar novo cupom de desconto")
-@discord.default_permissions(administrator=True)
-async def criar_cupom_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def criar_cupom_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando admin para criar cupom via modal"""
     try:
         from utils.ticket_views import CreateCouponModal
         
         modal = CreateCouponModal()
-        await ctx.response.send_modal(modal)
+        await inter.response.send_modal(modal)
         
     except Exception as e:
         print(f"Erro no comando criar_cupom: {e}")
-        await ctx.response.send_message("❌ Erro ao abrir modal de cupom.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao abrir modal de cupom.", ephemeral=True)
 
 @bot.slash_command(name="listar_cupons", description="[ADMIN] Listar todos os cupons")
-@discord.default_permissions(administrator=True)
-async def listar_cupons_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def listar_cupons_slash(inter: disnake.ApplicationCommandInteraction):
     """Lista todos os cupons ativos"""
     try:
         from models.coupon_model import CouponModel
         
         coupon_model = CouponModel()
-        coupons = await coupon_model.get_all_coupons(ctx.guild_id, active_only=True)
+        coupons = await coupon_model.get_all_coupons(inter.guild_id, active_only=True)
         
         if not coupons:
-            await ctx.response.send_message("📋 Nenhum cupom cadastrado.", ephemeral=True)
+            await inter.response.send_message("📋 Nenhum cupom cadastrado.", ephemeral=True)
             return
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🎟️ Cupons Cadastrados",
             description=f"Total: {len(coupons)} cupons ativos",
             color=0x8B5CF6
@@ -805,31 +805,31 @@ async def listar_cupons_slash(ctx: discord.ApplicationContext):
         if len(coupons) > 10:
             embed.set_footer(text=f"Mostrando 10 de {len(coupons)} cupons")
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando listar_cupons: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao listar cupons.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao listar cupons.", ephemeral=True)
 
 @bot.slash_command(name="cupom_stats", description="[ADMIN] Ver estatísticas de um cupom")
-@discord.default_permissions(administrator=True)
-async def cupom_stats_slash(ctx: discord.ApplicationContext, codigo: str):
+@disnake.default_permissions(administrator=True)
+async def cupom_stats_slash(inter: disnake.ApplicationCommandInteraction, codigo: str):
     """Mostra estatísticas de uso de um cupom"""
     try:
         from models.coupon_model import CouponModel
         
         coupon_model = CouponModel()
-        stats = await coupon_model.get_coupon_stats(codigo, ctx.guild_id)
+        stats = await coupon_model.get_coupon_stats(codigo, inter.guild_id)
         
         if not stats:
-            await ctx.response.send_message(f"❌ Cupom '{codigo}' não encontrado neste servidor.", ephemeral=True)
+            await inter.response.send_message(f"❌ Cupom '{codigo}' não encontrado neste servidor.", ephemeral=True)
             return
         
         coupon = stats['coupon']
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title=f"📊 Estatísticas: {coupon['code']}",
             description=f"Desconto de {coupon['discount_percent']}%",
             color=0x00ff00
@@ -881,17 +881,17 @@ async def cupom_stats_slash(ctx: discord.ApplicationContext, codigo: str):
         
         embed.set_footer(text=f"Criado por: {coupon.get('created_by', 'N/A')}")
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando cupom_stats: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao buscar estatísticas.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao buscar estatísticas.", ephemeral=True)
 
 @bot.slash_command(name="deletar_cupom", description="[ADMIN] Desativar um cupom")
-@discord.default_permissions(administrator=True)
-async def deletar_cupom_slash(ctx: discord.ApplicationContext, codigo: str):
+@disnake.default_permissions(administrator=True)
+async def deletar_cupom_slash(inter: disnake.ApplicationCommandInteraction, codigo: str):
     """Desativa um cupom"""
     try:
         from models.coupon_model import CouponModel
@@ -900,25 +900,25 @@ async def deletar_cupom_slash(ctx: discord.ApplicationContext, codigo: str):
         success, message = await coupon_model.delete_cupom(codigo)
         
         if success:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Cupom Desativado",
                 description=message,
                 color=0x00ff00
             )
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+            await inter.response.send_message(embed=embed, ephemeral=True)
         else:
-            await ctx.response.send_message(f"❌ {message}", ephemeral=True)
+            await inter.response.send_message(f"❌ {message}", ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando deletar_cupom: {e}")
-        await ctx.response.send_message("❌ Erro ao deletar cupom.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao deletar cupom.", ephemeral=True)
 
 # ========================================
 # COMANDOS VIP (USUÁRIO)
 # ========================================
 
 @bot.slash_command(name="meu_vip", description="Ver status da sua assinatura VIP")
-async def meu_vip_slash(ctx: discord.ApplicationContext):
+async def meu_vip_slash(inter: disnake.ApplicationCommandInteraction):
     """Mostra informações da assinatura VIP do usuário"""
     try:
         from models.vip_model import VipModel
@@ -926,31 +926,31 @@ async def meu_vip_slash(ctx: discord.ApplicationContext):
         
         vip_model = VipModel()
         subscription = await vip_model.get_user_subscription(
-            ctx.user.id,
-            ctx.guild.id
+            inter.user.id,
+            inter.guild.id
         )
         
         if not subscription:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="❌ Você não é VIP",
                 description="Você não possui uma assinatura VIP ativa no momento.",
-                color=discord.Color.red()
+                color=disnake.Color.red()
             )
             embed.add_field(
                 name="💎 Quer se tornar VIP?",
                 value="Use `/renovar_vip` para ver os planos disponíveis!",
                 inline=False
             )
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+            await inter.response.send_message(embed=embed, ephemeral=True)
             return
         
         # Calcular informações
         started_at = datetime.fromisoformat(subscription['started_at'].replace('Z', '+00:00'))
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="👑 Sua Assinatura VIP",
-            description=f"Olá {ctx.user.mention}! Aqui estão os detalhes da sua assinatura VIP.",
-            color=discord.Color.gold(),
+            description=f"Olá {inter.user.mention}! Aqui estão os detalhes da sua assinatura VIP.",
+            color=disnake.Color.gold(),
             timestamp=datetime.now()
         )
         
@@ -1004,37 +1004,37 @@ async def meu_vip_slash(ctx: discord.ApplicationContext):
         
         embed.set_footer(
             text=f"VIP desde {started_at.strftime('%d/%m/%Y')}",
-            icon_url=ctx.user.display_avatar.url if ctx.user.display_avatar else None
+            icon_url=inter.user.display_avatar.url if inter.user.display_avatar else None
         )
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando meu_vip: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao buscar informações VIP.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao buscar informações VIP.", ephemeral=True)
 
 @bot.slash_command(name="renovar_vip", description="Ver planos VIP disponíveis para renovação")
-async def renovar_vip_slash(ctx: discord.ApplicationContext):
+async def renovar_vip_slash(inter: disnake.ApplicationCommandInteraction):
     """Mostra os planos VIP disponíveis"""
     try:
         from models.product_model import ProductModel
         
         product_model = ProductModel()
-        all_products = await product_model.get_products_by_guild(ctx.guild_id)
+        all_products = await product_model.get_products_by_guild(inter.guild_id)
         
         # Filtrar apenas produtos VIP
         vip_products = [p for p in all_products if p.get('category') == 'VIP']
         
         if not vip_products:
-            await ctx.response.send_message("❌ Nenhum plano VIP disponível no momento.", ephemeral=True)
+            await inter.response.send_message("❌ Nenhum plano VIP disponível no momento.", ephemeral=True)
             return
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="👑 Planos VIP Disponíveis",
             description="Escolha o plano que mais combina com você e aproveite todos os benefícios exclusivos!",
-            color=discord.Color.gold()
+            color=disnake.Color.gold()
         )
         
         # Agrupar por role
@@ -1091,16 +1091,16 @@ async def renovar_vip_slash(ctx: discord.ApplicationContext):
         
         embed.set_footer(text="Invista no seu futuro VIP! 💎")
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando renovar_vip: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao carregar planos VIP.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao carregar planos VIP.", ephemeral=True)
 
 @bot.slash_command(name="historico_vip", description="Ver histórico de assinaturas VIP")
-async def historico_vip_slash(ctx: discord.ApplicationContext):
+async def historico_vip_slash(inter: disnake.ApplicationCommandInteraction):
     """Mostra o histórico completo de assinaturas VIP do usuário"""
     try:
         from models.vip_model import VipModel
@@ -1108,28 +1108,28 @@ async def historico_vip_slash(ctx: discord.ApplicationContext):
         
         vip_model = VipModel()
         history = await vip_model.get_subscription_history(
-            ctx.user.id,
-            ctx.guild.id
+            inter.user.id,
+            inter.guild.id
         )
         
         if not history:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="📋 Histórico VIP",
                 description="Você ainda não possui histórico de assinaturas VIP.",
-                color=discord.Color.blue()
+                color=disnake.Color.blue()
             )
             embed.add_field(
                 name="💎 Quer se tornar VIP?",
                 value="Use `/renovar_vip` para ver os planos disponíveis!",
                 inline=False
             )
-            await ctx.response.send_message(embed=embed, ephemeral=True)
+            await inter.response.send_message(embed=embed, ephemeral=True)
             return
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📋 Seu Histórico VIP",
-            description=f"Histórico completo de assinaturas de {ctx.user.mention}",
-            color=discord.Color.blue(),
+            description=f"Histórico completo de assinaturas de {inter.user.mention}",
+            color=disnake.Color.blue(),
             timestamp=datetime.now()
         )
         
@@ -1165,21 +1165,21 @@ async def historico_vip_slash(ctx: discord.ApplicationContext):
         else:
             embed.set_footer(text=f"Total: {len(history)} assinatura(s)")
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando historico_vip: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao buscar histórico VIP.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao buscar histórico VIP.", ephemeral=True)
 
 # ========================================
 # COMANDOS VIP (ADMIN)
 # ========================================
 
 @bot.slash_command(name="listar_vips", description="[ADMIN] Listar todos os VIPs ativos do servidor")
-@discord.default_permissions(administrator=True)
-async def listar_vips_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def listar_vips_slash(inter: disnake.ApplicationCommandInteraction):
     """Lista todos os membros VIP ativos"""
     try:
         from models.vip_model import VipModel
@@ -1187,18 +1187,18 @@ async def listar_vips_slash(ctx: discord.ApplicationContext):
         
         vip_model = VipModel()
         subscriptions = await vip_model.get_all_subscriptions(
-            ctx.guild.id,
+            inter.guild.id,
             status='active'
         )
         
         if not subscriptions:
-            await ctx.response.send_message("📋 Nenhum VIP ativo no servidor.", ephemeral=True)
+            await inter.response.send_message("📋 Nenhum VIP ativo no servidor.", ephemeral=True)
             return
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="👑 VIPs Ativos do Servidor",
             description=f"Total: {len(subscriptions)} membro(s) VIP ativo(s)",
-            color=discord.Color.gold(),
+            color=disnake.Color.gold(),
             timestamp=datetime.now()
         )
         
@@ -1215,7 +1215,7 @@ async def listar_vips_slash(ctx: discord.ApplicationContext):
             users_text = ""
             
             for sub in subs[:10]:  # Limitar 10 por role
-                user = ctx.guild.get_member(sub['user_id'])
+                user = inter.guild.get_member(sub['user_id'])
                 user_mention = user.mention if user else f"ID: {sub['user_id']}"
                 
                 if sub['duration_days'] is None:
@@ -1238,19 +1238,19 @@ async def listar_vips_slash(ctx: discord.ApplicationContext):
         
         embed.set_footer(text="Use /vip_stats para ver estatísticas completas")
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando listar_vips: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao listar VIPs.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao listar VIPs.", ephemeral=True)
 
 @bot.slash_command(name="adicionar_vip", description="[ADMIN] Adicionar VIP manualmente a um usuário")
-@discord.default_permissions(administrator=True)
+@disnake.default_permissions(administrator=True)
 async def adicionar_vip_slash(
-    ctx: discord.ApplicationContext,
-    membro: discord.Member,
+    ctx: disnake.ApplicationCommandInteraction,
+    membro: disnake.Member,
     role_vip: str,
     duracao_dias: int = None
 ):
@@ -1265,7 +1265,7 @@ async def adicionar_vip_slash(
         # Adicionar role
         role = await vip_manager.grant_vip_role(membro, role_vip)
         if not role:
-            await ctx.response.send_message(
+            await inter.response.send_message(
                 f"❌ Erro ao adicionar role {role_vip}. Verifique se o bot tem permissões adequadas.",
                 ephemeral=True
             )
@@ -1274,7 +1274,7 @@ async def adicionar_vip_slash(
         # Criar assinatura no banco
         subscription = await vip_model.create_subscription(
             user_id=membro.id,
-            guild_id=ctx.guild.id,
+            guild_id=inter.guild.id,
             role_id=role.id,
             role_name=role_vip,
             product_id=0,  # 0 indica adição manual
@@ -1283,14 +1283,14 @@ async def adicionar_vip_slash(
         )
         
         if not subscription:
-            await ctx.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
+            await inter.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
             return
         
         # Criar embed de confirmação
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="✅ VIP Adicionado Manualmente",
             description=f"VIP adicionado com sucesso para {membro.mention}",
-            color=discord.Color.green()
+            color=disnake.Color.green()
         )
         
         embed.add_field(
@@ -1312,11 +1312,11 @@ async def adicionar_vip_slash(
         
         embed.add_field(
             name="👤 Admin",
-            value=ctx.user.mention,
+            value=inter.user.mention,
             inline=True
         )
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
         # Enviar DM para o usuário (criar produto fictício para a mensagem)
         fake_product = {
@@ -1330,11 +1330,11 @@ async def adicionar_vip_slash(
         print(f"Erro no comando adicionar_vip: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
 
 @bot.slash_command(name="remover_vip", description="[ADMIN] Remover VIP de um usuário")
-@discord.default_permissions(administrator=True)
-async def remover_vip_slash(ctx: discord.ApplicationContext, membro: discord.Member):
+@disnake.default_permissions(administrator=True)
+async def remover_vip_slash(inter: disnake.ApplicationCommandInteraction, membro: disnake.Member):
     """Remove VIP de um usuário"""
     try:
         from models.vip_model import VipModel
@@ -1346,11 +1346,11 @@ async def remover_vip_slash(ctx: discord.ApplicationContext, membro: discord.Mem
         # Buscar assinatura ativa
         subscription = await vip_model.get_user_subscription(
             membro.id,
-            ctx.guild.id
+            inter.guild.id
         )
         
         if not subscription:
-            await ctx.response.send_message(
+            await inter.response.send_message(
                 f"❌ {membro.mention} não possui VIP ativo.",
                 ephemeral=True
             )
@@ -1362,10 +1362,10 @@ async def remover_vip_slash(ctx: discord.ApplicationContext, membro: discord.Mem
         # Remover role
         await vip_manager.remove_vip_role(subscription)
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🚫 VIP Removido",
             description=f"VIP removido de {membro.mention}",
-            color=discord.Color.orange()
+            color=disnake.Color.orange()
         )
         
         embed.add_field(
@@ -1376,32 +1376,32 @@ async def remover_vip_slash(ctx: discord.ApplicationContext, membro: discord.Mem
         
         embed.add_field(
             name="👤 Admin",
-            value=ctx.user.mention,
+            value=inter.user.mention,
             inline=True
         )
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando remover_vip: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao remover VIP.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao remover VIP.", ephemeral=True)
 
 @bot.slash_command(name="vip_stats", description="[ADMIN] Ver estatísticas de VIPs do servidor")
-@discord.default_permissions(administrator=True)
-async def vip_stats_slash(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def vip_stats_slash(inter: disnake.ApplicationCommandInteraction):
     """Mostra estatísticas detalhadas dos VIPs"""
     try:
         from models.vip_model import VipModel
         
         vip_model = VipModel()
-        stats = await vip_model.get_vip_stats(ctx.guild.id)
+        stats = await vip_model.get_vip_stats(inter.guild.id)
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📊 Estatísticas VIP do Servidor",
             description=f"Estatísticas completas de assinaturas VIP",
-            color=discord.Color.blue(),
+            color=disnake.Color.blue(),
             timestamp=datetime.now()
         )
         
@@ -1437,34 +1437,34 @@ async def vip_stats_slash(ctx: discord.ApplicationContext):
         
         embed.set_footer(text="Use /listar_vips para ver a lista completa")
         
-        await ctx.response.send_message(embed=embed, ephemeral=True)
+        await inter.response.send_message(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando vip_stats: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.response.send_message("❌ Erro ao buscar estatísticas VIP.", ephemeral=True)
+        await inter.response.send_message("❌ Erro ao buscar estatísticas VIP.", ephemeral=True)
 
 # ========================================
 # COMANDOS DE PRODUTOS
 # ========================================
 
 @bot.slash_command(name="produtos", description="Ver produtos disponíveis")
-async def produtos_slash(ctx: discord.ApplicationContext):
+async def produtos_slash(inter: disnake.ApplicationCommandInteraction):
     """Exibe os produtos disponíveis via slash command"""
     try:
-        products = await product_model.get_products_by_guild(ctx.guild_id)
+        products = await product_model.get_products_by_guild(inter.guild_id)
         
         if not products:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 description="❌ Nenhum produto disponível no momento.",
                 color=0x8B5CF6
             )
-            await ctx.response.send_message(embed=embed)
+            await inter.response.send_message(embed=embed)
             return
         
         # Criar embed principal
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🛍️ Loja Digital Khaos",
             description="**Produtos digitais premium com entrega instantânea!**\n\n💎 **Pagamento via Pix** • 🚀 **Entrega automática** • 🛡️ **Garantia total**",
             color=0x8B5CF6
@@ -1507,15 +1507,15 @@ async def produtos_slash(ctx: discord.ApplicationContext):
         
         embed.set_footer(text=f"📊 {len(products)} produtos disponíveis • Powered by Khaos")
         
-        await ctx.response.send_message(embed=embed)
+        await inter.response.send_message(embed=embed)
         
     except Exception as e:
         print(f"Erro no comando /produtos: {e}")
-        embed = discord.Embed(
+        embed = disnake.Embed(
             description="❌ Erro ao carregar produtos. Tente novamente em alguns instantes.",
             color=0x8B5CF6
         )
-        await ctx.response.send_message(embed=embed)
+        await inter.response.send_message(embed=embed)
 
 # Inicializar modelos
 product_model = ProductModel()
@@ -1529,37 +1529,37 @@ active_tickets = {}
 # Função auxiliar para responder comandos
 async def respond_command(ctx, message, embed=None, ephemeral=False):
     """Responde comandos tanto slash quanto prefixo"""
-    if ctx.interaction:
+    if inter.interaction:
         if embed:
-            await ctx.respond(embed=embed, ephemeral=ephemeral)
+            await inter.respond(embed=embed, ephemeral=ephemeral)
         else:
-            await ctx.respond(message, ephemeral=ephemeral)
+            await inter.respond(message, ephemeral=ephemeral)
     else:
         if embed:
-            await ctx.send(embed=embed)
+            await inter.send(embed=embed)
         else:
-            await ctx.send(message)
+            await inter.send(message)
 
 async def respond_with_side_embed(ctx, message, embed=None, ephemeral=False):
     """Responde apenas com embed lateral roxo"""
     # Criar embed lateral roxo simples apenas com a mensagem
-    side_embed = discord.Embed(
+    side_embed = disnake.Embed(
         description=message,
         color=0x8B5CF6  # Roxo
     )
     
     # Se já tem um embed principal, enviar apenas ambos embeds
     if embed:
-        if ctx.interaction:
-            await ctx.respond(embeds=[embed, side_embed], ephemeral=ephemeral)
+        if inter.interaction:
+            await inter.respond(embeds=[embed, side_embed], ephemeral=ephemeral)
         else:
-            await ctx.send(embeds=[embed, side_embed])
+            await inter.send(embeds=[embed, side_embed])
     else:
         # Se não tem embed principal, enviar apenas embed lateral
-        if ctx.interaction:
-            await ctx.respond(embed=side_embed, ephemeral=ephemeral)
+        if inter.interaction:
+            await inter.respond(embed=side_embed, ephemeral=ephemeral)
         else:
-            await ctx.send(embed=side_embed)
+            await inter.send(embed=side_embed)
 
 @bot.event
 async def on_ready():
@@ -1701,7 +1701,7 @@ async def on_ready():
         print(f"⚠️ Erro ao iniciar payment checker: {e}")
     
     # Iniciar task para liberar reservas expiradas
-    from discord.ext import tasks
+    from disnake.ext import tasks
     
     @tasks.loop(minutes=5)
     async def release_expired_reservations():
@@ -1767,12 +1767,12 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
     elif isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send(f"❌ Argumento obrigatório ausente: {error.param}")
+        await inter.send(f"❌ Argumento obrigatório ausente: {error.param}")
     elif isinstance(error, commands.BadArgument):
-        await ctx.send("❌ Argumento inválido fornecido.")
+        await inter.send("❌ Argumento inválido fornecido.")
     else:
         print(f"Erro não tratado: {error}")
-        await ctx.send("❌ Ocorreu um erro inesperado. Tente novamente.")
+        await inter.send("❌ Ocorreu um erro inesperado. Tente novamente.")
 
 async def load_sample_products():
     """Carrega produtos de exemplo no banco de dados"""
@@ -1907,16 +1907,16 @@ async def load_sample_products():
 
 
 @bot.command(name='products')
-async def show_products(ctx):
+async def show_products(inter):
     """Exibe os produtos disponíveis"""
     try:
         products = await product_model.get_all_products()
         
         if not products:
-            await ctx.send("❌ Nenhum produto disponível no momento.")
+            await inter.send("❌ Nenhum produto disponível no momento.")
             return
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🛍️ Produtos Disponíveis",
             description="Escolha um produto para comprar:",
             color=0x0099ff
@@ -1930,11 +1930,11 @@ async def show_products(ctx):
             )
         
         embed.set_footer(text="Use ?buy <nome_do_produto> para comprar")
-        await ctx.send(embed=embed)
+        await inter.send(embed=embed)
         
     except Exception as e:
         print(f"Erro ao carregar produtos: {e}")
-        await ctx.send("❌ Erro ao carregar produtos. Tente novamente.")
+        await inter.send("❌ Erro ao carregar produtos. Tente novamente.")
 
 # ==================== SLASH COMMANDS ====================
 
@@ -1955,13 +1955,13 @@ async def buy_product(ctx, *, product_name):
         product = await product_model.get_product_by_name(product_name)
         
         if not product:
-            await ctx.send("❌ Produto não encontrado. Use `?products` para ver os produtos disponíveis.")
+            await inter.send("❌ Produto não encontrado. Use `?products` para ver os produtos disponíveis.")
             return
         
         # Verificar se o usuário tem um ticket ativo
-        user_id = ctx.author.id
+        user_id = inter.author.id
         if user_id not in active_tickets:
-            await ctx.send("❌ Você precisa criar um ticket primeiro! Use o botão 'Criar Ticket de Compra' para começar.")
+            await inter.send("❌ Você precisa criar um ticket primeiro! Use o botão 'Criar Ticket de Compra' para começar.")
             return
         
         # Criar transação
@@ -1976,8 +1976,8 @@ async def buy_product(ctx, *, product_name):
         payment_data = await payment_utils.create_pix_payment(
             amount=product['price'],
             description=f"Compra: {product['name']}",
-            customer_email=f"{ctx.author.name}@discord.com",  # Email padrão baseado no nome
-            customer_name=ctx.author.name
+            customer_email=f"{inter.author.name}@discord.com",  # Email padrão baseado no nome
+            customer_name=inter.author.name
         )
         
         if payment_data:
@@ -1986,11 +1986,11 @@ async def buy_product(ctx, *, product_name):
                 'payment_id': payment_data['id'],
                 'pix_code': payment_data['pix_code'],
                 'qr_code': payment_data['qr_code'],
-                'email': f"{ctx.author.name}@discord.com"
+                'email': f"{inter.author.name}@discord.com"
             })
             
             # Exibir informações de pagamento
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="💳 Pagamento via Pix",
                 description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
                 color=0x00ff00
@@ -2007,17 +2007,17 @@ async def buy_product(ctx, *, product_name):
             )
             embed.set_footer(text="Escaneie o QR Code ou copie o código Pix")
             
-            await ctx.send(embed=embed)
+            await inter.send(embed=embed)
             
             # Enviar QR Code como imagem se disponível
             if payment_data.get('qr_code_base64'):
                 # Usar QR Code base64 do Mercado Pago
                 qr_image = payment_utils.get_qr_code_image_from_base64(payment_data['qr_code_base64'])
                 if qr_image:
-                    await ctx.send(file=discord.File(qr_image, filename='qrcode.png'))
+                    await inter.send(file=disnake.File(qr_image, filename='qrcode.png'))
             elif payment_data.get('qr_code_image'):
                 # Fallback para QR Code gerado localmente
-                await ctx.send(file=discord.File(payment_data['qr_code_image']))
+                await inter.send(file=disnake.File(payment_data['qr_code_image']))
             
             # Atualizar status do ticket
             active_tickets[user_id]['transaction_id'] = transaction['id']
@@ -2028,11 +2028,11 @@ async def buy_product(ctx, *, product_name):
             asyncio.create_task(monitor_payment(transaction['id'], user_id))
             
         else:
-            await ctx.send("❌ Erro ao gerar pagamento. Tente novamente.")
+            await inter.send("❌ Erro ao gerar pagamento. Tente novamente.")
         
     except Exception as e:
         print(f"Erro ao iniciar compra: {e}")
-        await ctx.send("❌ Erro ao iniciar processo de compra. Tente novamente.")
+        await inter.send("❌ Erro ao iniciar processo de compra. Tente novamente.")
 
 
 async def monitor_payment(transaction_id, user_id):
@@ -2098,7 +2098,7 @@ async def monitor_payment(transaction_id, user_id):
                         await asyncio.sleep(3)
                         
                         # Entrega do produto
-                        embed = discord.Embed(
+                        embed = disnake.Embed(
                             title="✅ Produto Entregue!",
                             description="🎊 Sua compra foi concluída com sucesso! 🎊",
                             color=0x00ff00
@@ -2180,24 +2180,24 @@ async def monitor_payment(transaction_id, user_id):
 
 # Comando de teste via prefixo
 @bot.command(name='teste')
-async def teste_prefix(ctx):
+async def teste_prefix(inter):
     """Comando de teste via prefixo"""
-    print(f"🔧 Comando ?teste executado por {ctx.author.name} em {ctx.guild.name}")
-    await ctx.send("✅ Comando ?teste funcionando via prefixo!")
+    print(f"🔧 Comando ?teste executado por {inter.author.name} em {inter.guild.name}")
+    await inter.send("✅ Comando ?teste funcionando via prefixo!")
 
 # Comando para forçar sincronização de slash commands
 @bot.command(name='sync')
 @commands.has_permissions(administrator=True)
-async def sync_commands(ctx):
+async def sync_commands(inter):
     """Força a sincronização dos comandos slash"""
     try:
-        print(f"🔄 Comando de sincronização executado por {ctx.author.name}")
+        print(f"🔄 Comando de sincronização executado por {inter.author.name}")
         
         # Listar comandos registrados
         commands = bot.pending_application_commands
-        await ctx.send(f"📋 Comandos registrados: {len(commands)}")
+        await inter.send(f"📋 Comandos registrados: {len(commands)}")
         for cmd in commands:
-            await ctx.send(f"  - /{cmd.name}: {cmd.description}")
+            await inter.send(f"  - /{cmd.name}: {cmd.description}")
         
         # Tentar sincronizar globalmente
         try:
@@ -2205,35 +2205,35 @@ async def sync_commands(ctx):
             
             # Verificar se sync_commands retornou algo
             if synced is None:
-                await ctx.send("⚠️ Sincronização global retornou None (comandos já sincronizados ou erro)")
+                await inter.send("⚠️ Sincronização global retornou None (comandos já sincronizados ou erro)")
             else:
-                await ctx.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
+                await inter.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
         except Exception as e:
-            await ctx.send(f"❌ Erro na sincronização global: {e}")
+            await inter.send(f"❌ Erro na sincronização global: {e}")
             
             # Tentar sincronizar por guild
             try:
-                synced = await bot.sync_commands(guild_ids=[ctx.guild.id])
+                synced = await bot.sync_commands(guild_ids=[inter.guild.id])
                 
                 # Verificar se sync_commands retornou algo
                 if synced is None:
-                    await ctx.send("⚠️ Sincronização na guild retornou None")
+                    await inter.send("⚠️ Sincronização na guild retornou None")
                 else:
-                    await ctx.send(f"✅ {len(synced)} comandos sincronizados na guild!")
+                    await inter.send(f"✅ {len(synced)} comandos sincronizados na guild!")
             except Exception as guild_error:
-                await ctx.send(f"❌ Erro na sincronização da guild: {guild_error}")
+                await inter.send(f"❌ Erro na sincronização da guild: {guild_error}")
             
     except Exception as e:
-        await ctx.send(f"❌ Erro: {e}")
+        await inter.send(f"❌ Erro: {e}")
         import traceback
         traceback.print_exc()
 
 # Comando para recarregar produtos
 @bot.command(name='reload_products')
 @commands.has_permissions(administrator=True)
-async def reload_products(ctx):
+async def reload_products(inter):
     """Recarrega os produtos no banco de dados"""
-    await ctx.send("⚠️ **Comando Obsoleto!**\n\n"
+    await inter.send("⚠️ **Comando Obsoleto!**\n\n"
                   "Este comando não funciona mais com o sistema multi-servidor.\n\n"
                   "**Use os novos comandos:**\n"
                   "`/admin_criar_produto` - Criar produto\n"
@@ -2244,7 +2244,7 @@ async def reload_products(ctx):
 # Comando para adicionar estoque via prefixo
 @bot.command(name='adicionar_estoque', aliases=['add_stock'])
 @commands.has_permissions(administrator=True)
-async def add_stock_prefix(ctx):
+async def add_stock_prefix(inter):
     """Adicionar itens ao estoque de um produto (versão prefixo)"""
     try:
         # Buscar todos os produtos
@@ -2253,11 +2253,11 @@ async def add_stock_prefix(ctx):
         products = await product_model.get_all_products()
         
         if not products:
-            await ctx.send("❌ Nenhum produto cadastrado.")
+            await inter.send("❌ Nenhum produto cadastrado.")
             return
         
         # Criar embed com lista de produtos
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="➕ Adicionar Estoque",
             description="**Produtos disponíveis:**",
             color=0x3498db
@@ -2281,13 +2281,13 @@ async def add_stock_prefix(ctx):
             inline=False
         )
         
-        await ctx.send(embed=embed)
+        await inter.send(embed=embed)
         
     except Exception as e:
         print(f"Erro no comando ?adicionar_estoque: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.send(f"❌ Erro: {str(e)}")
+        await inter.send(f"❌ Erro: {str(e)}")
 
 # Comando auxiliar para adicionar estoque por ID
 @bot.command(name='add_stock_id')
@@ -2302,10 +2302,10 @@ async def add_stock_by_id(ctx, product_id: int):
         product = await product_model.get_product_by_id(product_id)
         
         if not product:
-            await ctx.send(f"❌ Produto com ID {product_id} não encontrado.")
+            await inter.send(f"❌ Produto com ID {product_id} não encontrado.")
             return
         
-        await ctx.send(f"📦 **{product['name']}**\n\n"
+        await inter.send(f"📦 **{product['name']}**\n\n"
                       f"Cole os códigos/keys abaixo (um por linha).\n"
                       f"Quando terminar, envie `?done` ou aguarde 30 segundos.")
         
@@ -2313,7 +2313,7 @@ async def add_stock_by_id(ctx, product_id: int):
         codes = []
         
         def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel
+            return m.author == inter.author and m.channel == inter.channel
         
         for _ in range(100):  # Máximo 100 códigos por vez
             try:
@@ -2336,7 +2336,7 @@ async def add_stock_by_id(ctx, product_id: int):
                 break
         
         if not codes:
-            await ctx.send("❌ Nenhum código fornecido.")
+            await inter.send("❌ Nenhum código fornecido.")
             return
         
         # Adicionar ao estoque
@@ -2344,27 +2344,27 @@ async def add_stock_by_id(ctx, product_id: int):
         added = await inventory_model.add_bulk_stock(product_id, codes)
         
         if added > 0:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Estoque Adicionado",
                 description=f"**{added}** itens foram adicionados ao produto **{product['name']}**.",
                 color=0x00ff00
             )
             embed.add_field(name="📦 Produto", value=product['name'], inline=True)
             embed.add_field(name="➕ Itens Adicionados", value=str(added), inline=True)
-            await ctx.send(embed=embed)
+            await inter.send(embed=embed)
         else:
-            await ctx.send("❌ Erro ao adicionar estoque.")
+            await inter.send("❌ Erro ao adicionar estoque.")
             
     except Exception as e:
         print(f"Erro ao adicionar estoque por ID: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.send(f"❌ Erro: {str(e)}")
+        await inter.send(f"❌ Erro: {str(e)}")
 
 # Comando para ver estoque via prefixo
 @bot.command(name='ver_estoque', aliases=['stock', 'estoque'])
 @commands.has_permissions(administrator=True)
-async def view_stock_prefix(ctx):
+async def view_stock_prefix(inter):
     """Ver resumo do estoque de produtos (versão prefixo)"""
     try:
         from models.inventory_model import InventoryModel
@@ -2373,11 +2373,11 @@ async def view_stock_prefix(ctx):
         summary = await inventory_model.get_all_stock_summary()
         
         if not summary:
-            await ctx.send("❌ Nenhum produto com estoque.")
+            await inter.send("❌ Nenhum produto com estoque.")
             return
         
         # Criar embed com resumo
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📊 Resumo de Estoque",
             description="Status de estoque de todos os produtos",
             color=0x3498db
@@ -2397,13 +2397,13 @@ async def view_stock_prefix(ctx):
             )
         
         embed.set_footer(text="Use /adicionar_estoque para adicionar mais itens")
-        await ctx.send(embed=embed)
+        await inter.send(embed=embed)
         
     except Exception as e:
         print(f"Erro no comando !ver_estoque: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.send(f"❌ Erro: {str(e)}")
+        await inter.send(f"❌ Erro: {str(e)}")
 
 # Comando para configurar ticket com imagem e personalização
 @bot.command(name='setup_ticket_img')
@@ -2416,19 +2416,19 @@ async def setup_ticket_with_image(ctx, *, args=""):
     """
     try:
         # Verificar se há anexos
-        if not ctx.message.attachments:
-            await ctx.send("❌ **Como usar:**\n"
+        if not inter.message.attachments:
+            await inter.send("❌ **Como usar:**\n"
                           "1. Arraste uma imagem para o chat\n"
                           "2. Use: `!setup_ticket_img [título] [cor] [nome_botão]`\n"
                           "3. Ex: `!setup_ticket_img \"🛒 Vendas Premium\" \"#ff0000\" \"Comprar Agora\"`")
             return
         
         # Pegar a primeira imagem
-        attachment = ctx.message.attachments[0]
+        attachment = inter.message.attachments[0]
         
         # Verificar se é uma imagem
         if not attachment.content_type or not attachment.content_type.startswith('image/'):
-            await ctx.send("❌ O arquivo deve ser uma imagem!")
+            await inter.send("❌ O arquivo deve ser uma imagem!")
             return
         
         # Processar argumentos
@@ -2455,7 +2455,7 @@ async def setup_ticket_with_image(ctx, *, args=""):
             cor_int = 0x0099ff
         
         # Criar embed personalizado
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title=titulo,
             description="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
             color=cor_int
@@ -2472,8 +2472,8 @@ async def setup_ticket_with_image(ctx, *, args=""):
         from utils.ticket_views import TicketView
         view = TicketView(nome_botao)
         
-        await ctx.send(embed=embed, view=view)
-        await ctx.send(f"✅ Sistema de tickets configurado!\n"
+        await inter.send(embed=embed, view=view)
+        await inter.send(f"✅ Sistema de tickets configurado!\n"
                       f"**Título:** {titulo}\n"
                       f"**Cor:** {cor} (0x{cor_hex})\n"
                       f"**Botão:** {nome_botao}")
@@ -2482,16 +2482,16 @@ async def setup_ticket_with_image(ctx, *, args=""):
         print(f"Erro no setup_ticket_img: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.send("❌ Erro ao configurar sistema de tickets.")
+        await inter.send("❌ Erro ao configurar sistema de tickets.")
 
 # ========================================
 # COMANDOS ADMIN MULTI-SERVIDOR
 # ========================================
 
 @bot.slash_command(name="admin_criar_produto", description="[ADMIN] Criar um produto no servidor")
-@discord.default_permissions(administrator=True)
+@disnake.default_permissions(administrator=True)
 async def admin_criar_produto(
-    ctx: discord.ApplicationContext,
+    ctx: disnake.ApplicationCommandInteraction,
     nome: str,
     preco: float,
     descricao: str,
@@ -2500,7 +2500,7 @@ async def admin_criar_produto(
 ):
     """Criar produto que atualiza diretamente no Supabase"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         product_data = {
             'name': nome,
@@ -2510,34 +2510,34 @@ async def admin_criar_produto(
             'unlimited_stock': estoque_ilimitado
         }
         
-        product = await product_model.create_product(ctx.guild_id, product_data)
+        product = await product_model.create_product(inter.guild_id, product_data)
         
         if product:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Produto Criado no Supabase",
                 description=f"Produto **{nome}** criado com sucesso!",
-                color=discord.Color.green()
+                color=disnake.Color.green()
             )
             embed.add_field(name="ID", value=product['id'], inline=True)
             embed.add_field(name="Preço", value=f"R$ {preco:.2f}", inline=True)
             embed.add_field(name="Categoria", value=categoria, inline=True)
             embed.add_field(name="Estoque", value="♾️ Ilimitado" if estoque_ilimitado else "📦 Gerenciado", inline=True)
             
-            await ctx.followup.send(embed=embed, ephemeral=True)
+            await inter.followup.send(embed=embed, ephemeral=True)
         else:
-            await ctx.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
+            await inter.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao criar produto: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
-@discord.default_permissions(administrator=True)
-async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: str):
+@disnake.default_permissions(administrator=True)
+async def admin_deletar_produto(inter: disnake.ApplicationCommandInteraction, product_ids: str):
     """Deletar um ou mais produtos do Supabase"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         # Parse dos IDs (aceita vírgula ou espaço)
         ids_str = product_ids.replace(',', ' ').split()
@@ -2545,11 +2545,11 @@ async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: st
         try:
             ids = [int(id_str.strip()) for id_str in ids_str if id_str.strip().isdigit()]
         except ValueError:
-            await ctx.followup.send("❌ IDs inválidos. Use números separados por vírgula (ex: 1,2,3)", ephemeral=True)
+            await inter.followup.send("❌ IDs inválidos. Use números separados por vírgula (ex: 1,2,3)", ephemeral=True)
             return
         
         if not ids:
-            await ctx.followup.send("❌ Nenhum ID válido fornecido.", ephemeral=True)
+            await inter.followup.send("❌ Nenhum ID válido fornecido.", ephemeral=True)
             return
         
         # Deletar cada produto
@@ -2559,14 +2559,14 @@ async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: st
         
         for product_id in ids:
             # Buscar produto para confirmar
-            product = await product_model.get_product_by_id(product_id, ctx.guild_id)
+            product = await product_model.get_product_by_id(product_id, inter.guild_id)
             
             if not product:
                 not_found.append(product_id)
                 continue
             
             # Deletar do Supabase
-            success = await product_model.delete_product(product_id, ctx.guild_id)
+            success = await product_model.delete_product(product_id, inter.guild_id)
             
             if success:
                 deleted.append(f"**{product['name']}** (ID: {product_id})")
@@ -2574,9 +2574,9 @@ async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: st
                 errors.append(product_id)
         
         # Criar embed de resultado
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🗑️ Resultado da Exclusão",
-            color=discord.Color.green() if deleted else discord.Color.red()
+            color=disnake.Color.green() if deleted else disnake.Color.red()
         )
         
         if deleted:
@@ -2600,34 +2600,34 @@ async def admin_deletar_produto(ctx: discord.ApplicationContext, product_ids: st
                 inline=False
             )
         
-        await ctx.followup.send(embed=embed, ephemeral=True)
+        await inter.followup.send(embed=embed, ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao deletar produtos: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="admin_listar_produtos", description="[ADMIN] Listar todos os produtos do servidor")
-@discord.default_permissions(administrator=True)
-async def admin_listar_produtos(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def admin_listar_produtos(inter: disnake.ApplicationCommandInteraction):
     """Listar produtos do Supabase"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
-        products = await product_model.get_products_by_guild(ctx.guild_id)
+        products = await product_model.get_products_by_guild(inter.guild_id)
         
         if not products:
-            await ctx.followup.send("📦 Nenhum produto cadastrado neste servidor no Supabase.", ephemeral=True)
+            await inter.followup.send("📦 Nenhum produto cadastrado neste servidor no Supabase.", ephemeral=True)
             return
         
         # Separar por categoria
         vips = [p for p in products if p.get('category') == 'vip']
         normais = [p for p in products if p.get('category') != 'vip']
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title=f"📦 Produtos do Servidor ({len(products)} total)",
             description="Produtos cadastrados no Supabase",
-            color=discord.Color.blue()
+            color=disnake.Color.blue()
         )
         
         if normais:
@@ -2655,17 +2655,17 @@ async def admin_listar_produtos(ctx: discord.ApplicationContext):
         if len(products) > 20:
             embed.set_footer(text=f"Mostrando 20 de {len(products)} produtos")
         
-        await ctx.followup.send(embed=embed, ephemeral=True)
+        await inter.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao listar produtos: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="admin_criar_vip", description="[ADMIN] Criar produto VIP no servidor")
-@discord.default_permissions(administrator=True)
+@disnake.default_permissions(administrator=True)
 async def admin_criar_vip(
-    ctx: discord.ApplicationContext,
+    ctx: disnake.ApplicationCommandInteraction,
     nome: str,
     preco: float,
     role_name: str,
@@ -2674,7 +2674,7 @@ async def admin_criar_vip(
 ):
     """Criar produto VIP no Supabase"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         # Configuração VIP
         vip_config = {
@@ -2691,28 +2691,28 @@ async def admin_criar_vip(
             'unlimited_stock': True  # VIPs sempre têm estoque ilimitado
         }
         
-        product = await product_model.create_product(ctx.guild_id, product_data)
+        product = await product_model.create_product(inter.guild_id, product_data)
         
         if product:
             duracao_text = f"{duracao_dias} dias" if duracao_dias > 0 else "Vitalício"
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Produto VIP Criado no Supabase",
                 description=f"VIP **{nome}** criado com sucesso!",
-                color=discord.Color.gold()
+                color=disnake.Color.gold()
             )
             embed.add_field(name="ID", value=product['id'], inline=True)
             embed.add_field(name="Preço", value=f"R$ {preco:.2f}", inline=True)
             embed.add_field(name="Role", value=role_name, inline=True)
             embed.add_field(name="Duração", value=duracao_text, inline=True)
             
-            await ctx.followup.send(embed=embed, ephemeral=True)
+            await inter.followup.send(embed=embed, ephemeral=True)
         else:
-            await ctx.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
+            await inter.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao criar VIP: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # =============================================
@@ -2720,23 +2720,23 @@ async def admin_criar_vip(
 # =============================================
 
 @bot.slash_command(name="saldo", description="Ver saldo disponível e estatísticas da carteira")
-@discord.default_permissions(administrator=True)
-async def saldo_cmd(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def saldo_cmd(inter: disnake.ApplicationCommandInteraction):
     """Ver saldo e estatísticas da carteira do servidor"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         from models.wallet_model import WalletModel
         wallet_model = WalletModel()
         
         # Buscar estatísticas
-        stats = await wallet_model.get_wallet_stats(ctx.guild_id)
+        stats = await wallet_model.get_wallet_stats(inter.guild_id)
         
         # Criar embed
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="💰 Carteira do Servidor",
-            description=f"Estatísticas financeiras de **{ctx.guild.name}**",
-            color=discord.Color.green()
+            description=f"Estatísticas financeiras de **{inter.guild.name}**",
+            color=disnake.Color.green()
         )
         
         # Saldo disponível
@@ -2797,21 +2797,21 @@ async def saldo_cmd(ctx: discord.ApplicationContext):
         
         embed.set_footer(text=f"Use /solicitar_saque para sacar • Mínimo: R$ 10,00")
         
-        await ctx.followup.send(embed=embed, ephemeral=True)
+        await inter.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao buscar saldo: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.followup.send(f"❌ Erro ao buscar saldo: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro ao buscar saldo: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="configurar_pix", description="Cadastrar chave Pix padrão para saques")
-@discord.default_permissions(administrator=True)
-async def configurar_pix_cmd(ctx: discord.ApplicationContext, chave_pix: str, tipo: str):
+@disnake.default_permissions(administrator=True)
+async def configurar_pix_cmd(inter: disnake.ApplicationCommandInteraction, chave_pix: str, tipo: str):
     """Cadastrar chave Pix padrão"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         from models.wallet_model import WalletModel
         from utils.withdrawal_manager import WithdrawalManager
@@ -2823,11 +2823,11 @@ async def configurar_pix_cmd(ctx: discord.ApplicationContext, chave_pix: str, ti
         valid, result = withdrawal_manager.validate_pix_key(chave_pix, tipo)
         
         if not valid:
-            await ctx.followup.send(result, ephemeral=True)
+            await inter.followup.send(result, ephemeral=True)
             return
         
         # Salvar
-        success = await wallet_model.save_pix_key(ctx.guild_id, result, tipo)
+        success = await wallet_model.save_pix_key(inter.guild_id, result, tipo)
         
         if success:
             # Mascarar chave para exibir
@@ -2841,31 +2841,31 @@ async def configurar_pix_cmd(ctx: discord.ApplicationContext, chave_pix: str, ti
             else:
                 masked = f"{result[:5]}***{result[-4:]}"
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Chave Pix Cadastrada",
                 description=f"Chave Pix salva com sucesso!",
-                color=discord.Color.green()
+                color=disnake.Color.green()
             )
             embed.add_field(name="Tipo", value=tipo.upper(), inline=True)
             embed.add_field(name="Chave", value=masked, inline=True)
             embed.set_footer(text="Esta chave será usada como padrão nos saques")
             
-            await ctx.followup.send(embed=embed, ephemeral=True)
+            await inter.followup.send(embed=embed, ephemeral=True)
         else:
-            await ctx.followup.send("❌ Erro ao salvar chave Pix", ephemeral=True)
+            await inter.followup.send("❌ Erro ao salvar chave Pix", ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao configurar Pix: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="solicitar_saque", description="Solicitar saque via Pix")
-@discord.default_permissions(administrator=True)
-async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
     """Solicitar saque via modal"""
     try:
         # Criar modal para saque
-        class WithdrawalModal(discord.ui.Modal, title="💸 Solicitar Saque"):
+        class WithdrawalModal(disnake.ui.Modal, title="💸 Solicitar Saque"):
             amount_input = discord.ui.InputText(
                 label="Valor a Sacar (R$)",
                 placeholder="Ex: 50.00",
@@ -2889,7 +2889,7 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
             )
             
             async def on_submit(self, interaction: discord.Interaction):
-                await ctx.response.defer(ephemeral=True)
+                await inter.response.defer(ephemeral=True)
                 
                 try:
                     from decimal import Decimal
@@ -2903,7 +2903,7 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
                     try:
                         amount = Decimal(self.amount_input.value.replace(',', '.'))
                     except:
-                        await ctx.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
+                        await inter.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
                         return
                     
                     # Buscar chave Pix (usar padrão se não informada)
@@ -2912,9 +2912,9 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
                     
                     if not pix_key:
                         # Usar chave padrão
-                        wallet = await wallet_model.get_wallet(ctx.guild_id)
+                        wallet = await wallet_model.get_wallet(inter.guild_id)
                         if not wallet or not wallet.get('pix_key'):
-                            await ctx.followup.send(
+                            await inter.followup.send(
                                 "❌ Nenhuma chave Pix cadastrada. Use `/configurar_pix` primeiro ou informe a chave no formulário.",
                                 ephemeral=True
                             )
@@ -2925,30 +2925,30 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
                     
                     # Validar tipo
                     if pix_type not in ['cpf', 'cnpj', 'email', 'phone', 'random']:
-                        await ctx.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
+                        await inter.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
                         return
                     
                     # Criar solicitação
                     withdrawal = await withdrawal_manager.create_withdrawal_request(
-                        guild_id=ctx.guild_id,
-                        user_id=ctx.user.id,
+                        guild_id=inter.guild_id,
+                        user_id=inter.user.id,
                         amount=amount,
                         pix_key=pix_key,
                         pix_type=pix_type
                     )
                     
                     if not withdrawal:
-                        await ctx.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
+                        await inter.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
                         return
                     
                     # Calcular taxas
                     fees = await wallet_model.calculate_withdrawal_fees(amount)
                     
                     # Enviar confirmação
-                    embed = discord.Embed(
+                    embed = disnake.Embed(
                         title="📝 Solicitação de Saque Criada",
                         description="Seu saque será processado automaticamente!",
-                        color=discord.Color.blue()
+                        color=disnake.Color.blue()
                     )
                     embed.add_field(name="Valor Solicitado", value=f"R$ {amount:.2f}", inline=True)
                     embed.add_field(name="Taxa (3%)", value=f"R$ {fees['fee_amount']:.2f}", inline=True)
@@ -2957,7 +2957,7 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
                     embed.add_field(name="Status", value="⏳ Processando...", inline=True)
                     embed.set_footer(text=f"ID: #{withdrawal['id']}")
                     
-                    await ctx.followup.send(embed=embed, ephemeral=True)
+                    await inter.followup.send(embed=embed, ephemeral=True)
                     
                     # Processar saque imediatamente em background
                     import asyncio
@@ -2967,38 +2967,38 @@ async def solicitar_saque_cmd(ctx: discord.ApplicationContext):
                     print(f"Erro ao processar saque: {e}")
                     import traceback
                     traceback.print_exc()
-                    await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+                    await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
         
         # Mostrar modal
-        await ctx.response.send_modal(WithdrawalModal())
+        await inter.response.send_modal(WithdrawalModal())
         
     except Exception as e:
         print(f"Erro ao abrir modal de saque: {e}")
-        await ctx.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+        await inter.response.send_message(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="historico_vendas", description="Ver histórico de vendas e movimentações")
-@discord.default_permissions(administrator=True)
-async def historico_vendas_cmd(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def historico_vendas_cmd(inter: disnake.ApplicationCommandInteraction):
     """Ver histórico de transações da carteira"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         from models.wallet_model import WalletModel
         wallet_model = WalletModel()
         
         # Buscar histórico
-        history = await wallet_model.get_wallet_history(ctx.guild_id, limit=10)
+        history = await wallet_model.get_wallet_history(inter.guild_id, limit=10)
         
         if not history:
-            await ctx.followup.send("📭 Nenhuma movimentação encontrada.", ephemeral=True)
+            await inter.followup.send("📭 Nenhuma movimentação encontrada.", ephemeral=True)
             return
         
         # Criar embed
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📊 Histórico de Movimentações",
             description=f"Últimas 10 transações da carteira",
-            color=discord.Color.blue()
+            color=disnake.Color.blue()
         )
         
         for tx in history[:10]:
@@ -3028,35 +3028,35 @@ async def historico_vendas_cmd(ctx: discord.ApplicationContext):
                 inline=False
             )
         
-        await ctx.followup.send(embed=embed, ephemeral=True)
+        await inter.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao buscar histórico: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="historico_saques", description="Ver histórico de saques processados")
-@discord.default_permissions(administrator=True)
-async def historico_saques_cmd(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def historico_saques_cmd(inter: disnake.ApplicationCommandInteraction):
     """Ver histórico de saques"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         from utils.withdrawal_manager import WithdrawalManager
         withdrawal_manager = WithdrawalManager()
         
         # Buscar histórico
-        history = await withdrawal_manager.get_withdrawal_history(ctx.guild_id, limit=10)
+        history = await withdrawal_manager.get_withdrawal_history(inter.guild_id, limit=10)
         
         if not history:
-            await ctx.followup.send("📭 Nenhum saque encontrado.", ephemeral=True)
+            await inter.followup.send("📭 Nenhum saque encontrado.", ephemeral=True)
             return
         
         # Criar embed
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="💸 Histórico de Saques",
             description=f"Últimos 10 saques solicitados",
-            color=discord.Color.purple()
+            color=disnake.Color.purple()
         )
         
         for withdrawal in history:
@@ -3083,18 +3083,18 @@ async def historico_saques_cmd(ctx: discord.ApplicationContext):
                 inline=False
             )
         
-        await ctx.followup.send(embed=embed, ephemeral=True)
+        await inter.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"Erro ao buscar saques: {e}")
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 @bot.slash_command(name="verificar_pagamentos", description="[ADMIN] Verificar pagamentos pendentes manualmente")
-@discord.default_permissions(administrator=True)
-async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def verificar_pagamentos_cmd(inter: disnake.ApplicationCommandInteraction):
     """Verificar pagamentos pendentes manualmente (enquanto webhook não está configurado)"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         from models.transaction_model import TransactionModel
         from utils.mercadopago_manager import MercadoPagoManager
@@ -3107,12 +3107,12 @@ async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
         delivery_manager = DeliveryManager(bot)
         
         # Buscar transações pendentes deste servidor
-        print(f"🔍 Verificando pagamentos pendentes do servidor {ctx.guild_id}")
+        print(f"🔍 Verificando pagamentos pendentes do servidor {inter.guild_id}")
         
         # Query manual para buscar transações pendentes
         result = transaction_model.supabase.table('transactions')\
             .select('*')\
-            .eq('guild_id', ctx.guild_id)\
+            .eq('guild_id', inter.guild_id)\
             .eq('status', 'pending')\
             .order('created_at', desc=True)\
             .limit(10)\
@@ -3121,7 +3121,7 @@ async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
         pending_transactions = result.data if result.data else []
         
         if not pending_transactions:
-            await ctx.followup.send("✅ Nenhum pagamento pendente encontrado!", ephemeral=True)
+            await inter.followup.send("✅ Nenhum pagamento pendente encontrado!", ephemeral=True)
             return
         
         # Verificar cada transação
@@ -3155,7 +3155,7 @@ async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
                 net_amount = amount - platform_fee
                 
                 await wallet_model.credit_wallet(
-                    guild_id=ctx.guild_id,
+                    guild_id=inter.guild_id,
                     amount=net_amount,
                     transaction_id=transaction['id'],
                     platform_fee=platform_fee,
@@ -3172,9 +3172,9 @@ async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
                     print(f"⚠️ Erro ao entregar produto: {delivery_error}")
         
         # Resposta
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🔍 Verificação de Pagamentos",
-            color=discord.Color.green() if approved > 0 else discord.Color.blue()
+            color=disnake.Color.green() if approved > 0 else disnake.Color.blue()
         )
         
         embed.add_field(name="📊 Total verificado", value=str(checked), inline=True)
@@ -3192,13 +3192,13 @@ async def verificar_pagamentos_cmd(ctx: discord.ApplicationContext):
         
         embed.set_footer(text="Use /saldo para ver o saldo atualizado")
         
-        await ctx.followup.send(embed=embed, ephemeral=True)
+        await inter.followup.send(embed=embed, ephemeral=True)
         
     except Exception as e:
         print(f"❌ Erro ao verificar pagamentos: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # Sistema de espera para adicionar estoque
@@ -3269,10 +3269,10 @@ async def on_message(message):
                         added_count += 1
                 
                 # Embed de sucesso
-                embed = discord.Embed(
+                embed = disnake.Embed(
                     title="✅ Estoque Adicionado",
                     description=f"Códigos adicionados ao produto **{data['product']['name']}**",
-                    color=discord.Color.green()
+                    color=disnake.Color.green()
                 )
                 embed.add_field(name="📦 Produto", value=data['product']['name'], inline=True)
                 embed.add_field(name="✅ Adicionados", value=f"{added_count} códigos", inline=True)
@@ -3303,14 +3303,14 @@ async def on_message(message):
 
 
 @bot.slash_command(name="adicionar_estoque", description="[ADMIN] Adicionar códigos/keys ao estoque")
-@discord.default_permissions(administrator=True)
-async def adicionar_estoque(ctx: discord.ApplicationContext):
+@disnake.default_permissions(administrator=True)
+async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
     """Adicionar códigos ao estoque de produtos"""
     try:
-        await ctx.response.defer(ephemeral=True)
+        await inter.response.defer(ephemeral=True)
         
         # Buscar produtos do servidor (exceto VIPs e ilimitados)
-        products = await product_model.get_products_by_guild(ctx.guild_id)
+        products = await product_model.get_products_by_guild(inter.guild_id)
         
         # Filtrar apenas produtos que precisam de estoque
         products_with_stock = [
@@ -3319,17 +3319,17 @@ async def adicionar_estoque(ctx: discord.ApplicationContext):
         ]
         
         if not products_with_stock:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="⚠️ Nenhum Produto com Estoque Gerenciado",
                 description="Todos os produtos do servidor são ilimitados ou VIPs (não precisam de estoque).",
-                color=discord.Color.orange()
+                color=disnake.Color.orange()
             )
             embed.add_field(
                 name="💡 Dica",
                 value="Use `/admin_criar_produto` com `estoque_ilimitado: False` para criar produtos que precisam de estoque.",
                 inline=False
             )
-            await ctx.followup.send(embed=embed, ephemeral=True)
+            await inter.followup.send(embed=embed, ephemeral=True)
             return
         
         # Criar Select Menu com produtos
@@ -3353,18 +3353,18 @@ async def adicionar_estoque(ctx: discord.ApplicationContext):
                     
                     if product:
                         # Registrar que está esperando códigos deste usuário
-                        waiting_for_stock[ctx.user.id] = {
+                        waiting_for_stock[inter.user.id] = {
                             'product': product,
-                            'guild_id': ctx.guild_id,
-                            'channel_id': ctx.channel_id
+                            'guild_id': inter.guild_id,
+                            'channel_id': inter.channel_id
                         }
                         
-                        embed = discord.Embed(
+                        embed = disnake.Embed(
                             title="📝 Envie os Códigos",
                             description=f"Produto selecionado: **{product['name']}**\n\n"
                                        f"Envie os códigos/keys neste canal, **um por linha**.\n"
                                        f"Exemplo:",
-                            color=discord.Color.blue()
+                            color=disnake.Color.blue()
                         )
                         embed.add_field(
                             name="Formato:",
@@ -3373,14 +3373,14 @@ async def adicionar_estoque(ctx: discord.ApplicationContext):
                         )
                         embed.set_footer(text="Você tem 5 minutos para enviar os códigos")
                         
-                        await ctx.response.send_message(embed=embed, ephemeral=True)
+                        await inter.response.send_message(embed=embed, ephemeral=True)
                     else:
-                        await ctx.response.send_message("❌ Produto não encontrado.", ephemeral=True)
+                        await inter.response.send_message("❌ Produto não encontrado.", ephemeral=True)
                 except Exception as e:
                     print(f"Erro no select callback: {e}")
                     import traceback
                     traceback.print_exc()
-                    await ctx.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+                    await inter.response.send_message(f"❌ Erro: {e}", ephemeral=True)
         
         class ProductSelectView(discord.ui.View):
             def __init__(self, products):
@@ -3388,21 +3388,21 @@ async def adicionar_estoque(ctx: discord.ApplicationContext):
                 self.add_item(ProductSelect(products))
         
         # Criar embed
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="📦 Adicionar Estoque",
             description=f"Selecione o produto para adicionar códigos/keys.\n\n"
                        f"**Produtos com estoque gerenciado:** {len(products_with_stock)}",
-            color=discord.Color.blue()
+            color=disnake.Color.blue()
         )
         
         view = ProductSelectView(products_with_stock)
-        await ctx.followup.send(embed=embed, view=view, ephemeral=True)
+        await inter.followup.send(embed=embed, view=view, ephemeral=True)
         
     except Exception as e:
         print(f"Erro no comando /adicionar_estoque: {e}")
         import traceback
         traceback.print_exc()
-        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # Executar o bot
