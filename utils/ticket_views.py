@@ -7,6 +7,87 @@ from utils.ticket_manager import TicketManager
 import asyncio
 import time
 
+# Sistema de gerenciamento de views ativas
+active_config_views = {}
+
+class ObjectiveSelect(ui.Select):
+    """Select menu para escolher o objetivo do ticket"""
+    
+    def __init__(self):
+        options = [
+            disnake.SelectOption(
+                label="💳 Pagamentos Automatizados",
+                description="Sistema de vendas com produtos e pagamento automatizado",
+                value="payment"
+            ),
+            disnake.SelectOption(
+                label="🎫 Tickets Manuais",
+                description="Atendentes fazem a venda manualmente",
+                value="manual"
+            ),
+            disnake.SelectOption(
+                label="❓ Somente Suporte",
+                description="Apenas para tirar dúvidas e suporte",
+                value="support"
+            )
+        ]
+        
+        super().__init__(
+            placeholder="🎯 Escolha o objetivo do ticket...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        """Callback quando usuário seleciona um objetivo"""
+        selected_type = self.values[0]
+        
+        # Encontrar o label da opção selecionada
+        selected_label = "Objetivo"
+        for option in self.options:
+            if option.value == selected_type:
+                selected_label = option.label
+                break
+        
+        # Desabilitar o select após seleção
+        self.disabled = True
+        
+        # Atualizar mensagem inicial
+        embed = disnake.Embed(
+            title="⚙️ Configuração de Ticket",
+            description=f"**Objetivo selecionado:** {selected_label}\n\n✅ Prosseguindo para as configurações detalhadas...",
+            color=0x0099ff
+        )
+        await interaction.response.edit_message(embed=embed, view=self.view)
+        
+        # Aguardar um momento para o usuário ver a confirmação
+        await asyncio.sleep(1)
+        
+        # Abrir view de configuração detalhada
+        ticket_config_view = TicketConfigView(interaction.guild_id, ticket_type=selected_type)
+        
+        # Enviar preview inicial
+        new_embed = ticket_config_view._create_embed()
+        await interaction.followup.send(
+            embed=new_embed,
+            view=ticket_config_view,
+            ephemeral=True
+        )
+
+class ObjectiveSelectionView(ui.View):
+    """View inicial para selecionar o objetivo do ticket"""
+    
+    def __init__(self, guild_id: int):
+        super().__init__(timeout=300)  # 5 minutos
+        self.guild_id = guild_id
+        self.add_item(ObjectiveSelect())
+    
+    async def on_timeout(self):
+        """Quando o timeout expira"""
+        for item in self.children:
+            item.disabled = True
+
 class SetupMessageModal(ui.Modal):
     """Modal para criar mensagens embed personalizadas - DISNAKE"""
     
@@ -100,27 +181,42 @@ class SetupMessageModal(ui.Modal):
             traceback.print_exc()
             await interaction.followup.send(f"❌ Erro: {str(e)[:200]}", ephemeral=True)
 
-# Sistema de gerenciamento de views ativas
-active_config_views = {}
-
 class TicketConfigView(ui.View):
     """View interativa para configurar tickets com preview em tempo real"""
     
-    def __init__(self, guild_id: int):
+    def __init__(self, guild_id: int, ticket_type: str = 'payment'):
         super().__init__(timeout=1800)  # 30 minutos
         self.guild_id = guild_id
+        
+        # Configuração de título e descrição baseado no tipo
+        if ticket_type == 'payment':
+            default_title = "🛒 Sistema de Vendas Automatizado"
+            default_description = "Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!"
+            default_button = "Criar Ticket de Compra"
+            default_footer = "Atendimento 24/7 • Pagamento via Pix"
+        elif ticket_type == 'manual':
+            default_title = "🎫 Sistema de Atendimento"
+            default_description = "Clique no botão abaixo para criar um ticket e ser atendido por nossa equipe!"
+            default_button = "Abrir Ticket"
+            default_footer = "Atendimento disponível"
+        else:  # support
+            default_title = "❓ Central de Suporte"
+            default_description = "Clique no botão abaixo para criar um ticket de suporte e esclarecer suas dúvidas!"
+            default_button = "Abrir Ticket de Suporte"
+            default_footer = "Equipe de suporte disponível"
+        
         self.config = {
-            'title': "🛒 Sistema de Vendas Automatizado",
-            'description': "Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            'title': default_title,
+            'description': default_description,
             'color': 0x0099ff,
-            'button_name': "Criar Ticket de Compra",
-            'ticket_type': 'payment',  # 'payment', 'manual', 'support'
+            'button_name': default_button,
+            'ticket_type': ticket_type,
             'mention_role': None,  # Role ID para mencionar
             'product_ids': None,
             'author': None,
             'thumbnail': None,
             'image': None,
-            'footer': "Atendimento 24/7 • Pagamento via Pix",
+            'footer': default_footer,
             'fields': []
         }
         self.message = None

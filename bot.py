@@ -82,16 +82,28 @@ async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
     try:
         print(f"🔧 Comando setup_ticket executado por {inter.user.name}")
         
-        from utils.ticket_views import TicketConfigView
-        print("✅ TicketConfigView importado com sucesso!")
+        from utils.ticket_views import ObjectiveSelectionView
+        print("✅ ObjectiveSelectionView importado com sucesso!")
         
-        # Criar view interativa
-        view = TicketConfigView(inter.guild_id)
-        print("✅ View interativa criada com sucesso!")
+        # Criar view de seleção de objetivo
+        view = ObjectiveSelectionView(inter.guild_id)
+        print("✅ View de seleção criada com sucesso!")
         
-        # Enviar preview inicial
-        await view.update_preview(inter)
-        print("✅ Preview inicial enviado com sucesso!")
+        # Criar embed inicial
+        embed = disnake.Embed(
+            title="⚙️ Configuração de Sistema de Tickets",
+            description="**Selecione o objetivo do ticket:**\n\nEscolha uma das opções abaixo para configurar o tipo de ticket desejado.",
+            color=0x0099ff
+        )
+        embed.add_field(
+            name="💡 Dica",
+            value="Você poderá configurar todos os detalhes após selecionar o objetivo.",
+            inline=False
+        )
+        
+        # Enviar view inicial
+        await inter.response.send_message(embed=embed, view=view, ephemeral=True)
+        print("✅ View inicial enviada com sucesso!")
         
     except ImportError as e:
         print(f"❌ Erro de importação: {e}")
