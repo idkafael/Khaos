@@ -476,7 +476,7 @@ class TitleModal(ui.Modal):
     """Modal para editar título"""
     
     def __init__(self):
-        super().__init__(title="Editar Título", timeout=300)
+        super().__init__(title="Editar Título", timeout=600)
         self.add_item(ui.InputText(
             label="Título do Embed",
             placeholder="Ex: Sistema de Vendas Automatizado",
@@ -504,7 +504,7 @@ class DescriptionModal(ui.Modal):
     """Modal para editar descrição"""
     
     def __init__(self):
-        super().__init__(title="Editar Descrição", timeout=300)
+        super().__init__(title="Editar Descrição", timeout=600)
         self.add_item(ui.InputText(
             label="Descrição do Embed",
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra",
@@ -533,7 +533,7 @@ class ColorModal(ui.Modal):
     """Modal para editar cor"""
     
     def __init__(self):
-        super().__init__(title="Editar Cor", timeout=300)
+        super().__init__(title="Editar Cor", timeout=600)
         self.add_item(ui.InputText(
             label="Cor do Embed (Hex)",
             placeholder="Ex: #0099ff ou 0x0099ff",
@@ -577,7 +577,7 @@ class AuthorModal(ui.Modal):
     """Modal para editar autor"""
     
     def __init__(self):
-        super().__init__(title="Editar Autor", timeout=300)
+        super().__init__(title="Editar Autor", timeout=600)
         self.add_item(ui.InputText(
             label="Nome do Autor",
             placeholder="Ex: Sistema de Vendas",
@@ -604,7 +604,7 @@ class FieldsModal(ui.Modal):
     """Modal para editar campos"""
     
     def __init__(self):
-        super().__init__(title="Editar Campos", timeout=300)
+        super().__init__(title="Editar Campos", timeout=600)
         self.add_item(ui.InputText(
             label="Campos (Nome|Valor|Inline)",
             placeholder="Um campo por linha. Ex: Nome|Valor|true",
@@ -652,7 +652,7 @@ class ImageModal(ui.Modal):
     """Modal para editar imagens"""
     
     def __init__(self):
-        super().__init__(title="Editar Imagens", timeout=300)
+        super().__init__(title="Editar Imagens", timeout=600)
         self.add_item(ui.InputText(
             label="URL da Imagem Principal",
             placeholder="https://exemplo.com/imagem.png",
@@ -689,7 +689,7 @@ class FooterModal(ui.Modal):
     """Modal para editar rodapé"""
     
     def __init__(self):
-        super().__init__(title="Editar Rodapé", timeout=300)
+        super().__init__(title="Editar Rodapé", timeout=600)
         self.add_item(ui.InputText(
             label="Texto do Rodapé",
             placeholder="Ex: Atendimento 24/7 • Pagamento via Pix",
@@ -716,7 +716,7 @@ class ButtonNameModal(ui.Modal):
     """Modal para editar nome do botão"""
     
     def __init__(self):
-        super().__init__(title="Editar Nome do Botão", timeout=300)
+        super().__init__(title="Editar Nome do Botão", timeout=600)
         self.add_item(ui.InputText(
             label="Nome do Botão",
             placeholder="Ex: Criar Ticket de Compra",
@@ -743,7 +743,7 @@ class ProductFilterModal(ui.Modal):
     """Modal para editar filtro de produtos"""
     
     def __init__(self):
-        super().__init__(title="Editar Filtro de Produtos", timeout=300)
+        super().__init__(title="Editar Filtro de Produtos", timeout=600)
         self.add_item(ui.InputText(
             label="IDs dos Produtos (vazio = todos)",
             placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
@@ -1149,7 +1149,7 @@ class ProductSelectView(ui.View):
     """View com select menu para escolher produto"""
     
     def __init__(self, products: List[Dict]):
-        super().__init__(timeout=300)
+        super().__init__(timeout=600)
         self.products = products
         
         # Criar select menu diretamente aqui

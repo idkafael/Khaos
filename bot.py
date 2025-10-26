@@ -1610,7 +1610,12 @@ async def on_ready():
         try:
             print("🌍 Tentando sincronização global...")
             synced = await bot.sync_commands()
-            print(f"✅ {len(synced)} comandos sincronizados globalmente!")
+            
+            # Verificar se sync_commands retornou algo
+            if synced is None:
+                print("⚠️ Sincronização global retornou None (comandos já sincronizados ou erro)")
+            else:
+                print(f"✅ {len(synced)} comandos sincronizados globalmente!")
             
             # Aguardar um pouco para a sincronização se propagar
             await asyncio.sleep(3)
@@ -1624,7 +1629,12 @@ async def on_ready():
                 try:
                     print(f"🔄 Sincronizando na guild: {guild.name} (ID: {guild.id})")
                     synced = await bot.sync_commands(guild_ids=[guild.id])
-                    print(f"✅ {len(synced)} comandos sincronizados na guild {guild.name}!")
+                    
+                    # Verificar se sync_commands retornou algo
+                    if synced is None:
+                        print(f"⚠️ Sincronização na guild {guild.name} retornou None")
+                    else:
+                        print(f"✅ {len(synced)} comandos sincronizados na guild {guild.name}!")
                     
                     # Aguardar um pouco entre sincronizações
                     await asyncio.sleep(1)
@@ -2192,13 +2202,26 @@ async def sync_commands(ctx):
         # Tentar sincronizar globalmente
         try:
             synced = await bot.sync_commands()
-            await ctx.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
+            
+            # Verificar se sync_commands retornou algo
+            if synced is None:
+                await ctx.send("⚠️ Sincronização global retornou None (comandos já sincronizados ou erro)")
+            else:
+                await ctx.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
         except Exception as e:
             await ctx.send(f"❌ Erro na sincronização global: {e}")
             
             # Tentar sincronizar por guild
-            synced = await bot.sync_commands(guild_ids=[ctx.guild.id])
-            await ctx.send(f"✅ {len(synced)} comandos sincronizados na guild!")
+            try:
+                synced = await bot.sync_commands(guild_ids=[ctx.guild.id])
+                
+                # Verificar se sync_commands retornou algo
+                if synced is None:
+                    await ctx.send("⚠️ Sincronização na guild retornou None")
+                else:
+                    await ctx.send(f"✅ {len(synced)} comandos sincronizados na guild!")
+            except Exception as guild_error:
+                await ctx.send(f"❌ Erro na sincronização da guild: {guild_error}")
             
     except Exception as e:
         await ctx.send(f"❌ Erro: {e}")
