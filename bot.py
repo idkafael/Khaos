@@ -87,7 +87,7 @@ async def get_emotes(ctx):
         if not emojis:
             await ctx.send("❌ Este servidor não possui emojis customizados.")
             return
-        
+
         # Ordenar por nome
         emojis_sorted = sorted(emojis, key=lambda e: e.name.lower())
         
@@ -2937,27 +2937,27 @@ async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
             def __init__(self):
                 components = [
                     disnake.ui.TextInput(
-                        label="Valor a Sacar (R$)",
-                        placeholder="Ex: 50.00",
+                label="Valor a Sacar (R$)",
+                placeholder="Ex: 50.00",
                         custom_id="amount",
-                        required=True,
-                        min_length=1,
-                        max_length=10
+                required=True,
+                min_length=1,
+                max_length=10
                     ),
                     disnake.ui.TextInput(
-                        label="Chave Pix",
-                        placeholder="CPF, email, telefone, etc (ou deixe vazio para usar padrão)",
+                label="Chave Pix",
+                placeholder="CPF, email, telefone, etc (ou deixe vazio para usar padrão)",
                         custom_id="pix_key",
-                        required=False,
-                        max_length=255
+                required=False,
+                max_length=255
                     ),
                     disnake.ui.TextInput(
-                        label="Tipo da Chave Pix",
-                        placeholder="cpf, cnpj, email, phone ou random",
+                label="Tipo da Chave Pix",
+                placeholder="cpf, cnpj, email, phone ou random",
                         custom_id="pix_type",
-                        required=False,
-                        max_length=10
-                    )
+                required=False,
+                max_length=10
+            )
                 ]
                 super().__init__(title="💸 Solicitar Saque", components=components)
             
@@ -3284,26 +3284,7 @@ async def on_message(message):
     if message.author.bot:
         return
     
-    # Sistema de aguardar input (substitui modais)
-    from utils.ticket_views import waiting_for_input, process_user_input
-    if message.author.id in waiting_for_input:
-        input_data = waiting_for_input[message.author.id]
-        
-        # Verificar se está no canal correto
-        if message.channel.id == input_data['channel_id']:
-            # Processar input
-            await process_user_input(message, input_data)
-            
-            # Deletar mensagem do usuário (cleanup)
-            try:
-                await message.delete()
-            except:
-                pass  # Pode não ter permissão
-            
-            # Remover do dicionário
-            del waiting_for_input[message.author.id]
-            
-            return  # Não processar como comando
+    # Nota: Sistema de aguardar input foi removido - agora usando modais exclusivamente
     
     # Debug: Log de mensagens que começam com ?
     if message.content.startswith('?'):

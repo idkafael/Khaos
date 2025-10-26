@@ -1432,41 +1432,41 @@ class SetupTicketModal(ui.Modal):
     def __init__(self):
         components = [
             ui.TextInput(
-                label="Headline",
-                placeholder="Ex: Sistema de Vendas Automatizado",
+            label="Headline", 
+            placeholder="Ex: Sistema de Vendas Automatizado", 
                 custom_id="headline",
-                value="🛒 Sistema de Vendas Automatizado",
-                max_length=100
+            value="🛒 Sistema de Vendas Automatizado",
+            max_length=100
             ),
             ui.TextInput(
-                label="Descrição",
-                placeholder="Ex: Clique no botão abaixo para criar um ticket de compra",
+            label="Descrição", 
+            placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
                 custom_id="descricao",
-                value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
                 style=disnake.TextInputStyle.paragraph,
-                max_length=1000
+            max_length=1000
             ),
             ui.TextInput(
-                label="IDs dos Produtos (vazio = todos)",
-                placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
+            label="IDs dos Produtos (vazio = todos)", 
+            placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
                 custom_id="product_ids",
-                value="",
-                required=False,
-                max_length=200
+            value="",
+            required=False,
+            max_length=200
             ),
             ui.TextInput(
-                label="Nome do Botão",
-                placeholder="Ex: Criar Ticket de Compra",
+            label="Nome do Botão", 
+            placeholder="Ex: Criar Ticket de Compra", 
                 custom_id="nome_botao",
-                value="Criar Ticket de Compra",
-                max_length=80
+            value="Criar Ticket de Compra",
+            max_length=80
             ),
             ui.TextInput(
-                label="Cor do Embed (Hex)",
-                placeholder="Ex: #0099ff ou 0x0099ff",
+            label="Cor do Embed (Hex)", 
+            placeholder="Ex: #0099ff ou 0x0099ff", 
                 custom_id="cor",
-                value="#0099ff",
-                max_length=10
+            value="#0099ff",
+            max_length=10
             )
         ]
         super().__init__(title="Configurar Sistema de Tickets", components=components)
@@ -1530,27 +1530,27 @@ class SetupTicketModal(ui.Modal):
             
             # Criar embed
             embed = disnake.Embed(title=headline, description=descricao, color=cor_int)
-            embed.add_field(
-                name="🚀 Como Funciona?",
-                value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
-                inline=False
-            )
-            if allowed_product_ids:
                 embed.add_field(
-                    name="🔍 Produtos Filtrados",
-                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                    name="🚀 Como Funciona?",
+                    value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
                     inline=False
                 )
-            embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+                if allowed_product_ids:
+                    embed.add_field(
+                        name="🔍 Produtos Filtrados",
+                        value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
+                        inline=False
+                    )
+                embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
 
             # Criar view com botão
-            view = TicketView(nome_botao)
+                view = TicketView(nome_botao)
             await interaction.followup.send(
                 "✅ **Sistema configurado com sucesso!**\nCopie e cole abaixo:",
                 embed=embed,
                 view=view,
-                ephemeral=True
-            )
+                    ephemeral=True
+                )
             
             print(f"⏱️ SetupTicketModal processado em {time.time() - start_time:.2f}s")
             
@@ -1848,41 +1848,41 @@ class CreateCouponModal(ui.Modal):
     def __init__(self):
         components = [
             ui.TextInput(
-                label="Código do Cupom",
-                placeholder="Ex: PRIMEIRACOMPRA",
+            label="Código do Cupom",
+            placeholder="Ex: PRIMEIRACOMPRA",
                 custom_id="code",
-                max_length=50,
-                required=True
+            max_length=50,
+            required=True
             ),
             ui.TextInput(
-                label="Desconto (%)",
-                placeholder="Ex: 10 para 10%",
+            label="Desconto (%)",
+            placeholder="Ex: 10 para 10%",
                 custom_id="discount",
-                max_length=5,
-                required=True
+            max_length=5,
+            required=True
             ),
             ui.TextInput(
-                label="Limite de Usos (0 = ilimitado)",
-                placeholder="Ex: 100",
+            label="Limite de Usos (0 = ilimitado)",
+            placeholder="Ex: 100",
                 custom_id="max_uses",
-                value="0",
-                max_length=10,
-                required=False
+            value="0",
+            max_length=10,
+            required=False
             ),
             ui.TextInput(
-                label="Um uso por usuário? (sim/nao)",
-                placeholder="sim ou nao",
+            label="Um uso por usuário? (sim/nao)",
+            placeholder="sim ou nao",
                 custom_id="one_per_user",
-                value="nao",
-                max_length=3,
-                required=False
+            value="nao",
+            max_length=3,
+            required=False
             ),
             ui.TextInput(
-                label="Data Expiração (DD/MM/YYYY ou vazio)",
-                placeholder="31/12/2025",
+            label="Data Expiração (DD/MM/YYYY ou vazio)",
+            placeholder="31/12/2025",
                 custom_id="expires",
-                required=False,
-                max_length=10
+            required=False,
+            max_length=10
             )
         ]
         super().__init__(title="Criar Novo Cupom", components=components)
@@ -1976,41 +1976,41 @@ class SetupSupportModal(ui.Modal):
     def __init__(self):
         components = [
             ui.TextInput(
-                label="Título da Mensagem",
-                placeholder="Ex: Central de Atendimento",
+            label="Título da Mensagem", 
+            placeholder="Ex: Central de Atendimento", 
                 custom_id="titulo",
-                value="🎫 Central de Atendimento",
-                max_length=100
+            value="🎫 Central de Atendimento",
+            max_length=100
             ),
             ui.TextInput(
-                label="Descrição da Mensagem",
-                placeholder="Ex: Clique no botão abaixo para abrir um ticket",
+            label="Descrição da Mensagem", 
+            placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
                 custom_id="descricao",
-                value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
-                max_length=1000
+            value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
+            max_length=1000
             ),
             ui.TextInput(
-                label="Opções Menu (EMOJI|Nome|Descrição)",
-                placeholder="Uma por linha",
+            label="Opções Menu (EMOJI|Nome|Descrição)", 
+            placeholder="Uma por linha", 
                 custom_id="opcoes",
-                value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
+            value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
                 style=disnake.TextInputStyle.paragraph,
-                max_length=1000,
-                required=True
+            max_length=1000,
+            required=True
             ),
             ui.TextInput(
-                label="Nome do Botão | Emoji (opcional)",
-                placeholder="Ex: Abrir Ticket | 🎫",
+            label="Nome do Botão | Emoji (opcional)", 
+            placeholder="Ex: Abrir Ticket | 🎫", 
                 custom_id="botao",
-                value="Abrir Ticket | 🎫",
-                max_length=100
+            value="Abrir Ticket | 🎫",
+            max_length=100
             ),
             ui.TextInput(
-                label="Cor do Embed (Hex)",
-                placeholder="Ex: #5865F2",
+            label="Cor do Embed (Hex)", 
+            placeholder="Ex: #5865F2", 
                 custom_id="cor",
-                value="#5865F2",
-                max_length=10
+            value="#5865F2",
+            max_length=10
             )
         ]
         super().__init__(title="Configurar Tickets de Suporte", components=components)
