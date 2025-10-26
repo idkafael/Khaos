@@ -169,11 +169,6 @@ class SetupMessageModal(ui.Modal):
         print(f"🔧 MODAL SUBMIT: SetupMessageModal iniciado por {interaction.user.name}")
         
         try:
-            # Verificar se interaction ainda é válida
-            if interaction.response.is_done():
-                print("❌ Interaction já foi respondida!")
-                return
-                
             print(f"Modal de mensagem submetido por {interaction.user.name}")
             titulo = self.children[0].value.strip()
             descricao = self.children[1].value.strip()
@@ -235,24 +230,24 @@ class SetupMessageModal(ui.Modal):
             
             # Tentar enviar mensagem de erro
             try:
-                if not interaction.response.is_done():
-                    await interaction.response.send_message("❌ Erro ao criar mensagem embed.", ephemeral=True)
-                else:
+                await interaction.response.send_message("❌ Erro ao criar mensagem embed.", ephemeral=True)
+            except:
+                try:
                     await interaction.followup.send("❌ Erro ao criar mensagem embed.", ephemeral=True)
-            except Exception as e2:
-                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+                except Exception as e2:
+                    print(f"❌ Falha ao enviar mensagem de erro: {e2}")
     
     async def on_error(self, error: Exception, interaction: discord.Interaction):
         print(f"❌ ERRO NO MODAL SetupMessageModal: {error}")
         import traceback
         traceback.print_exc()
         try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
-            else:
-                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
         except:
-            pass
+            try:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            except:
+                pass
 
 # Sistema de gerenciamento de views ativas
 active_config_views = {}
