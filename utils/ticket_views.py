@@ -1201,265 +1201,204 @@ class ProductFilterModal(ui.Modal):
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
     
+    # InputText como atributos de classe
+    headline_input = ui.InputText(
+        label="Headline", 
+        placeholder="Ex: Sistema de Vendas Automatizado", 
+        value="🛒 Sistema de Vendas Automatizado",
+        max_length=100
+    )
+    
+    descricao_input = ui.InputText(
+        label="Descrição", 
+        placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
+        value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+        style=discord.InputTextStyle.paragraph,
+        max_length=1000
+    )
+    
+    products_input = ui.InputText(
+        label="IDs dos Produtos (vazio = todos)", 
+        placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
+        value="",
+        required=False,
+        max_length=200
+    )
+    
+    botao_input = ui.InputText(
+        label="Nome do Botão", 
+        placeholder="Ex: Criar Ticket de Compra", 
+        value="Criar Ticket de Compra",
+        max_length=80
+    )
+    
+    cor_input = ui.InputText(
+        label="Cor do Embed (Hex)", 
+        placeholder="Ex: #0099ff ou 0x0099ff", 
+        value="#0099ff",
+        max_length=10
+    )
+    
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(title="Configurar Sistema de Tickets", timeout=600)
-        self.add_item(ui.InputText(
-            label="Headline", 
-            placeholder="Ex: Sistema de Vendas Automatizado", 
-            value="🛒 Sistema de Vendas Automatizado",
-            max_length=100
-        ))
-        self.add_item(ui.InputText(
-            label="Descrição", 
-            placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
-            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
-            style=discord.InputTextStyle.paragraph,
-            max_length=1000
-        ))
-        self.add_item(ui.InputText(
-            label="IDs dos Produtos (vazio = todos)", 
-            placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
-            value="",
-            required=False,
-            max_length=200
-        ))
-        self.add_item(ui.InputText(
-            label="Nome do Botão", 
-            placeholder="Ex: Criar Ticket de Compra", 
-            value="Criar Ticket de Compra",
-            max_length=80
-        ))
-        self.add_item(ui.InputText(
-            label="Cor do Embed (Hex)", 
-            placeholder="Ex: #0099ff ou 0x0099ff", 
-            value="#0099ff",
-            max_length=10
-        ))
+        # SEM timeout, SEM custom_id
+        super().__init__(title="Configurar Sistema de Tickets")
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets"""
         print(f"🔧 MODAL SUBMIT: SetupTicketModal iniciado por {interaction.user.name}")
         
+        # Medição de performance
+        import time
+        start_time = time.time()
+        
+        # SEMPRE DEFER IMEDIATO (< 3 segundos)
+        await interaction.response.defer(ephemeral=True)
+        
         try:
-            # Verificar se interaction ainda é válida
-            if interaction.response.is_done():
-                print("❌ Interaction já foi respondida!")
-                return
-                
-            print("🔧 ========== SETUP TICKET MODAL DEBUG ==========")
-            print(f"🔧 Modal submetido por {interaction.user.name} (ID: {interaction.user.id})")
-            print(f"🔧 Guild: {interaction.guild.name} (ID: {interaction.guild_id})")
-            print(f"🔧 Channel: {interaction.channel.name} (ID: {interaction.channel_id})")
-            print(f"🔧 Interaction type: {type(interaction)}")
-            print(f"🔧 Interaction responded: {interaction.response.is_done()}")
-
-            # Debug: Verificar todos os children
-            print(f"🔧 Modal tem {len(self.children)} children:")
-            for i, child in enumerate(self.children):
-                print(f"🔧   Child {i}: {child.label} = '{child.value}' (type: {type(child.value)})")
-
-            headline = self.children[0].value
-            descricao = self.children[1].value
-            product_ids_input = self.children[2].value.strip()
-            nome_botao = self.children[3].value
-            cor_hex = self.children[4].value.strip()
-
-            print("🔧 ========== VALORES RECEBIDOS ==========")
-            print(f"🔧 Headline: '{headline}' (type: {type(headline)})")
-            print(f"🔧 Descrição: '{descricao}' (type: {type(descricao)})")
-            print(f"🔧 Product IDs Input: '{product_ids_input}' (type: {type(product_ids_input)})")
-            print(f"🔧 Nome Botão: '{nome_botao}' (type: {type(nome_botao)})")
-            print(f"🔧 Cor Hex: '{cor_hex}' (type: {type(cor_hex)})")
-            print(f"🔧 User permissions: {interaction.user.guild_permissions}")
-            print(f"🔧 User is admin: {interaction.user.guild_permissions.administrator}")
-            print(f"🔧 Bot has manage channels: {interaction.guild.me.guild_permissions.manage_channels}")
-            print(f"🔧 Bot has manage roles: {interaction.guild.me.guild_permissions.manage_roles}")
+            # Acessar valores via atributos
+            headline = self.headline_input.value
+            descricao = self.descricao_input.value
+            product_ids_input = self.products_input.value.strip()
+            nome_botao = self.botao_input.value
+            cor_hex = self.cor_input.value.strip()
             
             # Processar IDs dos produtos
-            print("🔧 ========== PROCESSANDO PRODUTOS ==========")
             allowed_product_ids = None
             if product_ids_input:
                 try:
-                    # Converter string "1,2,3" para lista de inteiros
                     allowed_product_ids = [int(pid.strip()) for pid in product_ids_input.split(',') if pid.strip()]
-                    print(f"✅ Produtos filtrados: {allowed_product_ids}")
-                except ValueError as e:
-                    print(f"❌ Erro ao converter IDs de produtos: {e}")
-                    await interaction.response.send_message(
-                        "❌ IDs de produtos inválidos! Use números separados por vírgula (ex: 1,2,3)",
-                        ephemeral=True
+                except ValueError:
+                    error_embed = discord.Embed(
+                        title="❌ Erro",
+                        description="IDs de produtos inválidos! Use números separados por vírgula (ex: 1,2,3)",
+                        color=0xff0000
                     )
+                    await interaction.followup.send(embed=error_embed, ephemeral=True)
                     return
-            else:
-                print("🔧 Nenhum filtro de produtos - todos produtos disponíveis")
-
-            # Salvar configuração no banco de dados
-            print("🔧 ========== SALVANDO NO BANCO ==========")
-            from models.guild_config_model import GuildConfigModel
-            guild_config = GuildConfigModel()
-
-            print(f"🔧 GuildConfigModel inicializado: {guild_config}")
-            print(f"🔧 Supabase URL: {guild_config.supabase._url}")
-            print(f"🔧 Table name: {guild_config.table_name}")
-
+            
+            # Salvar configuração no banco (com timeout)
             try:
-                print(f"🔧 Tentando salvar filtro de produtos para guild {interaction.guild_id}")
-                success = await guild_config.set_ticket_product_filter(
-                    guild_id=interaction.guild_id,
-                    product_ids=allowed_product_ids
+                from models.guild_config_model import GuildConfigModel
+                guild_config = GuildConfigModel()
+                
+                import asyncio
+                success = await asyncio.wait_for(
+                    guild_config.set_ticket_product_filter(
+                        guild_id=interaction.guild_id,
+                        product_ids=allowed_product_ids
+                    ),
+                    timeout=10.0
                 )
-                print(f"🔧 Resultado do save: {success}")
-            except Exception as e:
-                print(f"❌ ERRO AO SALVAR NO BANCO: {e}")
-                import traceback
-                traceback.print_exc()
-
-                # Verificar se é erro de coluna inexistente
-                if "ticket_allowed_products" in str(e) or "column" in str(e).lower():
-                    await interaction.response.send_message(
-                        "❌ **Erro de configuração do banco de dados!**\n\n"
-                        "A coluna `ticket_allowed_products` não existe na tabela.\n"
-                        "Execute o arquivo `database_ticket_product_filter.sql` no Supabase.\n\n"
-                        f"Erro técnico: {str(e)}",
-                        ephemeral=True
+            except asyncio.TimeoutError:
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description="Operação demorou muito. Tente novamente.",
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
+                return
+            except Exception as db_error:
+                print(f"❌ Erro de conexão com banco: {db_error}")
+                
+                if "ticket_allowed_products" in str(db_error) or "column" in str(db_error).lower():
+                    error_embed = discord.Embed(
+                        title="❌ Erro de Configuração",
+                        description="A coluna `ticket_allowed_products` não existe na tabela.\nExecute o arquivo SQL no Supabase.",
+                        color=0xff0000
                     )
+                    await interaction.followup.send(embed=error_embed, ephemeral=True)
                 else:
-                    await interaction.response.send_message(
-                        f"❌ Erro interno do servidor. Verifique os logs.\n\nErro: {str(e)}",
-                        ephemeral=True
+                    error_embed = discord.Embed(
+                        title="❌ Erro",
+                        description="Erro de conexão com o banco de dados. Tente novamente.",
+                        color=0xff0000
                     )
+                    await interaction.followup.send(embed=error_embed, ephemeral=True)
                 return
             
-            print("🔧 ========== VERIFICANDO RESULTADO DO SAVE ==========")
-            if success:
-                if allowed_product_ids:
-                    print(f"✅ Filtro de produtos salvo: {allowed_product_ids}")
-                else:
-                    print(f"✅ Filtro removido - todos produtos disponíveis")
-            else:
-                print(f"❌ FALHA AO SALVAR NO BANCO! Success = {success}")
-                await interaction.response.send_message(
-                    "❌ Erro ao salvar configuração no banco de dados. Verifique os logs.",
-                    ephemeral=True
+            if not success:
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description="Erro ao salvar configuração no banco de dados.",
+                    color=0xff0000
                 )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
                 return
-
+            
             # Converter cor hex para int
-            print("🔧 ========== CONVERTENDO COR ==========")
             try:
-                # Limpar a string de cor
-                cor_hex_original = cor_hex
-                cor_hex = cor_hex.strip().lower()
-
-                print(f"🔧 Cor original: '{cor_hex_original}'")
-                print(f"🔧 Cor após strip().lower(): '{cor_hex}'")
-
-                if cor_hex.startswith('#'):
-                    cor_hex = cor_hex[1:]  # Remove #
-                    print(f"🔧 Removeu '#': '{cor_hex}'")
-                elif cor_hex.startswith('0x'):
-                    cor_hex = cor_hex[2:]  # Remove 0x
-                    print(f"🔧 Removeu '0x': '{cor_hex}'")
-
-                # Garantir que tem 6 caracteres
-                if len(cor_hex) == 3:
-                    cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
-                    print(f"🔧 Expandiu cor de 3 para 6 chars: '{cor_hex}'")
-
-                print(f"🔧 Convertendo '{cor_hex}' para int...")
-                cor_int = int(cor_hex, 16)
-                print(f"✅ Cor convertida: {cor_int} (0x{cor_hex})")
-            except (ValueError, IndexError) as e:
-                print(f"❌ Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
-                cor_int = 0x0099ff  # Azul padrão
-
-            # Criar embed com as configurações
-            print("🔧 ========== CRIANDO EMBED ==========")
-            try:
-                embed = discord.Embed(
-                    title=headline,
-                    description=descricao,
-                    color=cor_int
-                )
-                print(f"✅ Embed criado: title='{headline}', color={cor_int}")
-
+                cor_hex_clean = cor_hex.strip().lower()
+                
+                if cor_hex_clean.startswith('#'):
+                    cor_hex_clean = cor_hex_clean[1:]
+                elif cor_hex_clean.startswith('0x'):
+                    cor_hex_clean = cor_hex_clean[2:]
+                
+                if len(cor_hex_clean) == 3:
+                    cor_hex_clean = cor_hex_clean[0]*2 + cor_hex_clean[1]*2 + cor_hex_clean[2]*2
+                
+                cor_int = int(cor_hex_clean, 16)
+            except (ValueError, IndexError):
+                cor_int = 0x0099ff
+            
+            # Criar embed
+            embed = discord.Embed(
+                title=headline,
+                description=descricao,
+                color=cor_int
+            )
+            
+            embed.add_field(
+                name="🚀 Como Funciona?",
+                value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
+                inline=False
+            )
+            
+            if allowed_product_ids:
                 embed.add_field(
-                    name="🚀 Como Funciona?",
-                    value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
+                    name="🔍 Produtos Filtrados",
+                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
                     inline=False
                 )
-                print("✅ Field 'Como Funciona?' adicionado")
-
-                # Adicionar info sobre filtro de produtos
-                if allowed_product_ids:
-                    embed.add_field(
-                        name="🔍 Produtos Filtrados",
-                        value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
-                        inline=False
-                    )
-                    print(f"✅ Field 'Produtos Filtrados' adicionado: {allowed_product_ids}")
-
-                embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
-                print("✅ Footer adicionado")
-
-                # Criar view com botão personalizado
-                print("🔧 ========== CRIANDO VIEW ==========")
-                view = TicketView(nome_botao)
-                print(f"✅ View criada com botão: '{nome_botao}'")
-
-                print("🔧 ========== ENVIANDO RESPOSTA ==========")
-                print(f"🔧 Interaction responded: {interaction.response.is_done()}")
-
-                try:
-                    await interaction.response.send_message(embed=embed, view=view)
-                    print("✅ Resposta enviada com sucesso!")
-                    print("🎉 Modal processado completamente!")
-                except Exception as e:
-                    print(f"❌ ERRO AO ENVIAR RESPOSTA: {e}")
-                    print(f"❌ Interaction already responded: {interaction.response.is_done()}")
-
-                    # Se já foi respondido, tentar followup
-                    if interaction.response.is_done():
-                        print(f"🔧 Tentando followup message...")
-                        try:
-                            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
-                            print("✅ Followup enviado com sucesso!")
-                        except Exception as e2:
-                            print(f"❌ Erro no followup: {e2}")
-                            # Última tentativa: editar a resposta original
-                            try:
-                                await interaction.edit_original_response(embed=embed, view=view)
-                                print("✅ Edit original response com sucesso!")
-                            except Exception as e3:
-                                print(f"❌ Erro no edit original response: {e3}")
-                                # Forçar erro para o usuário ver
-                                raise e3
-                    else:
-                        raise e
-
-            except Exception as e:
-                print(f"❌ ERRO AO CRIAR EMBED/VIEW: {e}")
-                import traceback
-                traceback.print_exc()
-                await interaction.response.send_message(
-                    f"❌ Erro ao criar interface. Verifique os logs.\n\nErro: {str(e)}",
-                    ephemeral=True
-                )
-                return
+            
+            embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+            
+            # Criar view com botão
+            view = TicketView(nome_botao)
+            
+            # Usar followup após defer
+            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            
+            # Log de performance
+            elapsed = time.time() - start_time
+            print(f"⏱️ Modal processado em {elapsed:.2f}s")
             
         except Exception as e:
             print(f"❌ ERRO CRÍTICO ao configurar sistema de tickets: {e}")
             import traceback
             traceback.print_exc()
             
-            # Tentar enviar mensagem de erro
-            try:
-                if not interaction.response.is_done():
-                    await interaction.response.send_message("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
-                else:
-                    await interaction.followup.send("❌ Erro ao configurar sistema de tickets.", ephemeral=True)
-            except Exception as e2:
-                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+            error_embed = discord.Embed(
+                title="❌ Erro",
+                description=f"Erro ao configurar sistema: {str(e)[:100]}",
+                color=0xff0000
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL SetupTicketModal: {error}")
+        import traceback
+        traceback.print_exc()
+        
+        error_embed = discord.Embed(
+            title="❌ Erro",
+            description=f"Erro inesperado: {str(error)[:100]}",
+            color=0xff0000
+        )
+        try:
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
+        except:
+            pass
 
 class CouponInputModal(ui.Modal):
     """Modal para coletar código de cupom (opcional)"""
@@ -1759,72 +1698,78 @@ class CloseTicketButton(ui.Button):
 class CreateCouponModal(ui.Modal):
     """Modal para criar cupom"""
     
+    # InputText como atributos de classe
+    code_input = ui.InputText(
+        label="Código do Cupom",
+        placeholder="Ex: PRIMEIRACOMPRA",
+        max_length=50,
+        required=True
+    )
+    
+    discount_input = ui.InputText(
+        label="Desconto (%)",
+        placeholder="Ex: 10 para 10%",
+        max_length=5,
+        required=True
+    )
+    
+    max_uses_input = ui.InputText(
+        label="Limite de Usos (0 = ilimitado)",
+        placeholder="Ex: 100",
+        value="0",
+        max_length=10,
+        required=False
+    )
+    
+    one_per_user_input = ui.InputText(
+        label="Um uso por usuário? (sim/nao)",
+        placeholder="sim ou nao",
+        value="nao",
+        max_length=3,
+        required=False
+    )
+    
+    expires_input = ui.InputText(
+        label="Data Expiração (DD/MM/YYYY ou vazio)",
+        placeholder="31/12/2025",
+        required=False,
+        max_length=10
+    )
+    
     def __init__(self):
-        super().__init__(
-            title="Criar Novo Cupom", 
-            timeout=600,
-            custom_id="modal_create_coupon"
-        )
-        
-        self.add_item(ui.InputText(
-            label="Código do Cupom",
-            placeholder="Ex: PRIMEIRACOMPRA",
-            max_length=50,
-            required=True
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Desconto (%)",
-            placeholder="Ex: 10 para 10%",
-            max_length=5,
-            required=True
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Limite de Usos (0 = ilimitado)",
-            placeholder="Ex: 100",
-            value="0",
-            max_length=10,
-            required=False
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Um uso por usuário? (sim/nao)",
-            placeholder="sim ou nao",
-            value="nao",
-            max_length=3,
-            required=False
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Data Expiração (DD/MM/YYYY ou vazio)",
-            placeholder="31/12/2025",
-            required=False,
-            max_length=10
-        ))
+        # SEM timeout, SEM custom_id
+        super().__init__(title="Criar Novo Cupom")
     
     async def on_submit(self, interaction: discord.Interaction):
         """Processa criação do cupom"""
         print(f"🔧 MODAL SUBMIT: CreateCouponModal iniciado por {interaction.user.name}")
         
+        import time
+        start_time = time.time()
+        
+        # SEMPRE DEFER IMEDIATO
+        await interaction.response.defer(ephemeral=True)
+        
         try:
-            # Verificar se interaction ainda é válida
-            if interaction.response.is_done():
-                print("❌ Interaction já foi respondida!")
-                return
-                
             from models.coupon_model import CouponModel
             from datetime import datetime
             
-            code = self.children[0].value.upper().strip()
-            discount = float(self.children[1].value.strip())
-            max_uses = int(self.children[2].value.strip()) if self.children[2].value.strip() and self.children[2].value.strip() != "0" else None
-            one_per_user = self.children[3].value.strip().lower() == "sim"
-            expires_str = self.children[4].value.strip()
+            # Acessar valores via atributos
+            code = self.code_input.value.upper().strip()
+            discount = float(self.discount_input.value.strip())
+            max_uses_str = self.max_uses_input.value.strip()
+            max_uses = int(max_uses_str) if max_uses_str and max_uses_str != "0" else None
+            one_per_user = self.one_per_user_input.value.strip().lower() == "sim"
+            expires_str = self.expires_input.value.strip()
             
             # Validar desconto
             if discount < 1 or discount > 100:
-                await interaction.response.send_message("❌ Desconto deve estar entre 1% e 100%!", ephemeral=True)
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description="Desconto deve estar entre 1% e 100%!",
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
                 return
             
             # Processar data de expiração
@@ -1833,22 +1778,50 @@ class CreateCouponModal(ui.Modal):
                 try:
                     expires_at = datetime.strptime(expires_str, "%d/%m/%Y").isoformat()
                 except:
-                    await interaction.response.send_message("❌ Data inválida! Use formato DD/MM/YYYY", ephemeral=True)
+                    error_embed = discord.Embed(
+                        title="❌ Erro",
+                        description="Data inválida! Use formato DD/MM/YYYY",
+                        color=0xff0000
+                    )
+                    await interaction.followup.send(embed=error_embed, ephemeral=True)
                     return
             
-            # Criar cupom
-            coupon_data = {
-                'code': code,
-                'discount_percent': discount,
-                'max_uses': max_uses,
-                'one_per_user': one_per_user,
-                'expires_at': expires_at,
-                'created_by': interaction.user.id,
-                'active': True
-            }
-            
-            coupon_model = CouponModel()
-            success, message = await coupon_model.create_coupon(coupon_data)
+            # Criar cupom com timeout
+            try:
+                import asyncio
+                coupon_model = CouponModel()
+                
+                coupon_data = {
+                    'code': code,
+                    'discount_percent': discount,
+                    'max_uses': max_uses,
+                    'one_per_user': one_per_user,
+                    'expires_at': expires_at,
+                    'created_by': interaction.user.id,
+                    'active': True
+                }
+                
+                success, message = await asyncio.wait_for(
+                    coupon_model.create_coupon(coupon_data),
+                    timeout=10.0
+                )
+            except asyncio.TimeoutError:
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description="Operação demorou muito. Tente novamente.",
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
+                return
+            except Exception as db_error:
+                print(f"❌ Erro de conexão com banco: {db_error}")
+                error_embed = discord.Embed(
+                    title="❌ Erro de Conexão",
+                    description="Erro de conexão com o banco de dados. Tente novamente.",
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
+                return
             
             if success:
                 embed = discord.Embed(
@@ -1860,96 +1833,115 @@ class CreateCouponModal(ui.Modal):
                 embed.add_field(name="Limite", value=str(max_uses) if max_uses else "Ilimitado", inline=True)
                 embed.add_field(name="Um por usuário", value="Sim" if one_per_user else "Não", inline=True)
                 
-                await interaction.response.send_message(embed=embed, ephemeral=True)
+                await interaction.followup.send(embed=embed, ephemeral=True)
             else:
-                await interaction.response.send_message(f"❌ {message}", ephemeral=True)
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description=message,
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
+            
+            # Log de performance
+            elapsed = time.time() - start_time
+            print(f"⏱️ Modal processado em {elapsed:.2f}s")
                 
         except ValueError:
-            await interaction.response.send_message("❌ Valores inválidos! Verifique desconto e limite.", ephemeral=True)
+            error_embed = discord.Embed(
+                title="❌ Erro",
+                description="Valores inválidos! Verifique desconto e limite.",
+                color=0xff0000
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
         except Exception as e:
             print(f"❌ ERRO CRÍTICO ao criar cupom: {e}")
             import traceback
             traceback.print_exc()
             
-            # Tentar enviar mensagem de erro
-            try:
-                if not interaction.response.is_done():
-                    await interaction.response.send_message("❌ Erro ao criar cupom.", ephemeral=True)
-                else:
-                    await interaction.followup.send("❌ Erro ao criar cupom.", ephemeral=True)
-            except Exception as e2:
-                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+            error_embed = discord.Embed(
+                title="❌ Erro",
+                description=f"Erro inesperado: {str(e)[:100]}",
+                color=0xff0000
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
     
     async def on_error(self, error: Exception, interaction: discord.Interaction):
         print(f"❌ ERRO NO MODAL CreateCouponModal: {error}")
         import traceback
         traceback.print_exc()
+        
+        error_embed = discord.Embed(
+            title="❌ Erro",
+            description=f"Erro inesperado: {str(error)[:100]}",
+            color=0xff0000
+        )
         try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
-            else:
-                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
         except:
             pass
 
 class SetupSupportModal(ui.Modal):
     """Modal para configurar o sistema de tickets de suporte com select menu"""
     
+    # InputText como atributos de classe
+    titulo_input = ui.InputText(
+        label="Título da Mensagem", 
+        placeholder="Ex: Central de Atendimento", 
+        value="🎫 Central de Atendimento",
+        max_length=100
+    )
+    
+    descricao_input = ui.InputText(
+        label="Descrição da Mensagem", 
+        placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
+        value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
+        max_length=1000
+    )
+    
+    opcoes_input = ui.InputText(
+        label="Opções Menu (EMOJI|Nome|Descrição)", 
+        placeholder="Uma por linha", 
+        value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
+        style=discord.InputTextStyle.paragraph,
+        max_length=1000,
+        required=True
+    )
+    
+    botao_input = ui.InputText(
+        label="Nome do Botão | Emoji (opcional)", 
+        placeholder="Ex: Abrir Ticket | 🎫", 
+        value="Abrir Ticket | 🎫",
+        max_length=100
+    )
+    
+    cor_input = ui.InputText(
+        label="Cor do Embed (Hex)", 
+        placeholder="Ex: #5865F2", 
+        value="#5865F2",
+        max_length=10
+    )
+    
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(
-            title="Configurar Tickets de Suporte", 
-            timeout=600,
-            custom_id="modal_setup_support"
-        )
-        self.add_item(ui.InputText(
-            label="Título da Mensagem", 
-            placeholder="Ex: Central de Atendimento", 
-            value="🎫 Central de Atendimento",
-            max_length=100
-        ))
-        self.add_item(ui.InputText(
-            label="Descrição da Mensagem", 
-            placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
-            value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
-            max_length=1000
-        ))
-        self.add_item(ui.InputText(
-            label="Opções Menu (EMOJI|Nome|Descrição)", 
-            placeholder="Uma por linha", 
-            value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
-            style=discord.InputTextStyle.paragraph,
-            max_length=1000,
-            required=True
-        ))
-        self.add_item(ui.InputText(
-            label="Nome do Botão | Emoji (opcional)", 
-            placeholder="Ex: Abrir Ticket | 🎫", 
-            value="Abrir Ticket | 🎫",
-            max_length=100
-        ))
-        self.add_item(ui.InputText(
-            label="Cor do Embed (Hex)", 
-            placeholder="Ex: #5865F2", 
-            value="#5865F2",
-            max_length=10
-        ))
+        # SEM timeout, SEM custom_id
+        super().__init__(title="Configurar Tickets de Suporte")
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets de suporte"""
         print(f"🔧 MODAL SUBMIT: SetupSupportModal iniciado por {interaction.user.name}")
         
+        import time
+        start_time = time.time()
+        
+        # SEMPRE DEFER IMEDIATO
+        await interaction.response.defer(ephemeral=True)
+        
         try:
-            # Verificar se interaction ainda é válida
-            if interaction.response.is_done():
-                print("❌ Interaction já foi respondida!")
-                return
-                
-            print(f"Modal de suporte submetido por {interaction.user.name}")
-            titulo = self.children[0].value.strip()
-            descricao = self.children[1].value.strip()
-            opcoes_text = self.children[2].value.strip()
-            botao_config = self.children[3].value.strip()
-            cor_hex = self.children[4].value.strip()
+            # Acessar valores via atributos
+            titulo = self.titulo_input.value.strip()
+            descricao = self.descricao_input.value.strip()
+            opcoes_text = self.opcoes_input.value.strip()
+            botao_config = self.botao_input.value.strip()
+            cor_hex = self.cor_input.value.strip()
             
             # Processar configuração do botão (Nome | Emoji)
             label_botao = "Abrir Ticket"
@@ -1994,30 +1986,38 @@ class SetupSupportModal(ui.Modal):
                     })
             
             if not opcoes_config:
-                await interaction.response.send_message("❌ Nenhuma opção válida configurada! Use o formato: EMOJI|Nome|Descrição", ephemeral=True)
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description="Nenhuma opção válida configurada! Use o formato: EMOJI|Nome|Descrição",
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
                 return
             
             if len(opcoes_config) > 25:
-                await interaction.response.send_message("❌ Máximo de 25 opções permitidas no select menu!", ephemeral=True)
+                error_embed = discord.Embed(
+                    title="❌ Erro",
+                    description="Máximo de 25 opções permitidas no select menu!",
+                    color=0xff0000
+                )
+                await interaction.followup.send(embed=error_embed, ephemeral=True)
                 return
             
             # Converter cor hex para int
             try:
-                cor_hex = cor_hex.strip().lower()
+                cor_hex_clean = cor_hex.strip().lower()
                 
-                if cor_hex.startswith('#'):
-                    cor_hex = cor_hex[1:]
-                elif cor_hex.startswith('0x'):
-                    cor_hex = cor_hex[2:]
+                if cor_hex_clean.startswith('#'):
+                    cor_hex_clean = cor_hex_clean[1:]
+                elif cor_hex_clean.startswith('0x'):
+                    cor_hex_clean = cor_hex_clean[2:]
                 
-                if len(cor_hex) == 3:
-                    cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
+                if len(cor_hex_clean) == 3:
+                    cor_hex_clean = cor_hex_clean[0]*2 + cor_hex_clean[1]*2 + cor_hex_clean[2]*2
                 
-                cor_int = int(cor_hex, 16)
-                print(f"Cor convertida: {cor_int} (0x{cor_hex})")
-            except (ValueError, IndexError) as e:
-                print(f"Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
-                cor_int = 0x5865F2  # Azul Discord padrão
+                cor_int = int(cor_hex_clean, 16)
+            except (ValueError, IndexError):
+                cor_int = 0x5865F2
             
             # Criar embed
             embed = discord.Embed(
@@ -2037,32 +2037,37 @@ class SetupSupportModal(ui.Modal):
             # Criar view com botão que abre select menu
             view = MultiSupportTicketView(opcoes_config, label_botao, emoji_botao)
             
-            await interaction.response.send_message(embed=embed, view=view)
-            print(f"Modal de suporte processado com sucesso - {len(opcoes_config)} opções criadas")
+            # Usar followup após defer
+            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            
+            # Log de performance
+            elapsed = time.time() - start_time
+            print(f"⏱️ Modal processado em {elapsed:.2f}s - {len(opcoes_config)} opções criadas")
             
         except Exception as e:
             print(f"❌ ERRO CRÍTICO ao configurar sistema de suporte: {e}")
             import traceback
             traceback.print_exc()
             
-            # Tentar enviar mensagem de erro
-            try:
-                if not interaction.response.is_done():
-                    await interaction.response.send_message("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
-                else:
-                    await interaction.followup.send("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
-            except Exception as e2:
-                print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+            error_embed = discord.Embed(
+                title="❌ Erro",
+                description=f"Erro ao configurar sistema: {str(e)[:100]}",
+                color=0xff0000
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
     
     async def on_error(self, error: Exception, interaction: discord.Interaction):
         print(f"❌ ERRO NO MODAL SetupSupportModal: {error}")
         import traceback
         traceback.print_exc()
+        
+        error_embed = discord.Embed(
+            title="❌ Erro",
+            description=f"Erro inesperado: {str(error)[:100]}",
+            color=0xff0000
+        )
         try:
-            if not interaction.response.is_done():
-                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
-            else:
-                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
         except:
             pass
 
