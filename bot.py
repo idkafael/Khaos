@@ -22,7 +22,11 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = discord.Bot(intents=intents)
+bot = commands.Bot(
+    command_prefix='?',
+    intents=intents,
+    help_command=None  # Desabilitar help padrão
+)
 # Deploy: 24/10/2025 15:35 - Fix InputText
 
 # Adicionar comandos slash manualmente
@@ -1584,10 +1588,17 @@ async def on_ready():
         await asyncio.sleep(2)
         
         # Listar comandos registrados antes da sincronização
-        commands = bot.pending_application_commands
-        print(f"📋 Comandos registrados no bot: {len(commands)}")
-        for cmd in commands:
+        slash_cmds = bot.pending_application_commands
+        prefix_cmds = list(bot.all_commands.keys())
+        
+        print(f"📋 Slash commands: {len(slash_cmds)}")
+        for cmd in slash_cmds:
             print(f"  - /{cmd.name}: {cmd.description}")
+            
+        print(f"📋 Prefix commands (?): {len(prefix_cmds)}")
+        for cmd_name in prefix_cmds:
+            cmd = bot.all_commands[cmd_name]
+            print(f"  - ?{cmd_name}: {cmd.help or 'Sem descrição'}")
         
         # Tentar sincronizar globalmente
         try:
@@ -3176,9 +3187,8 @@ async def on_message(message):
         print(f"🔧 DEBUG: Mensagem com prefixo detectada: {message.content[:50]}...")
         print(f"🔧 DEBUG: Autor: {message.author.name}, Canal: {message.channel.name}")
     
-    # Note: Comandos com prefixo são processados através de @bot.command
-    # py-cord automaticamente processa comandos registrados via @bot.command
-    # Não é necessário chamar bot.process_commands manualmente
+    # Processar comandos com prefixo
+    await bot.process_commands(message)
     
     # Verificar se está esperando códigos de estoque
     if message.author.id in waiting_for_stock:
