@@ -1403,20 +1403,20 @@ class SetupTicketModal(ui.Modal):
 class CouponInputModal(ui.Modal):
     """Modal para coletar código de cupom (opcional)"""
     
-    # InputText como atributo de classe (py-cord 2.4)
-    coupon_input = ui.InputText(
-        label="Código do Cupom",
-        placeholder="Digite o código do cupom ou deixe em branco",
-        required=False,
-        max_length=50
-    )
-    
     def __init__(self, user, guild, product):
         # SEM timeout, SEM custom_id (py-cord gerencia)
         super().__init__(title="Cupom de Desconto (Opcional)")
         self.user = user
         self.guild = guild
         self.product = product
+        
+        # Adicionar campo manualmente (py-cord 2.4+)
+        self.add_item(ui.InputText(
+            label="Código do Cupom",
+            placeholder="Digite o código do cupom ou deixe em branco",
+            required=False,
+            max_length=50
+        ))
     
     async def on_submit(self, interaction: discord.Interaction):
         """Processa o cupom e cria o ticket"""
@@ -1429,8 +1429,8 @@ class CouponInputModal(ui.Modal):
         await interaction.response.defer(ephemeral=True)
         
         try:
-            # Acessar valor via atributo
-            coupon_code = self.coupon_input.value.strip() if self.coupon_input.value else None
+            # Acessar valor via children (primeiro campo)
+            coupon_code = self.children[0].value.strip() if self.children[0].value else None
             
             # Importar TicketManager e criar instância com bot
             from utils.ticket_manager import TicketManager
