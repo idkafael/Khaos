@@ -1588,7 +1588,7 @@ async def on_ready():
         await asyncio.sleep(2)
         
         # Listar comandos registrados antes da sincronização
-        slash_cmds = bot.pending_application_commands
+        slash_cmds = getattr(bot, 'pending_application_commands', list(bot.application_commands))
         prefix_cmds = list(bot.all_commands.keys())
         
         print(f"📋 Slash commands: {len(slash_cmds)}")
@@ -1648,7 +1648,7 @@ async def on_ready():
         print("🔍 Verificando comandos disponíveis...")
         try:
             # Tentar acessar os comandos do bot
-            app_commands = bot.pending_application_commands
+            app_commands = getattr(bot, 'pending_application_commands', list(bot.application_commands))
             print(f"📊 Total de comandos app_commands: {len(app_commands)}")
             
             # Verificar se o bot tem as permissões necessárias
@@ -2194,7 +2194,7 @@ async def sync_commands(inter):
         print(f"🔄 Comando de sincronização executado por {inter.author.name}")
         
         # Listar comandos registrados
-        commands = bot.pending_application_commands
+        commands = getattr(bot, 'pending_application_commands', list(bot.application_commands))
         await inter.send(f"📋 Comandos registrados: {len(commands)}")
         for cmd in commands:
             await inter.send(f"  - /{cmd.name}: {cmd.description}")
