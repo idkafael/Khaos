@@ -2862,30 +2862,35 @@ async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
     try:
         # Criar modal para saque
         class WithdrawalModal(disnake.ui.Modal, title="💸 Solicitar Saque"):
-            amount_input = discord.ui.InputText(
-                label="Valor a Sacar (R$)",
-                placeholder="Ex: 50.00",
-                required=True,
-                min_length=1,
-                max_length=10
-            )
+            def __init__(self):
+                components = [
+                    disnake.ui.TextInput(
+                        label="Valor a Sacar (R$)",
+                        placeholder="Ex: 50.00",
+                        custom_id="amount",
+                        required=True,
+                        min_length=1,
+                        max_length=10
+                    ),
+                    disnake.ui.TextInput(
+                        label="Chave Pix",
+                        placeholder="CPF, email, telefone, etc (ou deixe vazio para usar padrão)",
+                        custom_id="pix_key",
+                        required=False,
+                        max_length=255
+                    ),
+                    disnake.ui.TextInput(
+                        label="Tipo da Chave Pix",
+                        placeholder="cpf, cnpj, email, phone ou random",
+                        custom_id="pix_type",
+                        required=False,
+                        max_length=10
+                    )
+                ]
+                super().__init__(title="💸 Solicitar Saque", components=components)
             
-            pix_key_input = discord.ui.InputText(
-                label="Chave Pix",
-                placeholder="CPF, email, telefone, etc (ou deixe vazio para usar padrão)",
-                required=False,
-                max_length=255
-            )
-            
-            pix_type_input = discord.ui.InputText(
-                label="Tipo da Chave Pix",
-                placeholder="cpf, cnpj, email, phone ou random",
-                required=False,
-                max_length=10
-            )
-            
-            async def on_submit(self, interaction: discord.Interaction):
-                await inter.response.defer(ephemeral=True)
+            async def callback(self, interaction: disnake.ModalInteraction):
+                await interaction.response.defer(ephemeral=True)
                 
                 try:
                     from decimal import Decimal
@@ -2897,20 +2902,20 @@ async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
                     
                     # Validar valor
                     try:
-                        amount = Decimal(self.amount_input.value.replace(',', '.'))
+                        amount = Decimal(interaction.text_values.get("amount", "0").replace(',', '.'))
                     except:
-                        await inter.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
+                        await interaction.followup.send("❌ Valor inválido. Use formato: 50.00", ephemeral=True)
                         return
                     
                     # Buscar chave Pix (usar padrão se não informada)
-                    pix_key = self.pix_key_input.value.strip()
-                    pix_type = self.pix_type_input.value.strip().lower()
+                    pix_key = interaction.text_values.get("pix_key", "").strip()
+                    pix_type = interaction.text_values.get("pix_type", "").strip().lower()
                     
                     if not pix_key:
                         # Usar chave padrão
-                        wallet = await wallet_model.get_wallet(inter.guild_id)
+                        wallet = await wallet_model.get_wallet(interaction.guild_id)
                         if not wallet or not wallet.get('pix_key'):
-                            await inter.followup.send(
+                            await interaction.followup.send(
                                 "❌ Nenhuma chave Pix cadastrada. Use `/configurar_pix` primeiro ou informe a chave no formulário.",
                                 ephemeral=True
                             )
@@ -2921,20 +2926,20 @@ async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
                     
                     # Validar tipo
                     if pix_type not in ['cpf', 'cnpj', 'email', 'phone', 'random']:
-                        await inter.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
+                        await interaction.followup.send("❌ Tipo de chave inválido. Use: cpf, cnpj, email, phone ou random", ephemeral=True)
                         return
                     
                     # Criar solicitação
                     withdrawal = await withdrawal_manager.create_withdrawal_request(
-                        guild_id=inter.guild_id,
-                        user_id=inter.user.id,
+                        guild_id=interaction.guild_id,
+                        user_id=interaction.user.id,
                         amount=amount,
                         pix_key=pix_key,
                         pix_type=pix_type
                     )
                     
                     if not withdrawal:
-                        await inter.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
+                        await interaction.followup.send("❌ Erro ao criar solicitação de saque. Verifique seu saldo.", ephemeral=True)
                         return
                     
                     # Calcular taxas
@@ -2953,7 +2958,7 @@ async def solicitar_saque_cmd(inter: disnake.ApplicationCommandInteraction):
                     embed.add_field(name="Status", value="⏳ Processando...", inline=True)
                     embed.set_footer(text=f"ID: #{withdrawal['id']}")
                     
-                    await inter.followup.send(embed=embed, ephemeral=True)
+                    await interaction.followup.send(embed=embed, ephemeral=True)
                     
                     # Processar saque imediatamente em background
                     import asyncio

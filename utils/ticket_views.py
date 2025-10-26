@@ -683,52 +683,48 @@ class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
     
     def __init__(self):
-        super().__init__(title="Configurar Sistema de Tickets")
-        
-        self.headline = ui.InputText(
-            label="Headline", 
-            placeholder="Ex: Sistema de Vendas Automatizado", 
-            value="🛒 Sistema de Vendas Automatizado",
-            max_length=100
-        )
-        
-        self.descricao = ui.InputText(
-            label="Descrição", 
-            placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
-            value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
-            style=disnake.TextInputStyle.paragraph,
-            max_length=1000
-        )
-        
-        self.product_ids = ui.InputText(
-            label="IDs dos Produtos (vazio = todos)", 
-            placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
-            value="",
-            required=False,
-            max_length=200
-        )
-        
-        self.nome_botao = ui.InputText(
-            label="Nome do Botão", 
-            placeholder="Ex: Criar Ticket de Compra", 
-            value="Criar Ticket de Compra",
-            max_length=80
-        )
-        
-        self.cor = ui.InputText(
-            label="Cor do Embed (Hex)", 
-            placeholder="Ex: #0099ff ou 0x0099ff", 
-            value="#0099ff",
-            max_length=10
-        )
-        
-        self.add_item(self.headline)
-        self.add_item(self.descricao)
-        self.add_item(self.product_ids)
-        self.add_item(self.nome_botao)
-        self.add_item(self.cor)
+        components = [
+            ui.TextInput(
+                label="Headline",
+                placeholder="Ex: Sistema de Vendas Automatizado",
+                custom_id="headline",
+                default="🛒 Sistema de Vendas Automatizado",
+                max_length=100
+            ),
+            ui.TextInput(
+                label="Descrição",
+                placeholder="Ex: Clique no botão abaixo para criar um ticket de compra",
+                custom_id="descricao",
+                default="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
+                style=disnake.TextInputStyle.paragraph,
+                max_length=1000
+            ),
+            ui.TextInput(
+                label="IDs dos Produtos (vazio = todos)",
+                placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
+                custom_id="product_ids",
+                default="",
+                required=False,
+                max_length=200
+            ),
+            ui.TextInput(
+                label="Nome do Botão",
+                placeholder="Ex: Criar Ticket de Compra",
+                custom_id="nome_botao",
+                default="Criar Ticket de Compra",
+                max_length=80
+            ),
+            ui.TextInput(
+                label="Cor do Embed (Hex)",
+                placeholder="Ex: #0099ff ou 0x0099ff",
+                custom_id="cor",
+                default="#0099ff",
+                max_length=10
+            )
+        ]
+        super().__init__(title="Configurar Sistema de Tickets", components=components)
 
-    async def on_submit(self, interaction: disnake.Interaction):
+    async def callback(self, interaction: disnake.ModalInteraction):
         """Processa a configuração do sistema de tickets"""
         await interaction.response.defer(ephemeral=True)
         
@@ -738,12 +734,12 @@ class SetupTicketModal(ui.Modal):
             
             start_time = time.time()
             
-            # Acessar valores via atributos com validação
-            headline = self.headline.value.strip() if self.headline.value else "🛒 Sistema de Vendas"
-            descricao = self.descricao.value.strip() if self.descricao.value else "Clique no botão abaixo!"
-            product_ids_input = self.product_ids.value.strip() if self.product_ids.value else ""
-            nome_botao = self.nome_botao.value.strip() if self.nome_botao.value else "Criar Ticket de Compra"
-            cor_hex = self.cor.value.strip() if self.cor.value else "#0099ff"
+            # Acessar valores via interaction.text_values
+            headline = interaction.text_values.get("headline", "🛒 Sistema de Vendas").strip()
+            descricao = interaction.text_values.get("descricao", "Clique no botão abaixo!").strip()
+            product_ids_input = interaction.text_values.get("product_ids", "").strip()
+            nome_botao = interaction.text_values.get("nome_botao", "Criar Ticket de Compra").strip()
+            cor_hex = interaction.text_values.get("cor", "#0099ff").strip()
             
             # Processar IDs dos produtos
             allowed_product_ids = None
@@ -1103,46 +1099,48 @@ class CreateCouponModal(ui.Modal):
     """Modal para criar cupom"""
     
     def __init__(self):
-        super().__init__(title="Criar Novo Cupom")
-        
-        self.add_item(ui.InputText(
-            label="Código do Cupom",
-            placeholder="Ex: PRIMEIRACOMPRA",
-            max_length=50,
-            required=True
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Desconto (%)",
-            placeholder="Ex: 10 para 10%",
-            max_length=5,
-            required=True
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Limite de Usos (0 = ilimitado)",
-            placeholder="Ex: 100",
-            value="0",
-            max_length=10,
-            required=False
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Um uso por usuário? (sim/nao)",
-            placeholder="sim ou nao",
-            value="nao",
-            max_length=3,
-            required=False
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Data Expiração (DD/MM/YYYY ou vazio)",
-            placeholder="31/12/2025",
-            required=False,
-            max_length=10
-        ))
+        components = [
+            ui.TextInput(
+                label="Código do Cupom",
+                placeholder="Ex: PRIMEIRACOMPRA",
+                custom_id="code",
+                max_length=50,
+                required=True
+            ),
+            ui.TextInput(
+                label="Desconto (%)",
+                placeholder="Ex: 10 para 10%",
+                custom_id="discount",
+                max_length=5,
+                required=True
+            ),
+            ui.TextInput(
+                label="Limite de Usos (0 = ilimitado)",
+                placeholder="Ex: 100",
+                custom_id="max_uses",
+                default="0",
+                max_length=10,
+                required=False
+            ),
+            ui.TextInput(
+                label="Um uso por usuário? (sim/nao)",
+                placeholder="sim ou nao",
+                custom_id="one_per_user",
+                default="nao",
+                max_length=3,
+                required=False
+            ),
+            ui.TextInput(
+                label="Data Expiração (DD/MM/YYYY ou vazio)",
+                placeholder="31/12/2025",
+                custom_id="expires",
+                required=False,
+                max_length=10
+            )
+        ]
+        super().__init__(title="Criar Novo Cupom", components=components)
     
-    async def on_submit(self, interaction: disnake.Interaction):
+    async def callback(self, interaction: disnake.ModalInteraction):
         """Processa criação do cupom"""
         await interaction.response.defer(ephemeral=True)
         
@@ -1154,12 +1152,12 @@ class CreateCouponModal(ui.Modal):
             
             start_time = time.time()
             
-            # Acessar valores via children com validação
-            code = self.children[0].value.upper().strip() if self.children[0].value else ""
-            discount_str = self.children[1].value.strip() if self.children[1].value else "0"
-            max_uses_str = self.children[2].value.strip() if self.children[2].value else "0"
-            one_per_user_str = self.children[3].value.strip() if self.children[3].value else "nao"
-            expires_str = self.children[4].value.strip() if self.children[4].value else ""
+            # Acessar valores via interaction.text_values
+            code = interaction.text_values.get("code", "").upper().strip()
+            discount_str = interaction.text_values.get("discount", "0").strip()
+            max_uses_str = interaction.text_values.get("max_uses", "0").strip()
+            one_per_user_str = interaction.text_values.get("one_per_user", "nao").strip()
+            expires_str = interaction.text_values.get("expires", "").strip()
             
             # Convert
             try:
@@ -1229,46 +1227,48 @@ class SetupSupportModal(ui.Modal):
     """Modal para configurar o sistema de tickets de suporte com select menu"""
     
     def __init__(self):
-        super().__init__(title="Configurar Tickets de Suporte")
-        
-        self.add_item(ui.InputText(
-            label="Título da Mensagem", 
-            placeholder="Ex: Central de Atendimento", 
-            value="🎫 Central de Atendimento",
-            max_length=100
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Descrição da Mensagem", 
-            placeholder="Ex: Clique no botão abaixo para abrir um ticket", 
-            value="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
-            max_length=1000
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Opções Menu (EMOJI|Nome|Descrição)", 
-            placeholder="Uma por linha", 
-            value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
-            style=disnake.TextInputStyle.paragraph,
-            max_length=1000,
-            required=True
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Nome do Botão | Emoji (opcional)", 
-            placeholder="Ex: Abrir Ticket | 🎫", 
-            value="Abrir Ticket | 🎫",
-            max_length=100
-        ))
-        
-        self.add_item(ui.InputText(
-            label="Cor do Embed (Hex)", 
-            placeholder="Ex: #5865F2", 
-            value="#5865F2",
-            max_length=10
-        ))
+        components = [
+            ui.TextInput(
+                label="Título da Mensagem",
+                placeholder="Ex: Central de Atendimento",
+                custom_id="titulo",
+                default="🎫 Central de Atendimento",
+                max_length=100
+            ),
+            ui.TextInput(
+                label="Descrição da Mensagem",
+                placeholder="Ex: Clique no botão abaixo para abrir um ticket",
+                custom_id="descricao",
+                default="Clique no botão abaixo e selecione o tipo de atendimento que você precisa.",
+                max_length=1000
+            ),
+            ui.TextInput(
+                label="Opções Menu (EMOJI|Nome|Descrição)",
+                placeholder="Uma por linha",
+                custom_id="opcoes",
+                default="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
+                style=disnake.TextInputStyle.paragraph,
+                max_length=1000,
+                required=True
+            ),
+            ui.TextInput(
+                label="Nome do Botão | Emoji (opcional)",
+                placeholder="Ex: Abrir Ticket | 🎫",
+                custom_id="botao",
+                default="Abrir Ticket | 🎫",
+                max_length=100
+            ),
+            ui.TextInput(
+                label="Cor do Embed (Hex)",
+                placeholder="Ex: #5865F2",
+                custom_id="cor",
+                default="#5865F2",
+                max_length=10
+            )
+        ]
+        super().__init__(title="Configurar Tickets de Suporte", components=components)
 
-    async def on_submit(self, interaction: disnake.Interaction):
+    async def callback(self, interaction: disnake.ModalInteraction):
         """Processa a configuração do sistema de tickets de suporte"""
         await interaction.response.defer(ephemeral=True)
         
@@ -1276,12 +1276,12 @@ class SetupSupportModal(ui.Modal):
             import time
             start_time = time.time()
             
-            # Acessar valores via children com validação
-            titulo = self.children[0].value.strip() if self.children[0].value else "🎫 Central de Atendimento"
-            descricao = self.children[1].value.strip() if self.children[1].value else "Clique no botão abaixo!"
-            opcoes_text = self.children[2].value.strip() if self.children[2].value else ""
-            botao_config = self.children[3].value.strip() if self.children[3].value else "Abrir Ticket | 🎫"
-            cor_hex = self.children[4].value.strip() if self.children[4].value else "#5865F2"
+            # Acessar valores via interaction.text_values
+            titulo = interaction.text_values.get("titulo", "🎫 Central de Atendimento").strip()
+            descricao = interaction.text_values.get("descricao", "Clique no botão abaixo!").strip()
+            opcoes_text = interaction.text_values.get("opcoes", "").strip()
+            botao_config = interaction.text_values.get("botao", "Abrir Ticket | 🎫").strip()
+            cor_hex = interaction.text_values.get("cor", "#5865F2").strip()
             
             # Processar configuração do botão
             label_botao = "Abrir Ticket"
