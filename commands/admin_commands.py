@@ -158,44 +158,7 @@ class ProductSelectView(ui.View):
 
 async def setup_admin_commands(bot: discord.Bot):
     """Configura os comandos de admin"""
-    
-    @bot.slash_command(
-        name="adicionar_estoque",
-        description="[ADMIN] Adicionar itens ao estoque de um produto"
-    )
-    @commands.has_permissions(administrator=True)
-    async def add_stock_command(ctx: discord.ApplicationContext):
-        """Comando para adicionar estoque"""
-        try:
-            # Buscar todos os produtos
-            product_model = ProductModel()
-            products = await product_model.get_all_products()
-            
-            if not products:
-                await ctx.respond("❌ Nenhum produto cadastrado.", ephemeral=True)
-                return
-            
-            # Criar embed de introdução
-            embed = discord.Embed(
-                title="➕ Adicionar Estoque",
-                description="Selecione o produto para adicionar itens ao estoque.",
-                color=0x3498db
-            )
-            embed.add_field(
-                name="📝 Como funciona",
-                value="1. Selecione o produto\n2. Cole os códigos/keys (um por linha)\n3. Confirme",
-                inline=False
-            )
-            
-            # Enviar com select menu
-            view = ProductSelectView(products, action="add")
-            await ctx.respond(embed=embed, view=view, ephemeral=True)
-            
-        except Exception as e:
-            print(f"Erro no comando adicionar_estoque: {e}")
-            import traceback
-            traceback.print_exc()
-            await ctx.respond(f"❌ Erro: {str(e)}", ephemeral=True)
+    # Nota: Comandos de estoque foram movidos para bot.py para evitar duplicação
     
     @bot.slash_command(
         name="ver_estoque",
