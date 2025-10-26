@@ -5,6 +5,7 @@ from typing import List, Dict, Optional
 from models.product_model import ProductModel
 from utils.ticket_manager import TicketManager
 import asyncio
+import time
 
 # Sistema de aguardar input do usuário (substitui modais)
 waiting_for_input = {}
@@ -122,76 +123,88 @@ async def process_user_input(message: discord.Message, input_data: dict):
 class SetupMessageModal(ui.Modal):
     """Modal para criar mensagens embed personalizadas sem botões"""
     
+    # InputText como atributos de classe
+    titulo_input = ui.InputText(
+        label="Título", 
+        placeholder="Ex: Bem-vindo ao Servidor!", 
+        value="",
+        max_length=256,
+        required=False
+    )
+    
+    descricao_input = ui.InputText(
+        label="Descrição", 
+        placeholder="Escreva o conteúdo principal da mensagem...", 
+        value="",
+        style=discord.InputTextStyle.paragraph,
+        max_length=4000,
+        required=True
+    )
+    
+    url_imagem_input = ui.InputText(
+        label="URL da Imagem", 
+        placeholder="Cole o link da imagem (opcional)", 
+        value="",
+        required=False,
+        max_length=500
+    )
+    
+    cor_input = ui.InputText(
+        label="Cor do Embed (Hex)", 
+        placeholder="Ex: #0099ff ou 0x0099ff", 
+        value="#0099ff",
+        max_length=10
+    )
+    
+    rodape_input = ui.InputText(
+        label="Rodapé (Footer)", 
+        placeholder="Texto no rodapé (opcional)", 
+        value="",
+        required=False,
+        max_length=100
+    )
+    
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(
-            title="Criar Mensagem Embed", 
-            timeout=600,
-            custom_id="modal_setup_message"
-        )
-        self.add_item(ui.InputText(
-            label="Título", 
-            placeholder="Ex: Bem-vindo ao Servidor!", 
-            value="",
-            max_length=256,
-            required=False
-        ))
-        self.add_item(ui.InputText(
-            label="Descrição", 
-            placeholder="Escreva o conteúdo principal da mensagem...", 
-            value="",
-            style=discord.InputTextStyle.paragraph,
-            max_length=4000,
-            required=True
-        ))
-        self.add_item(ui.InputText(
-            label="URL da Imagem", 
-            placeholder="Cole o link da imagem (opcional)", 
-            value="",
-            required=False,
-            max_length=500
-        ))
-        self.add_item(ui.InputText(
-            label="Cor do Embed (Hex)", 
-            placeholder="Ex: #0099ff ou 0x0099ff", 
-            value="#0099ff",
-            max_length=10
-        ))
-        self.add_item(ui.InputText(
-            label="Rodapé (Footer)", 
-            placeholder="Texto no rodapé (opcional)", 
-            value="",
-            required=False,
-            max_length=100
-        ))
+        # SEM timeout, SEM custom_id
+        super().__init__(title="Criar Mensagem Embed")
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a criação da mensagem embed"""
         print(f"🔧 MODAL SUBMIT: SetupMessageModal iniciado por {interaction.user.name}")
         
+        # Medição de performance
+        import time
+        start_time = time.time()
+        
+        # SEMPRE DEFER IMEDIATO (< 3 segundos)
+        await interaction.response.defer(ephemeral=True)
+        
         try:
             print(f"Modal de mensagem submetido por {interaction.user.name}")
-            titulo = self.children[0].value.strip()
-            descricao = self.children[1].value.strip()
-            url_imagem = self.children[2].value.strip()
-            cor_hex = self.children[3].value.strip()
-            rodape = self.children[4].value.strip()
+            
+            # Acessar valores via atributos
+            titulo = self.titulo_input.value.strip()
+            descricao = self.descricao_input.value.strip()
+            url_imagem = self.url_imagem_input.value.strip()
+            cor_hex = self.cor_input.value.strip()
+            rodape = self.rodape_input.value.strip()
             
             print(f"Valores: titulo={titulo}, descricao={descricao[:50]}..., cor={cor_hex}")
             
             # Converter cor hex para int
             try:
-                cor_hex = cor_hex.strip().lower()
+                cor_hex_clean = cor_hex.strip().lower()
                 
-                if cor_hex.startswith('#'):
-                    cor_hex = cor_hex[1:]
-                elif cor_hex.startswith('0x'):
-                    cor_hex = cor_hex[2:]
+                if cor_hex_clean.startswith('#'):
+                    cor_hex_clean = cor_hex_clean[1:]
+                elif cor_hex_clean.startswith('0x'):
+                    cor_hex_clean = cor_hex_clean[2:]
                 
-                if len(cor_hex) == 3:
-                    cor_hex = cor_hex[0] + cor_hex[0] + cor_hex[1] + cor_hex[1] + cor_hex[2] + cor_hex[2]
+                if len(cor_hex_clean) == 3:
+                    cor_hex_clean = cor_hex_clean[0]*2 + cor_hex_clean[1]*2 + cor_hex_clean[2]*2
                 
-                cor_int = int(cor_hex, 16)
-                print(f"Cor convertida: {cor_int} (0x{cor_hex})")
+                cor_int = int(cor_hex_clean, 16)
+                print(f"Cor convertida: {cor_int} (0x{cor_hex_clean})")
             except (ValueError, IndexError) as e:
                 print(f"Cor inválida '{cor_hex}', usando padrão. Erro: {e}")
                 cor_int = 0x0099ff
@@ -218,36 +231,43 @@ class SetupMessageModal(ui.Modal):
             if rodape:
                 embed.set_footer(text=rodape)
             
-            # Enviar mensagem embed (sem view/botões)
+            # Usar followup após defer
             print("🔧 Enviando resposta do modal...")
-            await interaction.response.send_message(embed=embed)
+            await interaction.followup.send(embed=embed, ephemeral=True)
             print("✅ Mensagem embed criada com sucesso")
+            
+            # Log de performance
+            elapsed = time.time() - start_time
+            print(f"⏱️ Modal processado em {elapsed:.2f}s")
             
         except Exception as e:
             print(f"❌ ERRO CRÍTICO ao criar mensagem embed: {e}")
             import traceback
             traceback.print_exc()
             
-            # Tentar enviar mensagem de erro
-            try:
-                await interaction.response.send_message("❌ Erro ao criar mensagem embed.", ephemeral=True)
-            except:
-                try:
-                    await interaction.followup.send("❌ Erro ao criar mensagem embed.", ephemeral=True)
-                except Exception as e2:
-                    print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+            # Usar followup sempre (já fizemos defer)
+            error_embed = discord.Embed(
+                title="❌ Erro",
+                description=f"Erro ao criar mensagem embed: {str(e)[:100]}",
+                color=0xff0000
+            )
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
     
     async def on_error(self, error: Exception, interaction: discord.Interaction):
         print(f"❌ ERRO NO MODAL SetupMessageModal: {error}")
         import traceback
         traceback.print_exc()
+        
+        # Usar followup sempre
+        error_embed = discord.Embed(
+            title="❌ Erro",
+            description=f"Erro inesperado: {str(error)[:100]}",
+            color=0xff0000
+        )
         try:
-            await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            await interaction.followup.send(embed=error_embed, ephemeral=True)
         except:
-            try:
-                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
-            except:
-                pass
+            pass  # Ignorar se falhar
 
 # Sistema de gerenciamento de views ativas
 active_config_views = {}
