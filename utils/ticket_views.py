@@ -7,119 +7,6 @@ from utils.ticket_manager import TicketManager
 import asyncio
 import time
 
-# Sistema de aguardar input do usuário (substitui modais)
-waiting_for_input = {}
-# Formato: {user_id: {'type': str, 'guild_id': int, 'channel_id': int, 'extra_data': dict}}
-
-async def process_user_input(message: disnake.Message, input_data: dict):
-    """Processa input do usuário baseado no tipo aguardado"""
-    try:
-        input_type = input_data['type']
-        guild_id = input_data['guild_id']
-        user_content = message.content.strip()
-        
-        print(f"🔧 Processando input tipo '{input_type}' de {message.author.name}: {user_content[:50]}...")
-        
-        # Buscar view ativa para esta guild
-        view = active_config_views.get(guild_id)
-        if not view:
-            await message.channel.send(
-                f"{message.author.mention} ❌ Sessão de configuração expirada. Use `/setup_ticket` novamente.",
-                delete_after=10
-            )
-            return
-        
-        # Processar baseado no tipo
-        if input_type == 'title':
-            view.config['title'] = user_content
-            
-        elif input_type == 'description':
-            view.config['description'] = user_content
-            
-        elif input_type == 'color':
-            # Converter cor hex para int
-            try:
-                color_hex = user_content.lower()
-                if color_hex.startswith('#'):
-                    color_hex = color_hex[1:]
-                elif color_hex.startswith('0x'):
-                    color_hex = color_hex[2:]
-                
-                if len(color_hex) == 3:
-                    color_hex = color_hex[0]*2 + color_hex[1]*2 + color_hex[2]*2
-                
-                view.config['color'] = int(color_hex, 16)
-            except (ValueError, IndexError):
-                await message.channel.send(
-                    f"{message.author.mention} ❌ Cor inválida! Use formato hex (#0099ff ou 0099ff)",
-                    delete_after=10
-                )
-                return
-                
-        elif input_type == 'author':
-            view.config['author'] = user_content if user_content else None
-            
-        elif input_type == 'fields':
-            # Parse campos (Nome|Valor|inline por linha)
-            fields = []
-            if user_content:
-                for line in user_content.split('\n'):
-                    line = line.strip()
-                    if not line:
-                        continue
-                    parts = line.split('|')
-                    if len(parts) >= 2:
-                        fields.append({
-                            'name': parts[0].strip(),
-                            'value': parts[1].strip(),
-                            'inline': parts[2].strip().lower() == 'true' if len(parts) > 2 else False
-                        })
-            view.config['fields'] = fields
-            
-        elif input_type == 'images':
-            # Parse URLs (linha 1 = imagem, linha 2 = thumbnail)
-            lines = user_content.split('\n')
-            view.config['image'] = lines[0].strip() if len(lines) > 0 and lines[0].strip() else None
-            view.config['thumbnail'] = lines[1].strip() if len(lines) > 1 and lines[1].strip() else None
-            
-        elif input_type == 'footer':
-            view.config['footer'] = user_content if user_content else None
-            
-        elif input_type == 'button_name':
-            view.config['button_name'] = user_content
-            
-        elif input_type == 'product_filter':
-            # Parse IDs (1,2,3 ou vazio para todos)
-            if user_content:
-                try:
-                    product_ids = [int(x.strip()) for x in user_content.split(',')]
-                    view.config['product_ids'] = product_ids
-                except ValueError:
-                    await message.channel.send(
-                        f"{message.author.mention} ❌ IDs inválidos! Use números separados por vírgula (1,2,3)",
-                        delete_after=10
-                    )
-                    return
-            else:
-                view.config['product_ids'] = None
-        
-        # Atualizar preview
-        if view.message:
-            await view.message.edit(embed=view._create_embed(), view=view)
-            print(f"✅ Preview atualizado com sucesso para {input_type}")
-        
-        # Feedback ao usuário
-        await message.add_reaction("✅")
-        
-    except Exception as e:
-        print(f"❌ Erro ao processar input: {e}")
-        import traceback
-        traceback.print_exc()
-        await message.channel.send(
-            f"{message.author.mention} ❌ Erro ao processar: {str(e)[:100]}",
-            delete_after=10
-        )
-
 class SetupMessageModal(ui.Modal):
     """Modal para criar mensagens embed personalizadas - DISNAKE"""
     
@@ -404,6 +291,36 @@ class TicketConfigView(ui.View):
                 ephemeral=True
             )
 
+class TitleModal(ui.Modal):
+    """Modal para editar título"""
+    
+    def __init__(self, current_title: str):
+        components = [
+            ui.TextInput(
+                label="Título do Embed",
+                placeholder="Ex: 🛒 Sistema de Vendas Automatizado",
+                custom_id="title_input",
+                default=current_title,
+                max_length=256
+            )
+        ]
+        super().__init__(title="Editar Título", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
+        
+        title = interaction.text_values.get("title_input", "").strip()
+        
+        # Buscar view ativa
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['title'] = title
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Título atualizado!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada. Use `/setup_ticket` novamente.", ephemeral=True)
+
 class TitleButton(ui.Button):
     """Botão para editar título"""
     
@@ -416,20 +333,40 @@ class TitleButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        # Registrar que usuário está aguardando input
-        waiting_for_input[interaction.user.id] = {
-            'type': 'title',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_title = view.config.get('title', '🛒 Sistema de Vendas Automatizado')
+        modal = TitleModal(current_title)
+        await interaction.response.send_modal(modal)
+
+class DescriptionModal(ui.Modal):
+    """Modal para editar descrição"""
+    
+    def __init__(self, current_description: str):
+        components = [
+            ui.TextInput(
+                label="Descrição do Embed",
+                placeholder="Clique no botão abaixo para criar um ticket!",
+                custom_id="description_input",
+                default=current_description,
+                style=disnake.TextInputStyle.paragraph,
+                max_length=4000
+            )
+        ]
+        super().__init__(title="Editar Descrição", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
         
-        await interaction.response.send_message(
-            "📝 **Digite o novo título do embed:**\n"
-            "Digite sua resposta no chat abaixo. A mensagem será processada automaticamente.\n\n"
-            "**Exemplo:** `🛒 Sistema de Vendas Automatizado`",
-            ephemeral=True,
-            delete_after=60
-        )
+        description = interaction.text_values.get("description_input", "").strip()
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['description'] = description
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Descrição atualizada!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class DescriptionButton(ui.Button):
     """Botão para editar descrição"""
@@ -443,19 +380,52 @@ class DescriptionButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'description',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_desc = view.config.get('description', 'Clique no botão abaixo!')
+        modal = DescriptionModal(current_desc)
+        await interaction.response.send_modal(modal)
+
+class ColorModal(ui.Modal):
+    """Modal para editar cor"""
+    
+    def __init__(self):
+        components = [
+            ui.TextInput(
+                label="Cor do Embed (Hex)",
+                placeholder="Ex: #0099ff ou 0099ff",
+                custom_id="color_input",
+                default="#0099ff",
+                max_length=10
+            )
+        ]
+        super().__init__(title="Editar Cor", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
         
-        await interaction.response.send_message(
-            "📄 **Digite a nova descrição do embed:**\n"
-            "Digite sua resposta no chat. Pode ser texto longo.\n\n"
-            "**Exemplo:** `Clique no botão abaixo para criar um ticket e ser atendido!`",
-            ephemeral=True,
-            delete_after=60
-        )
+        color_hex = interaction.text_values.get("color_input", "#0099ff").strip()
+        
+        try:
+            # Converter cor hex para int
+            cor_hex_clean = color_hex.strip().lower()
+            if cor_hex_clean.startswith('#'):
+                cor_hex_clean = cor_hex_clean[1:]
+            elif cor_hex_clean.startswith('0x'):
+                cor_hex_clean = cor_hex_clean[2:]
+            if len(cor_hex_clean) == 3:
+                cor_hex_clean = cor_hex_clean[0]*2 + cor_hex_clean[1]*2 + cor_hex_clean[2]*2
+            cor_int = int(cor_hex_clean, 16)
+            
+            view = active_config_views.get(interaction.guild_id)
+            if view:
+                view.config['color'] = cor_int
+                if view.message:
+                    await view.message.edit(embed=view._create_embed(), view=view)
+                await interaction.followup.send("✅ Cor atualizada!", ephemeral=True)
+            else:
+                await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
+        except ValueError:
+            await interaction.followup.send("❌ Cor inválida! Use formato hex (#0099ff).", ephemeral=True)
 
 class ColorButton(ui.Button):
     """Botão para editar cor"""
@@ -469,19 +439,38 @@ class ColorButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'color',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        modal = ColorModal()
+        await interaction.response.send_modal(modal)
+
+class AuthorModal(ui.Modal):
+    """Modal para editar autor"""
+    
+    def __init__(self, current_author: str):
+        components = [
+            ui.TextInput(
+                label="Nome do Autor (opcional)",
+                placeholder="Deixe vazio para remover",
+                custom_id="author_input",
+                default=current_author or "",
+                required=False,
+                max_length=100
+            )
+        ]
+        super().__init__(title="Editar Autor", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
         
-        await interaction.response.send_message(
-            "🎨 **Digite a cor do embed (formato hex):**\n"
-            "Digite no chat. Formatos aceitos: `#0099ff`, `0099ff` ou `09f`\n\n"
-            "**Exemplo:** `#FF5733`",
-            ephemeral=True,
-            delete_after=60
-        )
+        author = interaction.text_values.get("author_input", "").strip() or None
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['author'] = author
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Autor atualizado!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class AuthorButton(ui.Button):
     """Botão para editar autor"""
@@ -495,19 +484,61 @@ class AuthorButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'author',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_author = view.config.get('author') or ""
+        modal = AuthorModal(current_author)
+        await interaction.response.send_modal(modal)
+
+class FieldsModal(ui.Modal):
+    """Modal para editar campos"""
+    
+    def __init__(self, current_fields: list):
+        # Converter campos para texto
+        fields_text = ""
+        if current_fields:
+            for field in current_fields:
+                fields_text += f"{field['name']}|{field['value']}|{field.get('inline', False)}\n"
         
-        await interaction.response.send_message(
-            "👤 **Digite o nome do autor (opcional):**\n"
-            "Digite no chat. Deixe vazio para remover.\n\n"
-            "**Exemplo:** `Sistema de Vendas` ou `vazio` para remover",
-            ephemeral=True,
-            delete_after=60
-        )
+        components = [
+            ui.TextInput(
+                label="Campos (um por linha)",
+                placeholder="Nome|Valor|inline",
+                custom_id="fields_input",
+                default=fields_text.strip(),
+                style=disnake.TextInputStyle.paragraph,
+                max_length=2000,
+                required=False
+            )
+        ]
+        super().__init__(title="Editar Campos", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
+        
+        fields_text = interaction.text_values.get("fields_input", "").strip()
+        fields = []
+        
+        if fields_text:
+            for line in fields_text.split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                parts = line.split('|')
+                if len(parts) >= 2:
+                    fields.append({
+                        'name': parts[0].strip(),
+                        'value': parts[1].strip(),
+                        'inline': parts[2].strip().lower() == 'true' if len(parts) > 2 else False
+                    })
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['fields'] = fields
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Campos atualizados!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class FieldsButton(ui.Button):
     """Botão para editar campos"""
@@ -521,21 +552,48 @@ class FieldsButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'fields',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_fields = view.config.get('fields', [])
+        modal = FieldsModal(current_fields)
+        await interaction.response.send_modal(modal)
+
+class ImageModal(ui.Modal):
+    """Modal para editar imagens"""
+    
+    def __init__(self, current_image: str, current_thumbnail: str):
+        images_text = f"{current_image or ''}\n{current_thumbnail or ''}"
         
-        await interaction.response.send_message(
-            "📋 **Digite os campos do embed (um por linha):**\n"
-            "Formato: `Nome|Valor|inline` (inline = true ou false)\n\n"
-            "**Exemplo:**\n"
-            "`Horário|24/7|true`\n"
-            "`Pagamento|PIX|true`",
-            ephemeral=True,
-            delete_after=60
-        )
+        components = [
+            ui.TextInput(
+                label="URLs das Imagens",
+                placeholder="Linha 1: imagem principal\nLinha 2: thumbnail",
+                custom_id="images_input",
+                default=images_text.strip(),
+                style=disnake.TextInputStyle.paragraph,
+                max_length=1000,
+                required=False
+            )
+        ]
+        super().__init__(title="Editar Imagens", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
+        
+        images_text = interaction.text_values.get("images_input", "").strip()
+        lines = images_text.split('\n')
+        
+        image = lines[0].strip() if len(lines) > 0 and lines[0].strip() else None
+        thumbnail = lines[1].strip() if len(lines) > 1 and lines[1].strip() else None
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['image'] = image
+            view.config['thumbnail'] = thumbnail
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Imagens atualizadas!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class ImageButton(ui.Button):
     """Botão para editar imagens"""
@@ -549,22 +607,41 @@ class ImageButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'images',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_image = view.config.get('image') or ""
+        current_thumbnail = view.config.get('thumbnail') or ""
+        modal = ImageModal(current_image, current_thumbnail)
+        await interaction.response.send_modal(modal)
+
+class FooterModal(ui.Modal):
+    """Modal para editar rodapé"""
+    
+    def __init__(self, current_footer: str):
+        components = [
+            ui.TextInput(
+                label="Texto do Rodapé (opcional)",
+                placeholder="Deixe vazio para remover",
+                custom_id="footer_input",
+                default=current_footer or "",
+                required=False,
+                max_length=100
+            )
+        ]
+        super().__init__(title="Editar Rodapé", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
         
-        await interaction.response.send_message(
-            "🖼️ **Digite as URLs das imagens:**\n"
-            "Linha 1: URL da imagem principal\n"
-            "Linha 2: URL da thumbnail (opcional)\n\n"
-            "**Exemplo:**\n"
-            "`https://exemplo.com/banner.png`\n"
-            "`https://exemplo.com/thumb.png`",
-            ephemeral=True,
-            delete_after=60
-        )
+        footer = interaction.text_values.get("footer_input", "").strip() or None
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['footer'] = footer
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Rodapé atualizado!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class FooterButton(ui.Button):
     """Botão para editar rodapé"""
@@ -578,19 +655,39 @@ class FooterButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'footer',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_footer = view.config.get('footer') or ""
+        modal = FooterModal(current_footer)
+        await interaction.response.send_modal(modal)
+
+class ButtonNameModal(ui.Modal):
+    """Modal para editar nome do botão"""
+    
+    def __init__(self, current_button_name: str):
+        components = [
+            ui.TextInput(
+                label="Nome do Botão",
+                placeholder="Ex: Criar Ticket de Compra",
+                custom_id="button_name_input",
+                default=current_button_name,
+                max_length=80
+            )
+        ]
+        super().__init__(title="Editar Nome do Botão", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
         
-        await interaction.response.send_message(
-            "📌 **Digite o texto do rodapé (opcional):**\n"
-            "Digite no chat. Deixe vazio para remover.\n\n"
-            "**Exemplo:** `Atendimento 24/7 • Pagamento via Pix`",
-            ephemeral=True,
-            delete_after=60
-        )
+        button_name = interaction.text_values.get("button_name_input", "").strip()
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['button_name'] = button_name
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Nome do botão atualizado!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class ButtonNameButton(ui.Button):
     """Botão para editar nome do botão"""
@@ -604,19 +701,52 @@ class ButtonNameButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'button_name',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
+        view = self.view
+        current_button_name = view.config.get('button_name', 'Criar Ticket de Compra')
+        modal = ButtonNameModal(current_button_name)
+        await interaction.response.send_modal(modal)
+
+class ProductFilterModal(ui.Modal):
+    """Modal para editar filtro de produtos"""
+    
+    def __init__(self, current_product_ids: list):
+        product_ids_text = ""
+        if current_product_ids:
+            product_ids_text = ",".join(map(str, current_product_ids))
         
-        await interaction.response.send_message(
-            "🔘 **Digite o nome do botão de criar ticket:**\n"
-            "Digite no chat.\n\n"
-            "**Exemplo:** `Criar Ticket de Compra` ou `Comprar Agora`",
-            ephemeral=True,
-            delete_after=60
-        )
+        components = [
+            ui.TextInput(
+                label="IDs dos Produtos (opcional)",
+                placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
+                custom_id="product_ids_input",
+                default=product_ids_text,
+                required=False,
+                max_length=200
+            )
+        ]
+        super().__init__(title="Editar Filtro de Produtos", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
+        
+        product_ids_text = interaction.text_values.get("product_ids_input", "").strip()
+        product_ids = None
+        
+        if product_ids_text:
+            try:
+                product_ids = [int(x.strip()) for x in product_ids_text.split(',') if x.strip()]
+            except ValueError:
+                await interaction.followup.send("❌ IDs inválidos! Use números separados por vírgula.", ephemeral=True)
+                return
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['product_ids'] = product_ids
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send("✅ Filtro de produtos atualizado!", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
 
 class ProductFilterButton(ui.Button):
     """Botão para editar filtro de produtos"""
@@ -630,20 +760,10 @@ class ProductFilterButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        waiting_for_input[interaction.user.id] = {
-            'type': 'product_filter',
-            'guild_id': interaction.guild_id,
-            'channel_id': interaction.channel_id
-        }
-        
-        await interaction.response.send_message(
-            "🔍 **Digite os IDs dos produtos permitidos (opcional):**\n"
-            "Formato: números separados por vírgula\n"
-            "Deixe vazio para permitir todos os produtos.\n\n"
-            "**Exemplo:** `1,2,3,5` ou `vazio` para todos",
-            ephemeral=True,
-            delete_after=60
-        )
+        view = self.view
+        current_product_ids = view.config.get('product_ids') or []
+        modal = ProductFilterModal(current_product_ids)
+        await interaction.response.send_modal(modal)
 
 class PreviewButton(ui.Button):
     """Botão para atualizar preview"""
@@ -675,9 +795,7 @@ class FinishButton(ui.Button):
         view = self.view
         await view.finish_configuration(interaction)
 
-# MODAIS DELETADOS - Sistema "aguardar mensagem" já implementado
-# TitleModal, DescriptionModal, ColorModal, AuthorModal, FieldsModal, 
-# ImageModal, FooterModal, ButtonNameModal, ProductFilterModal
+
 
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
