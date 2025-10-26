@@ -283,7 +283,7 @@ class TicketConfigView(ui.View):
     
     def _create_embed(self):
         """Cria o embed baseado na configuração"""
-            embed = discord.Embed(
+        embed = discord.Embed(
             title=self.config['title'],
             description=self.config['description'],
             color=self.config['color']
@@ -777,22 +777,22 @@ class SetupTicketModal(ui.Modal):
             
             # Criar embed
             embed = discord.Embed(title=headline, description=descricao, color=cor_int)
+            embed.add_field(
+                name="🚀 Como Funciona?",
+                value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
+                inline=False
+            )
+            if allowed_product_ids:
                 embed.add_field(
-                    name="🚀 Como Funciona?",
-                    value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
+                    name="🔍 Produtos Filtrados",
+                    value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
                     inline=False
                 )
-                if allowed_product_ids:
-                    embed.add_field(
-                        name="🔍 Produtos Filtrados",
-                        value=f"Apenas os produtos com IDs: **{', '.join(map(str, allowed_product_ids))}** aparecerão neste ticket.",
-                        inline=False
-                    )
-                embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
+            embed.set_footer(text="Atendimento 24/7 • Pagamento via Pix")
 
             # Criar view com botão
-                view = TicketView(nome_botao)
-                            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            view = TicketView(nome_botao)
+            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
             
             print(f"⏱️ SetupTicketModal processado em {time.time() - start_time:.2f}s")
 
