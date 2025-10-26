@@ -158,55 +158,7 @@ class ProductSelectView(ui.View):
 
 async def setup_admin_commands(bot: discord.Bot):
     """Configura os comandos de admin"""
-    # Nota: Comandos de estoque foram movidos para bot.py para evitar duplicação
-    
-    @bot.slash_command(
-        name="ver_estoque",
-        description="[ADMIN] Ver resumo do estoque de produtos"
-    )
-    @commands.has_permissions(administrator=True)
-    async def view_stock_command(ctx: discord.ApplicationContext):
-        """Comando para ver estoque"""
-        try:
-            inventory_model = InventoryModel()
-            summary = await inventory_model.get_all_stock_summary()
-            
-            if not summary:
-                await ctx.respond("❌ Nenhum produto com estoque.", ephemeral=True)
-                return
-            
-            # Criar embed com resumo
-            embed = discord.Embed(
-                title="📊 Resumo de Estoque",
-                description="Status de estoque de todos os produtos",
-                color=0x3498db
-            )
-            
-            for item in summary:
-                status_emoji = "✅" if item['available'] > 0 else "❌"
-                value = f"{status_emoji} Disponível: **{item['available']}**\n"
-                value += f"🔒 Reservado: {item['reserved']}\n"
-                value += f"💰 Vendido: {item['sold']}\n"
-                value += f"📦 Total: {item['total']}"
-                
-                embed.add_field(
-                    name=f"{item['product_name']}",
-                    value=value,
-                    inline=True
-                )
-            
-            # Adicionar botão para ver detalhes
-            product_model = ProductModel()
-            products = await product_model.get_all_products()
-            view = ProductSelectView(products, action="view")
-            
-            await ctx.respond(embed=embed, view=view, ephemeral=True)
-            
-        except Exception as e:
-            print(f"Erro no comando ver_estoque: {e}")
-            import traceback
-            traceback.print_exc()
-            await ctx.respond(f"❌ Erro: {str(e)}", ephemeral=True)
-    
-    print("✅ Comandos de admin configurados")
+    # Nota: Todos os comandos slash foram movidos para bot.py para evitar duplicação
+    # Este arquivo agora contém apenas modais e views para uso pelos comandos
+    print("✅ Modais e views de admin carregados")
 
