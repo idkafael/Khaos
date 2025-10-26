@@ -3347,10 +3347,7 @@ async def adicionar_estoque(ctx: discord.ApplicationContext):
 # Executar o bot
 if __name__ == "__main__":
     try:
-        print("🚀 Iniciando bot com sistema híbrido (slash + prefixo)...")
-        print(f"🔧 Prefixo configurado: {bot.command_prefix}")
-        print(f"🔧 Comandos registrados: {len(bot.commands)} comandos com prefixo")
-        print(f"🔧 Slash commands: {len(bot.application_commands)} comandos slash")
+        print("🚀 Iniciando bot...")
         bot.run(Config.DISCORD_TOKEN)
     except Exception as e:
         print(f"Erro ao iniciar o bot: {e}")
