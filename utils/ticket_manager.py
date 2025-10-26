@@ -1,4 +1,4 @@
-import discord
+import disnake
 from datetime import datetime
 from typing import Tuple, Optional
 from config.config import Config
@@ -12,7 +12,7 @@ class TicketManager:
         self.admin_role_id = getattr(Config, 'ADMIN_ROLE_ID', None)
         self.logs_channel_id = getattr(Config, 'TICKET_LOGS_CHANNEL_ID', None)
     
-    async def create_ticket(self, user: discord.Member, guild: discord.Guild, product: dict, coupon_code: str = None) -> Tuple[bool, str]:
+    async def create_ticket(self, user: disnake.Member, guild: disnake.Guild, product: dict, coupon_code: str = None) -> Tuple[bool, str]:
         """Cria um novo ticket (canal privado) para o usuário"""
         try:
             # Verificar se usuário já tem ticket ativo
@@ -23,20 +23,20 @@ class TicketManager:
             # Encontrar categoria de tickets (se configurada)
             category = None
             if self.ticket_category_id:
-                category = discord.utils.get(guild.categories, id=self.ticket_category_id)
+                category = disnake.utils.get(guild.categories, id=self.ticket_category_id)
             
             # Configurar permissões do canal
             overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-                guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True)
+                guild.default_role: disnake.PermissionOverwrite(read_messages=False),
+                user: disnake.PermissionOverwrite(read_messages=True, send_messages=True),
+                guild.me: disnake.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True)
             }
             
             # Adicionar permissões para admin role se configurado
             if self.admin_role_id:
-                admin_role = discord.utils.get(guild.roles, id=self.admin_role_id)
+                admin_role = disnake.utils.get(guild.roles, id=self.admin_role_id)
                 if admin_role:
-                    overwrites[admin_role] = discord.PermissionOverwrite(
+                    overwrites[admin_role] = disnake.PermissionOverwrite(
                         read_messages=True, 
                         send_messages=True, 
                         manage_messages=True
@@ -92,7 +92,7 @@ class TicketManager:
             print(f"Erro ao criar ticket: {e}")
             return False, f"Erro ao criar ticket: {str(e)}"
     
-    async def create_support_ticket(self, user: discord.Member, guild: discord.Guild, categoria: str = "Suporte") -> Tuple[bool, str]:
+    async def create_support_ticket(self, user: disnake.Member, guild: disnake.Guild, categoria: str = "Suporte") -> Tuple[bool, str]:
         """Cria um ticket de suporte (sem produto)"""
         try:
             # Verificar se usuário já tem ticket ativo
@@ -103,20 +103,20 @@ class TicketManager:
             # Encontrar categoria de tickets (se configurada)
             category = None
             if self.ticket_category_id:
-                category = discord.utils.get(guild.categories, id=self.ticket_category_id)
+                category = disnake.utils.get(guild.categories, id=self.ticket_category_id)
             
             # Configurar permissões do canal
             overwrites = {
-                guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-                guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True)
+                guild.default_role: disnake.PermissionOverwrite(read_messages=False),
+                user: disnake.PermissionOverwrite(read_messages=True, send_messages=True),
+                guild.me: disnake.PermissionOverwrite(read_messages=True, send_messages=True, manage_messages=True)
             }
             
             # Adicionar permissões para admin role se configurado
             if self.admin_role_id:
-                admin_role = discord.utils.get(guild.roles, id=self.admin_role_id)
+                admin_role = disnake.utils.get(guild.roles, id=self.admin_role_id)
                 if admin_role:
-                    overwrites[admin_role] = discord.PermissionOverwrite(
+                    overwrites[admin_role] = disnake.PermissionOverwrite(
                         read_messages=True, 
                         send_messages=True, 
                         manage_messages=True
@@ -168,7 +168,7 @@ class TicketManager:
             traceback.print_exc()
             return False, f"Erro ao criar ticket de suporte: {str(e)}"
     
-    async def _send_support_welcome_message(self, channel: discord.TextChannel, user: discord.Member, categoria: str = "Suporte"):
+    async def _send_support_welcome_message(self, channel: disnake.TextChannel, user: disnake.Member, categoria: str = "Suporte"):
         """Envia mensagem de boas-vindas no canal de suporte"""
         from utils.ticket_views import TicketChannelView
         
@@ -184,7 +184,7 @@ class TicketManager:
         categoria_lower = categoria.lower().replace('ú', 'u').replace('í', 'i').replace('ê', 'e')
         emoji = emoji_map.get(categoria_lower, '🆘')
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title=f"{emoji} Ticket de {categoria} Criado!",
             description=f"Olá {user.mention}! Bem-vindo ao seu ticket de **{categoria}**.",
             color=0x5865F2
@@ -211,7 +211,7 @@ class TicketManager:
         view = TicketChannelView()
         await channel.send(embed=embed, view=view)
     
-    async def close_ticket(self, channel: discord.TextChannel, admin: discord.Member) -> Tuple[bool, str]:
+    async def close_ticket(self, channel: disnake.TextChannel, admin: disnake.Member) -> Tuple[bool, str]:
         """Fecha um ticket (remove do active_tickets)"""
         try:
             import bot
@@ -246,13 +246,13 @@ class TicketManager:
             print(f"Erro ao fechar ticket: {e}")
             return False, f"Erro ao fechar ticket: {str(e)}"
     
-    async def _send_welcome_message(self, channel: discord.TextChannel, user: discord.Member, product: dict):
+    async def _send_welcome_message(self, channel: disnake.TextChannel, user: disnake.Member, product: dict):
         """Envia mensagem de boas-vindas no canal do ticket e gera pagamento automaticamente"""
         from utils.ticket_views import TicketChannelView
         from utils.payment_utils import PaymentUtils
         from models.transaction_model import TransactionModel
         
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="🎫 Ticket de Compra Criado!",
             description=f"Olá {user.mention}! Bem-vindo ao seu ticket de compra.",
             color=0x00ff00
@@ -299,7 +299,7 @@ class TicketManager:
         # Gerar pagamento automaticamente - PRIMEIRA OPÇÃO
         await self._generate_automatic_payment(channel, user, product)
     
-    async def _generate_automatic_payment(self, channel: discord.TextChannel, user: discord.Member, product: dict):
+    async def _generate_automatic_payment(self, channel: disnake.TextChannel, user: disnake.Member, product: dict):
         """Gera pagamento automaticamente - PRIMEIRA OPÇÃO"""
         try:
             print(f"🔄 Gerando pagamento automático para {user.name} - {product['name']}")
@@ -319,7 +319,7 @@ class TicketManager:
                 
                 if stock_counts['available'] == 0:
                     # Sem estoque disponível
-                    embed = discord.Embed(
+                    embed = disnake.Embed(
                         title="❌ Produto Esgotado",
                         description=f"Infelizmente o produto **{product['name']}** está temporariamente sem estoque.",
                         color=0xff0000
@@ -457,9 +457,9 @@ class TicketManager:
                 except:
                     pass
     
-    async def _send_out_of_stock_message(self, channel: discord.TextChannel, product: dict):
+    async def _send_out_of_stock_message(self, channel: disnake.TextChannel, product: dict):
         """Envia mensagem de produto esgotado"""
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="❌ Produto Esgotado",
             description=f"O produto **{product['name']}** está temporariamente sem estoque.",
             color=0xff0000
@@ -471,9 +471,9 @@ class TicketManager:
         )
         await channel.send(embed=embed)
     
-    async def _send_fallback_message(self, channel: discord.TextChannel, user: discord.Member, product: dict):
+    async def _send_fallback_message(self, channel: disnake.TextChannel, user: disnake.Member, product: dict):
         """Envia mensagem de fallback quando pagamento automático falha"""
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="⚠️ Pagamento Automático Falhou",
             description="Não conseguimos gerar o pagamento automaticamente, mas você pode tentar novamente manualmente.",
             color=0xffa500
@@ -504,9 +504,9 @@ class TicketManager:
         
         await channel.send(f"{user.mention}", embed=embed)
     
-    async def _send_payment_message(self, channel: discord.TextChannel, user: discord.Member, product: dict, payment_data: dict):
+    async def _send_payment_message(self, channel: disnake.TextChannel, user: disnake.Member, product: dict, payment_data: dict):
         """Envia mensagem com dados do pagamento Pix"""
-        embed = discord.Embed(
+        embed = disnake.Embed(
             title="💳 Pagamento Pix Gerado!",
             description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
             color=0x00ff00
@@ -565,7 +565,7 @@ class TicketManager:
                 img.save(img_bytes, format='PNG')
                 img_bytes.seek(0)
                 
-                qr_file = discord.File(img_bytes, filename="qrcode.png")
+                qr_file = disnake.File(img_bytes, filename="qrcode.png")
                 print(f"🔧 Debug: QR Code gerado: {len(img_bytes.getvalue())} bytes")
                 
                 await channel.send(embed=embed, file=qr_file)
@@ -579,7 +579,7 @@ class TicketManager:
             await channel.send(embed=embed)
             await channel.send(f"📱 **QR Code:**\n```\n{payment_data.get('qr_code', 'N/A')}\n```")
     
-    async def _log_ticket_creation(self, guild: discord.Guild, user: discord.Member, product: dict, channel: discord.TextChannel):
+    async def _log_ticket_creation(self, guild: disnake.Guild, user: disnake.Member, product: dict, channel: disnake.TextChannel):
         """Log da criação do ticket"""
         if not self.logs_channel_id:
             return
@@ -589,7 +589,7 @@ class TicketManager:
             if not logs_channel:
                 return
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="🎫 Novo Ticket Criado",
                 color=0x00ff00,
                 timestamp=datetime.now()
@@ -605,7 +605,7 @@ class TicketManager:
         except Exception as e:
             print(f"Erro ao logar criação de ticket: {e}")
     
-    async def _log_ticket_closure(self, guild: discord.Guild, user_id: int, admin: discord.Member, ticket_data: dict):
+    async def _log_ticket_closure(self, guild: disnake.Guild, user_id: int, admin: disnake.Member, ticket_data: dict):
         """Log do fechamento do ticket"""
         if not self.logs_channel_id:
             return
@@ -618,7 +618,7 @@ class TicketManager:
             user = guild.get_member(user_id)
             user_mention = user.mention if user else f"<@{user_id}>"
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="🔒 Ticket Fechado",
                 color=0xff0000,
                 timestamp=datetime.now()
@@ -633,12 +633,12 @@ class TicketManager:
         except Exception as e:
             print(f"Erro ao logar fechamento de ticket: {e}")
     
-    async def send_ticket_embed(self, channel: discord.TextChannel) -> bool:
+    async def send_ticket_embed(self, channel: disnake.TextChannel) -> bool:
         """Envia embed com botão para criar tickets"""
         try:
             from utils.ticket_views import TicketView
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="🛒 Sistema de Vendas",
                 description="Clique no botão abaixo para criar um ticket de compra e escolher seu produto!",
                 color=0x0099ff

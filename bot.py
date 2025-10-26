@@ -1609,13 +1609,13 @@ async def on_ready():
         # Tentar sincronizar globalmente
         try:
             print("🌍 Tentando sincronização global...")
-            synced = await bot.sync_commands()
-            
-            # Verificar se sync_commands retornou algo
-            if synced is None:
-                print("⚠️ Sincronização global retornou None (comandos já sincronizados ou erro)")
+            # Em disnake, sync_commands é um método estático
+            if hasattr(bot, 'sync_all_commands'):
+                synced = await bot.sync_all_commands()
+                print(f"✅ Comandos sincronizados usando sync_all_commands!")
             else:
-                print(f"✅ {len(synced)} comandos sincronizados globalmente!")
+                # Fallback: tentar await para sincronização automática
+                print("⚠️ sync_all_commands não disponível, usando sincronização automática")
             
             # Aguardar um pouco para a sincronização se propagar
             await asyncio.sleep(3)
@@ -1628,13 +1628,12 @@ async def on_ready():
             for guild in bot.guilds:
                 try:
                     print(f"🔄 Sincronizando na guild: {guild.name} (ID: {guild.id})")
-                    synced = await bot.sync_commands(guild_ids=[guild.id])
-                    
-                    # Verificar se sync_commands retornou algo
-                    if synced is None:
-                        print(f"⚠️ Sincronização na guild {guild.name} retornou None")
+                    # Em disnake, use bot.sync_commands_force() com guild_id
+                    if hasattr(bot, 'sync_commands_force'):
+                        synced = await bot.sync_commands_force([guild.id])
+                        print(f"✅ Comandos sincronizados na guild {guild.name} usando sync_commands_force!")
                     else:
-                        print(f"✅ {len(synced)} comandos sincronizados na guild {guild.name}!")
+                        print(f"⚠️ sync_commands_force não disponível")
                     
                     # Aguardar um pouco entre sincronizações
                     await asyncio.sleep(1)
@@ -2201,25 +2200,22 @@ async def sync_commands(inter):
         
         # Tentar sincronizar globalmente
         try:
-            synced = await bot.sync_commands()
-            
-            # Verificar se sync_commands retornou algo
-            if synced is None:
-                await inter.send("⚠️ Sincronização global retornou None (comandos já sincronizados ou erro)")
+            # Em disnake, use sync_all_commands
+            if hasattr(bot, 'sync_all_commands'):
+                await bot.sync_all_commands()
+                await inter.send("✅ Comandos sincronizados usando sync_all_commands!")
             else:
-                await inter.send(f"✅ {len(synced)} comandos sincronizados globalmente!")
+                await inter.send("⚠️ sync_all_commands não disponível, usando sincronização automática")
         except Exception as e:
             await inter.send(f"❌ Erro na sincronização global: {e}")
             
             # Tentar sincronizar por guild
             try:
-                synced = await bot.sync_commands(guild_ids=[inter.guild.id])
-                
-                # Verificar se sync_commands retornou algo
-                if synced is None:
-                    await inter.send("⚠️ Sincronização na guild retornou None")
+                if hasattr(bot, 'sync_commands_force'):
+                    await bot.sync_commands_force([inter.guild.id])
+                    await inter.send("✅ Comandos sincronizados na guild usando sync_commands_force!")
                 else:
-                    await inter.send(f"✅ {len(synced)} comandos sincronizados na guild!")
+                    await inter.send("⚠️ sync_commands_force não disponível")
             except Exception as guild_error:
                 await inter.send(f"❌ Erro na sincronização da guild: {guild_error}")
             
