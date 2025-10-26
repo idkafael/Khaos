@@ -312,10 +312,24 @@ class TitleModal(ui.Modal):
         
         # Buscar view ativa
         view = active_config_views.get(interaction.guild_id)
+        print(f"🔧 TitleModal: view encontrada? {view is not None}")
         if view:
+            print(f"🔧 TitleModal: view.message existe? {view.message is not None}")
             view.config['title'] = title
             if view.message:
+                print("🔧 Editando mensagem...")
                 await view.message.edit(embed=view._create_embed(), view=view)
+                print("✅ Mensagem editada com sucesso!")
+            else:
+                print("❌ view.message é None, tentando buscar mensagem...")
+                # Tentar buscar mensagem recente do canal
+                messages = await interaction.channel.history(limit=5).flatten()
+                for msg in messages:
+                    if msg.author.id == interaction.client.user.id and msg.embeds:
+                        view.message = msg
+                        await view.message.edit(embed=view._create_embed(), view=view)
+                        print("✅ Mensagem editada via fallback!")
+                        break
             await interaction.followup.send("✅ Título atualizado!", ephemeral=True)
         else:
             await interaction.followup.send("❌ Sessão expirada. Use `/setup_ticket` novamente.", ephemeral=True)
