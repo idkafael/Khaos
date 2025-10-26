@@ -114,6 +114,8 @@ class TicketConfigView(ui.View):
             'description': "Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
             'color': 0x0099ff,
             'button_name': "Criar Ticket de Compra",
+            'ticket_type': 'payment',  # 'payment', 'manual', 'support'
+            'mention_role': None,  # Role ID para mencionar
             'product_ids': None,
             'author': None,
             'thumbnail': None,
@@ -135,6 +137,8 @@ class TicketConfigView(ui.View):
         self.add_item(ImageButton())
         self.add_item(FooterButton())
         self.add_item(ButtonNameButton())
+        self.add_item(TicketTypeButton())
+        self.add_item(MentionRoleButton())
         self.add_item(ProductFilterButton())
         self.add_item(FinishButton())
     
@@ -200,8 +204,28 @@ class TicketConfigView(ui.View):
         if self.config['footer']:
             embed.set_footer(text=self.config['footer'])
         
-        # Adicionar informações sobre filtro de produtos
-        if self.config['product_ids']:
+        # Adicionar informações sobre tipo de ticket
+        ticket_type_names = {
+            'payment': '💳 Pagamentos',
+            'manual': '🎫 Ticket Manual',
+            'support': '❓ Somente Suporte'
+        }
+        embed.add_field(
+            name="🎯 Tipo de Ticket",
+            value=ticket_type_names.get(self.config.get('ticket_type', 'payment'), '💳 Pagamentos'),
+            inline=True
+        )
+        
+        # Adicionar informações sobre cargo
+        if self.config.get('mention_role'):
+            embed.add_field(
+                name="👤 Cargo a Mencionar",
+                value=f"<@&{self.config['mention_role']}>",
+                inline=True
+            )
+        
+        # Adicionar informações sobre filtro de produtos (apenas para payment)
+        if self.config['product_ids'] and self.config.get('ticket_type') == 'payment':
             embed.add_field(
                 name="🔍 Produtos Filtrados",
                 value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
@@ -262,8 +286,28 @@ class TicketConfigView(ui.View):
             if self.config['footer']:
                 embed.set_footer(text=self.config['footer'])
             
-            # Adicionar informações sobre filtro de produtos
-            if self.config['product_ids']:
+            # Adicionar informações sobre tipo de ticket
+            ticket_type_names = {
+                'payment': '💳 Pagamentos',
+                'manual': '🎫 Ticket Manual',
+                'support': '❓ Somente Suporte'
+            }
+            embed.add_field(
+                name="🎯 Tipo de Ticket",
+                value=ticket_type_names.get(self.config.get('ticket_type', 'payment'), '💳 Pagamentos'),
+                inline=True
+            )
+            
+            # Adicionar informações sobre cargo
+            if self.config.get('mention_role'):
+                embed.add_field(
+                    name="👤 Cargo a Mencionar",
+                    value=f"<@&{self.config['mention_role']}>",
+                    inline=True
+                )
+            
+            # Adicionar informações sobre filtro de produtos (apenas para payment)
+            if self.config['product_ids'] and self.config.get('ticket_type') == 'payment':
                 embed.add_field(
                     name="🔍 Produtos Filtrados",
                     value=f"Apenas os produtos com IDs: **{', '.join(map(str, self.config['product_ids']))}** aparecerão neste ticket.",
@@ -849,6 +893,142 @@ class ProductFilterButton(ui.Button):
         view = self.view
         current_product_ids = view.config.get('product_ids') or []
         modal = ProductFilterModal(current_product_ids)
+        await interaction.response.send_modal(modal)
+
+class TicketTypeSelect(ui.Select):
+    """Select menu para escolher tipo de ticket"""
+    
+    def __init__(self):
+        options = [
+            disnake.SelectOption(
+                label="💳 Pagamentos",
+                description="Sistema automatizado com produtos",
+                value="payment"
+            ),
+            disnake.SelectOption(
+                label="🎫 Ticket Manual",
+                description="Atendente faz a venda manualmente",
+                value="manual"
+            ),
+            disnake.SelectOption(
+                label="❓ Somente Suporte",
+                description="Apenas para tirar dúvidas",
+                value="support"
+            )
+        ]
+        
+        super().__init__(
+            placeholder="Escolha o tipo de ticket...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        """Callback quando usuário seleciona um tipo"""
+        selected_type = self.values[0]
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['ticket_type'] = selected_type
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.response.send_message("✅ Tipo de ticket atualizado!", ephemeral=True)
+        else:
+            await interaction.response.send_message("❌ Sessão expirada.", ephemeral=True)
+
+class TicketTypeButton(ui.Button):
+    """Botão para editar tipo de ticket"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Tipo",
+            style=disnake.ButtonStyle.secondary,
+            emoji="🎯",
+            custom_id="edit_ticket_type"
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        # Criar view temporária com select menu
+        view = ui.View(timeout=60)
+        select = TicketTypeSelect()
+        view.add_item(select)
+        
+        await interaction.response.send_message(
+            "🎯 **Escolha o tipo de ticket:**",
+            view=view,
+            ephemeral=True
+        )
+
+class MentionRoleModal(ui.Modal):
+    """Modal para editar role a mencionar"""
+    
+    def __init__(self, current_role_mention: str = ""):
+        components = [
+            ui.TextInput(
+                label="Nome ou ID do Cargo",
+                placeholder="Ex: @Atendente ou 1234567890",
+                custom_id="role_input",
+                value=current_role_mention or "",
+                required=False,
+                max_length=100
+            )
+        ]
+        super().__init__(title="Editar Cargo a Mencionar", components=components)
+    
+    async def callback(self, interaction: disnake.ModalInteraction):
+        await interaction.response.defer(ephemeral=True)
+        
+        role_input = interaction.text_values.get("role_input", "").strip()
+        
+        # Tentar encontrar o role
+        role_id = None
+        if role_input:
+            # Procurar por ID
+            if role_input.isdigit():
+                role = interaction.guild.get_role(int(role_input))
+                if role:
+                    role_id = role.id
+            else:
+                # Procurar por nome
+                role = disnake.utils.get(interaction.guild.roles, name=role_input)
+                if role:
+                    role_id = role.id
+                else:
+                    await interaction.followup.send("❌ Cargo não encontrado!", ephemeral=True)
+                    return
+            
+            if not role_id:
+                await interaction.followup.send("❌ Cargo inválido!", ephemeral=True)
+                return
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['mention_role'] = role_id
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            await interaction.followup.send(f"✅ Cargo atualizado! {f'<@&{role_id}>' if role_id else '(nenhum)'}", ephemeral=True)
+        else:
+            await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
+
+class MentionRoleButton(ui.Button):
+    """Botão para editar cargo a mencionar"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Cargo",
+            style=disnake.ButtonStyle.secondary,
+            emoji="👤",
+            custom_id="edit_mention_role"
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        view = self.view
+        current_role_id = view.config.get('mention_role')
+        current_role_mention = ""
+        if current_role_id:
+            current_role_mention = f"<@&{current_role_id}>"
+        modal = MentionRoleModal(current_role_mention)
         await interaction.response.send_modal(modal)
 
 class FinishButton(ui.Button):
