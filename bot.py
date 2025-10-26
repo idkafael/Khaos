@@ -75,6 +75,66 @@ async def teste_modal_slash(inter: disnake.ApplicationCommandInteraction):
         )
         await inter.response.send_message(embed=embed, ephemeral=True)
 
+@bot.command(name="get_emotes")
+async def get_emotes(ctx):
+    """Comando para listar todos os emojis do servidor com IDs e nomes"""
+    try:
+        guild = ctx.guild
+        
+        # Buscar todos os emojis do servidor
+        emojis = [emoji for emoji in guild.emojis if emoji.available]
+        
+        if not emojis:
+            await ctx.send("❌ Este servidor não possui emojis customizados.")
+            return
+        
+        # Ordenar por nome
+        emojis_sorted = sorted(emojis, key=lambda e: e.name.lower())
+        
+        # Criar embed
+        embed = disnake.Embed(
+            title=f"📋 Emojis do Servidor: {guild.name}",
+            description=f"Total de emojis: **{len(emojis)}**",
+            color=0x0099ff
+        )
+        
+        # Dividir em chunks de 10 para evitar limite do Discord
+        chunk_size = 10
+        for i in range(0, len(emojis_sorted), chunk_size):
+            chunk = emojis_sorted[i:i + chunk_size]
+            
+            field_value = ""
+            for emoji in chunk:
+                emoji_str = f"{emoji} `:{emoji.name}:`"
+                emoji_id = f"ID: `{emoji.id}`"
+                field_value += f"{emoji_str} - {emoji_id}\n"
+            
+            field_name = f"Emojis {i+1}-{min(i+chunk_size, len(emojis_sorted))}"
+            embed.add_field(name=field_name, value=field_value, inline=False)
+        
+        # Adicionar footer com instruções
+        embed.set_footer(text="💡 Copie o formato <:nome:ID> para usar em qualquer servidor")
+        
+        # Criar mensagem de texto para fácil cópia
+        text_content = "```python\n# IDs dos Emojis para usar no código:\n"
+        text_content += "EMOJI_IDS = {\n"
+        for emoji in emojis_sorted:
+            text_content += f'    "{emoji.name}": {emoji.id},\n'
+        text_content += "}\n```"
+        
+        # Enviar embed
+        await ctx.send(embed=embed)
+        
+        # Enviar código formatado
+        if len(text_content) <= 2000:
+            await ctx.send(text_content)
+        
+    except Exception as e:
+        print(f"❌ Erro ao buscar emojis: {e}")
+        import traceback
+        traceback.print_exc()
+        await ctx.send(f"❌ Erro ao buscar emojis: {str(e)[:200]}")
+
 @bot.slash_command(name="setup_ticket", description="[ADMIN] Configurar sistema de tickets")
 @commands.has_permissions(administrator=True)
 async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
