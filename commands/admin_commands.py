@@ -8,129 +8,64 @@ from typing import List
 class AddStockModal(ui.Modal):
     """Modal para adicionar estoque"""
     
-    # InputText como atributo de classe
-    stock_input = ui.InputText(
-        label="Códigos/Keys (um por linha)",
-        style=discord.InputTextStyle.paragraph,
-        placeholder="KEY-123-ABC\nKEY-456-DEF\nKEY-789-GHI",
-        required=True,
-        max_length=4000
-    )
-    
     def __init__(self, product_id: int, product_name: str):
-        # SEM timeout, SEM custom_id
         super().__init__(title=f"Adicionar Estoque: {product_name}")
         self.product_id = product_id
         self.product_name = product_name
+        
+        self.add_item(ui.InputText(
+            label="Códigos/Keys (um por linha)",
+            style=discord.InputTextStyle.paragraph,
+            placeholder="KEY-123-ABC\nKEY-456-DEF\nKEY-789-GHI",
+            required=True,
+            max_length=4000
+        ))
     
     async def on_submit(self, interaction: discord.Interaction):
         """Processa o envio do modal"""
-        # Medição de performance
-        import time
-        start_time = time.time()
-        
-        # SEMPRE DEFER IMEDIATO (< 3 segundos)
         await interaction.response.defer(ephemeral=True)
         
         try:
+            import time
+            import asyncio
+            start_time = time.time()
+            
             # Processar linhas
-            lines = self.stock_input.value.strip().split('\n')
+            lines = self.children[0].value.strip().split('\n')
             lines = [line.strip() for line in lines if line.strip()]
             
             if not lines:
-                error_embed = discord.Embed(
-                    title="❌ Erro",
-                    description="Nenhum código válido foi fornecido.",
-                    color=0xff0000
-                )
-                await interaction.followup.send(embed=error_embed, ephemeral=True)
+                await interaction.followup.send("❌ Nenhum código válido foi fornecido.", ephemeral=True)
                 return
             
-            # Processamento pesado APÓS defer (com timeout)
-            try:
-                inventory_model = InventoryModel()
-                
-                # Timeout de 10s para operação de BD
-                import asyncio
-                added = await asyncio.wait_for(
-                    inventory_model.add_bulk_stock(self.product_id, lines),
-                    timeout=10.0
-                )
-            except asyncio.TimeoutError:
-                error_embed = discord.Embed(
-                    title="❌ Erro",
-                    description="Processamento demorou muito. Tente novamente.",
-                    color=0xff0000
-                )
-                await interaction.followup.send(embed=error_embed, ephemeral=True)
-                return
-            except Exception as db_error:
-                print(f"❌ Erro de conexão com banco: {db_error}")
-                error_embed = discord.Embed(
-                    title="❌ Erro de Conexão",
-                    description="Erro de conexão com o banco de dados. Tente novamente em instantes.",
-                    color=0xff0000
-                )
-                await interaction.followup.send(embed=error_embed, ephemeral=True)
-                return
+            # Adicionar ao BD
+            inventory_model = InventoryModel()
+            added = await asyncio.wait_for(
+                inventory_model.add_bulk_stock(self.product_id, lines),
+                timeout=10.0
+            )
             
-            # Resposta de sucesso
             if added > 0:
                 embed = discord.Embed(
                     title="✅ Estoque Adicionado",
-                    description=f"**{added}** itens foram adicionados ao produto **{self.product_name}**.",
+                    description=f"**{added}** itens adicionados ao produto **{self.product_name}**.",
                     color=0x00ff00
                 )
-                embed.add_field(
-                    name="📦 Produto",
-                    value=self.product_name,
-                    inline=True
-                )
-                embed.add_field(
-                    name="➕ Itens Adicionados",
-                    value=str(added),
-                    inline=True
-                )
+                embed.add_field(name="📦 Produto", value=self.product_name, inline=True)
+                embed.add_field(name="➕ Itens", value=str(added), inline=True)
                 await interaction.followup.send(embed=embed, ephemeral=True)
             else:
-                error_embed = discord.Embed(
-                    title="❌ Erro",
-                    description="Erro ao adicionar estoque. Verifique os logs.",
-                    color=0xff0000
-                )
-                await interaction.followup.send(embed=error_embed, ephemeral=True)
+                await interaction.followup.send("❌ Erro ao adicionar estoque.", ephemeral=True)
             
-            # Log de performance
-            elapsed = time.time() - start_time
-            print(f"⏱️ Modal processado em {elapsed:.2f}s")
+            print(f"⏱️ AddStockModal processado em {time.time() - start_time:.2f}s")
                 
+        except asyncio.TimeoutError:
+            await interaction.followup.send("❌ Processamento demorou muito. Tente novamente.", ephemeral=True)
         except Exception as e:
-            print(f"❌ Erro ao processar adição de estoque: {e}")
+            print(f"❌ Erro ao adicionar estoque: {e}")
             import traceback
             traceback.print_exc()
-            
-            error_embed = discord.Embed(
-                title="❌ Erro",
-                description=f"Erro inesperado: {str(e)[:100]}",
-                color=0xff0000
-            )
-            await interaction.followup.send(embed=error_embed, ephemeral=True)
-    
-    async def on_error(self, error: Exception, interaction: discord.Interaction):
-        """Handler de erros do modal"""
-        print(f"❌ ERRO NO MODAL AddStockModal: {error}")
-        import traceback
-        traceback.print_exc()
-        
-        error_embed = discord.Embed(
-            title="❌ Erro",
-            description=f"Erro inesperado: {str(error)[:100]}",
-            color=0xff0000
-        )
-        try:
-            await interaction.followup.send(embed=error_embed, ephemeral=True)
-        except:
-            pass  # Ignorar se falhar
+            await interaction.followup.send(f"❌ Erro: {str(e)[:100]}", ephemeral=True)
 
 
 class ProductSelect(ui.Select):
