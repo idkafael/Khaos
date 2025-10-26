@@ -398,8 +398,8 @@ class DescriptionButton(ui.Button):
         modal = DescriptionModal(current_desc)
         await interaction.response.send_modal(modal)
 
-class ColorModal(ui.Modal):
-    """Modal para editar cor"""
+class CustomColorModal(ui.Modal):
+    """Modal para inserir cor personalizada (hex)"""
     
     def __init__(self):
         components = [
@@ -411,7 +411,7 @@ class ColorModal(ui.Modal):
                 max_length=10
             )
         ]
-        super().__init__(title="Editar Cor", components=components)
+        super().__init__(title="Cor Personalizada", components=components)
     
     async def callback(self, interaction: disnake.ModalInteraction):
         await interaction.response.defer(ephemeral=True)
@@ -434,11 +434,76 @@ class ColorModal(ui.Modal):
                 view.config['color'] = cor_int
                 if view.message:
                     await view.message.edit(embed=view._create_embed(), view=view)
-                await interaction.followup.send("✅ Cor atualizada!", ephemeral=True)
+                await interaction.followup.send("✅ Cor personalizada aplicada!", ephemeral=True)
             else:
                 await interaction.followup.send("❌ Sessão expirada.", ephemeral=True)
         except ValueError:
             await interaction.followup.send("❌ Cor inválida! Use formato hex (#0099ff).", ephemeral=True)
+
+class ColorSelect(ui.Select):
+    """Select menu para escolher cor"""
+    
+    def __init__(self):
+        # Cores padrão do Discord
+        colors = [
+            ("Default", "#5865F2", "Cor padrão do Discord"),
+            ("Verde", "#57F287", "Verde sucesso"),
+            ("Amarelo", "#FEE75C", "Amarelo alerta"),
+            ("Fuchsia", "#EB459E", "Rosa vibrante"),
+            ("Vermelho", "#ED4245", "Vermelho erro"),
+            ("Branco", "#FFFFFF", "Branco puro"),
+            ("Cinza", "#95A5A6", "Cinza neutro"),
+            ("Azul Claro", "#3498DB", "Azul céu"),
+            ("Azul Escuro", "#206694", "Azul marinho"),
+            ("Verde Escuro", "#1F8B4C", "Verde floresta"),
+            ("Laranja", "#F39C12", "Laranja"),
+            ("Roxo", "#9B59B6", "Roxo"),
+            ("Personalizada", "custom", "Inserir código hex personalizado"),
+        ]
+        
+        options = []
+        for name, value, description in colors:
+            options.append(disnake.SelectOption(
+                label=name,
+                description=description,
+                value=value,
+                emoji="🎨" if name == "Personalizada" else None
+            ))
+        
+        super().__init__(
+            placeholder="Escolha uma cor...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        """Callback quando usuário seleciona uma cor"""
+        selected_color = self.values[0]
+        
+        if selected_color == "custom":
+            # Abrir modal para cor personalizada
+            modal = CustomColorModal()
+            await interaction.response.send_modal(modal)
+        else:
+            # Usar cor pré-definida
+            try:
+                # Converter cor hex para int
+                cor_hex_clean = selected_color.strip().lower().lstrip('#')
+                if len(cor_hex_clean) == 3:
+                    cor_hex_clean = cor_hex_clean[0]*2 + cor_hex_clean[1]*2 + cor_hex_clean[2]*2
+                cor_int = int(cor_hex_clean, 16)
+                
+                view = active_config_views.get(interaction.guild_id)
+                if view:
+                    view.config['color'] = cor_int
+                    if view.message:
+                        await view.message.edit(embed=view._create_embed(), view=view)
+                    await interaction.response.send_message("✅ Cor atualizada!", ephemeral=True)
+                else:
+                    await interaction.response.send_message("❌ Sessão expirada.", ephemeral=True)
+            except ValueError:
+                await interaction.response.send_message("❌ Erro ao processar cor.", ephemeral=True)
 
 class ColorButton(ui.Button):
     """Botão para editar cor"""
@@ -452,8 +517,16 @@ class ColorButton(ui.Button):
         )
     
     async def callback(self, interaction: disnake.Interaction):
-        modal = ColorModal()
-        await interaction.response.send_modal(modal)
+        # Criar view temporária com select menu de cores
+        view = ui.View(timeout=60)
+        select = ColorSelect()
+        view.add_item(select)
+        
+        await interaction.response.send_message(
+            "🎨 **Escolha uma cor:**",
+            view=view,
+            ephemeral=True
+        )
 
 class AuthorModal(ui.Modal):
     """Modal para editar autor"""
