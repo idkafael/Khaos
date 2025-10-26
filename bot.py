@@ -22,7 +22,7 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = discord.Bot(intents=intents, command_prefix='?')
+bot = discord.Bot(intents=intents)
 # Deploy: 24/10/2025 15:35 - Fix InputText
 
 # Adicionar comandos slash manualmente
@@ -3176,8 +3176,9 @@ async def on_message(message):
         print(f"🔧 DEBUG: Mensagem com prefixo detectada: {message.content[:50]}...")
         print(f"🔧 DEBUG: Autor: {message.author.name}, Canal: {message.channel.name}")
     
-    # Processar comandos com prefixo
-    await bot.process_commands(message)
+    # Note: Comandos com prefixo são processados através de @bot.command
+    # py-cord automaticamente processa comandos registrados via @bot.command
+    # Não é necessário chamar bot.process_commands manualmente
     
     # Verificar se está esperando códigos de estoque
     if message.author.id in waiting_for_stock:
