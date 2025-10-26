@@ -808,35 +808,30 @@ class CouponInputModal(ui.Modal):
     """Modal para coletar código de cupom (opcional)"""
     
     def __init__(self, user, guild, product):
-        # SEM timeout, SEM custom_id (py-cord gerencia)
         super().__init__(title="Cupom de Desconto (Opcional)")
         self.user = user
         self.guild = guild
         self.product = product
         
-        # Adicionar campo manualmente (py-cord 2.4+)
-        self.add_item(ui.InputText(
+        self.coupon_code = ui.InputText(
             label="Código do Cupom",
             placeholder="Digite o código do cupom ou deixe em branco",
             required=False,
             max_length=50
-        ))
+        )
+        
+        self.add_item(self.coupon_code)
     
     async def on_submit(self, interaction: discord.Interaction):
         """Processa o cupom e cria o ticket"""
-        print(f"🔧 MODAL SUBMIT: CouponInputModal iniciado por {interaction.user.name}")
-        
-        import time
-        start_time = time.time()
-        
-        # SEMPRE DEFER IMEDIATO (< 3 segundos)
         await interaction.response.defer(ephemeral=True)
         
         try:
-            # Acessar valor via children (primeiro campo)
-            coupon_code = self.children[0].value.strip() if self.children[0].value else None
+            start_time = time.time()
             
-            # Importar TicketManager e criar instância com bot
+            # Acessar valor via atributo
+            coupon_code = self.coupon_code.value.strip() if self.coupon_code.value else None
+            
             from utils.ticket_manager import TicketManager
             ticket_manager = TicketManager(interaction.client)
             
@@ -852,37 +847,30 @@ class CouponInputModal(ui.Modal):
             else:
                 await interaction.followup.send(f"❌ {message}", ephemeral=True)
             
-            # Log de performance
-            elapsed = time.time() - start_time
-            print(f"⏱️ Modal processado em {elapsed:.2f}s")
+            print(f"⏱️ CouponInputModal processado em {time.time() - start_time:.2f}s")
                 
         except Exception as e:
-            print(f"❌ ERRO CRÍTICO ao processar cupom: {e}")
+            print(f"❌ Erro ao processar cupom: {e}")
             import traceback
             traceback.print_exc()
-            
-            error_embed = discord.Embed(
-                title="❌ Erro",
-                description=f"Erro ao processar cupom: {str(e)[:100]}",
-                color=0xff0000
+            await interaction.followup.send(
+                f"❌ **Erro ao processar cupom:** {str(e)[:200]}",
+                ephemeral=True
             )
-            await interaction.followup.send(embed=error_embed, ephemeral=True)
     
     async def on_error(self, error: Exception, interaction: discord.Interaction):
         """Handler de erros do modal"""
-        print(f"❌ ERRO NO MODAL CouponInputModal: {error}")
+        print(f"❌ Erro no CouponInputModal: {error}")
         import traceback
         traceback.print_exc()
         
-        error_embed = discord.Embed(
-            title="❌ Erro",
-            description=f"Erro inesperado: {str(error)[:100]}",
-            color=0xff0000
-        )
         try:
-            await interaction.followup.send(embed=error_embed, ephemeral=True)
+            await interaction.followup.send(
+                f"❌ **Erro inesperado:** {str(error)[:200]}",
+                ephemeral=True
+            )
         except:
-            pass  # Ignorar se falhar
+            pass
 
 class ProductSelect(ui.Select):
     """Select menu personalizado para escolher produto"""
