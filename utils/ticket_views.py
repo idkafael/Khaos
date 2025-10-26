@@ -6,6 +6,119 @@ from models.product_model import ProductModel
 from utils.ticket_manager import TicketManager
 import asyncio
 
+# Sistema de aguardar input do usuário (substitui modais)
+waiting_for_input = {}
+# Formato: {user_id: {'type': str, 'guild_id': int, 'channel_id': int}}
+
+async def process_user_input(message: discord.Message, input_data: dict):
+    """Processa input do usuário baseado no tipo aguardado"""
+    try:
+        input_type = input_data['type']
+        guild_id = input_data['guild_id']
+        user_content = message.content.strip()
+        
+        print(f"🔧 Processando input tipo '{input_type}' de {message.author.name}: {user_content[:50]}...")
+        
+        # Buscar view ativa para esta guild
+        view = active_config_views.get(guild_id)
+        if not view:
+            await message.channel.send(
+                f"{message.author.mention} ❌ Sessão de configuração expirada. Use `/setup_ticket` novamente.",
+                delete_after=10
+            )
+            return
+        
+        # Processar baseado no tipo
+        if input_type == 'title':
+            view.config['title'] = user_content
+            
+        elif input_type == 'description':
+            view.config['description'] = user_content
+            
+        elif input_type == 'color':
+            # Converter cor hex para int
+            try:
+                color_hex = user_content.lower()
+                if color_hex.startswith('#'):
+                    color_hex = color_hex[1:]
+                elif color_hex.startswith('0x'):
+                    color_hex = color_hex[2:]
+                
+                if len(color_hex) == 3:
+                    color_hex = color_hex[0]*2 + color_hex[1]*2 + color_hex[2]*2
+                
+                view.config['color'] = int(color_hex, 16)
+            except (ValueError, IndexError):
+                await message.channel.send(
+                    f"{message.author.mention} ❌ Cor inválida! Use formato hex (#0099ff ou 0099ff)",
+                    delete_after=10
+                )
+                return
+                
+        elif input_type == 'author':
+            view.config['author'] = user_content if user_content else None
+            
+        elif input_type == 'fields':
+            # Parse campos (Nome|Valor|inline por linha)
+            fields = []
+            if user_content:
+                for line in user_content.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    parts = line.split('|')
+                    if len(parts) >= 2:
+                        fields.append({
+                            'name': parts[0].strip(),
+                            'value': parts[1].strip(),
+                            'inline': parts[2].strip().lower() == 'true' if len(parts) > 2 else False
+                        })
+            view.config['fields'] = fields
+            
+        elif input_type == 'images':
+            # Parse URLs (linha 1 = imagem, linha 2 = thumbnail)
+            lines = user_content.split('\n')
+            view.config['image'] = lines[0].strip() if len(lines) > 0 and lines[0].strip() else None
+            view.config['thumbnail'] = lines[1].strip() if len(lines) > 1 and lines[1].strip() else None
+            
+        elif input_type == 'footer':
+            view.config['footer'] = user_content if user_content else None
+            
+        elif input_type == 'button_name':
+            view.config['button_name'] = user_content
+            
+        elif input_type == 'product_filter':
+            # Parse IDs (1,2,3 ou vazio para todos)
+            if user_content:
+                try:
+                    product_ids = [int(x.strip()) for x in user_content.split(',')]
+                    view.config['product_ids'] = product_ids
+                except ValueError:
+                    await message.channel.send(
+                        f"{message.author.mention} ❌ IDs inválidos! Use números separados por vírgula (1,2,3)",
+                        delete_after=10
+                    )
+                    return
+            else:
+                view.config['product_ids'] = None
+        
+        # Atualizar preview
+        if view.message:
+            await view.message.edit(embed=view._create_embed(), view=view)
+            print(f"✅ Preview atualizado com sucesso para {input_type}")
+        
+        # Feedback ao usuário
+        await message.add_reaction("✅")
+        
+    except Exception as e:
+        print(f"❌ Erro ao processar input: {e}")
+        import traceback
+        traceback.print_exc()
+        await message.channel.send(
+            f"{message.author.mention} ❌ Erro ao processar: {str(e)[:100]}",
+            delete_after=10
+        )
+
 class SetupMessageModal(ui.Modal):
     """Modal para criar mensagens embed personalizadas sem botões"""
     
@@ -344,8 +457,20 @@ class TitleButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = TitleModal()
-        await interaction.response.send_modal(modal)
+        # Registrar que usuário está aguardando input
+        waiting_for_input[interaction.user.id] = {
+            'type': 'title',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "📝 **Digite o novo título do embed:**\n"
+            "Digite sua resposta no chat abaixo. A mensagem será processada automaticamente.\n\n"
+            "**Exemplo:** `🛒 Sistema de Vendas Automatizado`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class DescriptionButton(ui.Button):
     """Botão para editar descrição"""
@@ -359,8 +484,19 @@ class DescriptionButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = DescriptionModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'description',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "📄 **Digite a nova descrição do embed:**\n"
+            "Digite sua resposta no chat. Pode ser texto longo.\n\n"
+            "**Exemplo:** `Clique no botão abaixo para criar um ticket e ser atendido!`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class ColorButton(ui.Button):
     """Botão para editar cor"""
@@ -374,8 +510,19 @@ class ColorButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = ColorModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'color',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "🎨 **Digite a cor do embed (formato hex):**\n"
+            "Digite no chat. Formatos aceitos: `#0099ff`, `0099ff` ou `09f`\n\n"
+            "**Exemplo:** `#FF5733`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class AuthorButton(ui.Button):
     """Botão para editar autor"""
@@ -389,8 +536,19 @@ class AuthorButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = AuthorModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'author',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "👤 **Digite o nome do autor (opcional):**\n"
+            "Digite no chat. Deixe vazio para remover.\n\n"
+            "**Exemplo:** `Sistema de Vendas` ou `vazio` para remover",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class FieldsButton(ui.Button):
     """Botão para editar campos"""
@@ -404,8 +562,21 @@ class FieldsButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = FieldsModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'fields',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "📋 **Digite os campos do embed (um por linha):**\n"
+            "Formato: `Nome|Valor|inline` (inline = true ou false)\n\n"
+            "**Exemplo:**\n"
+            "`Horário|24/7|true`\n"
+            "`Pagamento|PIX|true`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class ImageButton(ui.Button):
     """Botão para editar imagens"""
@@ -419,8 +590,22 @@ class ImageButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = ImageModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'images',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "🖼️ **Digite as URLs das imagens:**\n"
+            "Linha 1: URL da imagem principal\n"
+            "Linha 2: URL da thumbnail (opcional)\n\n"
+            "**Exemplo:**\n"
+            "`https://exemplo.com/banner.png`\n"
+            "`https://exemplo.com/thumb.png`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class FooterButton(ui.Button):
     """Botão para editar rodapé"""
@@ -434,8 +619,19 @@ class FooterButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = FooterModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'footer',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "📌 **Digite o texto do rodapé (opcional):**\n"
+            "Digite no chat. Deixe vazio para remover.\n\n"
+            "**Exemplo:** `Atendimento 24/7 • Pagamento via Pix`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class ButtonNameButton(ui.Button):
     """Botão para editar nome do botão"""
@@ -449,8 +645,19 @@ class ButtonNameButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = ButtonNameModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'button_name',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "🔘 **Digite o nome do botão de criar ticket:**\n"
+            "Digite no chat.\n\n"
+            "**Exemplo:** `Criar Ticket de Compra` ou `Comprar Agora`",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class ProductFilterButton(ui.Button):
     """Botão para editar filtro de produtos"""
@@ -464,8 +671,20 @@ class ProductFilterButton(ui.Button):
         )
     
     async def callback(self, interaction: discord.Interaction):
-        modal = ProductFilterModal()
-        await interaction.response.send_modal(modal)
+        waiting_for_input[interaction.user.id] = {
+            'type': 'product_filter',
+            'guild_id': interaction.guild_id,
+            'channel_id': interaction.channel_id
+        }
+        
+        await interaction.response.send_message(
+            "🔍 **Digite os IDs dos produtos permitidos (opcional):**\n"
+            "Formato: números separados por vírgula\n"
+            "Deixe vazio para permitir todos os produtos.\n\n"
+            "**Exemplo:** `1,2,3,5` ou `vazio` para todos",
+            ephemeral=True,
+            delete_after=60
+        )
 
 class PreviewButton(ui.Button):
     """Botão para atualizar preview"""

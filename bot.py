@@ -3211,6 +3211,27 @@ async def on_message(message):
     if message.author.bot:
         return
     
+    # Sistema de aguardar input (substitui modais)
+    from utils.ticket_views import waiting_for_input, process_user_input
+    if message.author.id in waiting_for_input:
+        input_data = waiting_for_input[message.author.id]
+        
+        # Verificar se está no canal correto
+        if message.channel.id == input_data['channel_id']:
+            # Processar input
+            await process_user_input(message, input_data)
+            
+            # Deletar mensagem do usuário (cleanup)
+            try:
+                await message.delete()
+            except:
+                pass  # Pode não ter permissão
+            
+            # Remover do dicionário
+            del waiting_for_input[message.author.id]
+            
+            return  # Não processar como comando
+    
     # Debug: Log de mensagens que começam com ?
     if message.content.startswith('?'):
         print(f"🔧 DEBUG: Mensagem com prefixo detectada: {message.content[:50]}...")
