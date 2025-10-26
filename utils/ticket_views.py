@@ -10,7 +10,11 @@ class SetupMessageModal(ui.Modal):
     """Modal para criar mensagens embed personalizadas sem botões"""
     
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(title="Criar Mensagem Embed", timeout=600)
+        super().__init__(
+            title="Criar Mensagem Embed", 
+            timeout=600,
+            custom_id="modal_setup_message"
+        )
         self.add_item(ui.InputText(
             label="Título", 
             placeholder="Ex: Bem-vindo ao Servidor!", 
@@ -124,6 +128,18 @@ class SetupMessageModal(ui.Modal):
                     await interaction.followup.send("❌ Erro ao criar mensagem embed.", ephemeral=True)
             except Exception as e2:
                 print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL SetupMessageModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 # Sistema de gerenciamento de views ativas
 active_config_views = {}
@@ -485,7 +501,11 @@ class TitleModal(ui.Modal):
     """Modal para editar título"""
     
     def __init__(self):
-        super().__init__(title="Editar Título", timeout=600)
+        super().__init__(
+            title="Editar Título", 
+            timeout=600,
+            custom_id="modal_edit_title"
+        )
         self.add_item(ui.InputText(
             label="Título do Embed",
             placeholder="Ex: Sistema de Vendas Automatizado",
@@ -526,12 +546,29 @@ class TitleModal(ui.Modal):
                     await interaction.followup.send("❌ Erro ao editar título.", ephemeral=True)
             except Exception as e2:
                 print(f"❌ Erro ao enviar mensagem de erro: {e2}")
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        """Handler de erros do modal"""
+        print(f"❌ ERRO NO MODAL TitleModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class DescriptionModal(ui.Modal):
     """Modal para editar descrição"""
     
     def __init__(self):
-        super().__init__(title="Editar Descrição", timeout=600)
+        super().__init__(
+            title="Editar Descrição", 
+            timeout=600,
+            custom_id="modal_edit_description"
+        )
         self.add_item(ui.InputText(
             label="Descrição do Embed",
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra",
@@ -555,12 +592,29 @@ class DescriptionModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar descrição: {e}")
             await interaction.response.send_message("❌ Erro ao editar descrição.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        """Handler de erros do modal"""
+        print(f"❌ ERRO NO MODAL DescriptionModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class ColorModal(ui.Modal):
     """Modal para editar cor"""
     
     def __init__(self):
-        super().__init__(title="Editar Cor", timeout=600)
+        super().__init__(
+            title="Editar Cor", 
+            timeout=600,
+            custom_id="modal_edit_color"
+        )
         self.add_item(ui.InputText(
             label="Cor do Embed (Hex)",
             placeholder="Ex: #0099ff ou 0x0099ff",
@@ -599,12 +653,28 @@ class ColorModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar cor: {e}")
             await interaction.response.send_message("❌ Erro ao editar cor.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL ColorModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class AuthorModal(ui.Modal):
     """Modal para editar autor"""
     
     def __init__(self):
-        super().__init__(title="Editar Autor", timeout=600)
+        super().__init__(
+            title="Editar Autor", 
+            timeout=600,
+            custom_id="modal_edit_author"
+        )
         self.add_item(ui.InputText(
             label="Nome do Autor",
             placeholder="Ex: Sistema de Vendas",
@@ -626,12 +696,28 @@ class AuthorModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar autor: {e}")
             await interaction.response.send_message("❌ Erro ao editar autor.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL AuthorModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class FieldsModal(ui.Modal):
     """Modal para editar campos"""
     
     def __init__(self):
-        super().__init__(title="Editar Campos", timeout=600)
+        super().__init__(
+            title="Editar Campos", 
+            timeout=600,
+            custom_id="modal_edit_fields"
+        )
         self.add_item(ui.InputText(
             label="Campos (Nome|Valor|Inline)",
             placeholder="Um campo por linha. Ex: Nome|Valor|true",
@@ -674,12 +760,28 @@ class FieldsModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar campos: {e}")
             await interaction.response.send_message("❌ Erro ao editar campos.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL FieldsModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class ImageModal(ui.Modal):
     """Modal para editar imagens"""
     
     def __init__(self):
-        super().__init__(title="Editar Imagens", timeout=600)
+        super().__init__(
+            title="Editar Imagens", 
+            timeout=600,
+            custom_id="modal_edit_images"
+        )
         self.add_item(ui.InputText(
             label="URL da Imagem Principal",
             placeholder="https://exemplo.com/imagem.png",
@@ -711,12 +813,28 @@ class ImageModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar imagens: {e}")
             await interaction.response.send_message("❌ Erro ao editar imagens.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL ImageModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class FooterModal(ui.Modal):
     """Modal para editar rodapé"""
     
     def __init__(self):
-        super().__init__(title="Editar Rodapé", timeout=600)
+        super().__init__(
+            title="Editar Rodapé", 
+            timeout=600,
+            custom_id="modal_edit_footer"
+        )
         self.add_item(ui.InputText(
             label="Texto do Rodapé",
             placeholder="Ex: Atendimento 24/7 • Pagamento via Pix",
@@ -738,12 +856,28 @@ class FooterModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar rodapé: {e}")
             await interaction.response.send_message("❌ Erro ao editar rodapé.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL FooterModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class ButtonNameModal(ui.Modal):
     """Modal para editar nome do botão"""
     
     def __init__(self):
-        super().__init__(title="Editar Nome do Botão", timeout=600)
+        super().__init__(
+            title="Editar Nome do Botão", 
+            timeout=600,
+            custom_id="modal_edit_button_name"
+        )
         self.add_item(ui.InputText(
             label="Nome do Botão",
             placeholder="Ex: Criar Ticket de Compra",
@@ -765,12 +899,28 @@ class ButtonNameModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar nome do botão: {e}")
             await interaction.response.send_message("❌ Erro ao editar nome do botão.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL ButtonNameModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class ProductFilterModal(ui.Modal):
     """Modal para editar filtro de produtos"""
     
     def __init__(self):
-        super().__init__(title="Editar Filtro de Produtos", timeout=600)
+        super().__init__(
+            title="Editar Filtro de Produtos", 
+            timeout=600,
+            custom_id="modal_edit_product_filter"
+        )
         self.add_item(ui.InputText(
             label="IDs dos Produtos (vazio = todos)",
             placeholder="Ex: 1,2,3,5 ou deixe vazio para todos",
@@ -801,6 +951,18 @@ class ProductFilterModal(ui.Modal):
         except Exception as e:
             print(f"Erro ao editar filtro de produtos: {e}")
             await interaction.response.send_message("❌ Erro ao editar filtro de produtos.", ephemeral=True)
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL ProductFilterModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class SetupTicketModal(ui.Modal):
     """Modal para configurar o sistema de tickets"""
@@ -1069,7 +1231,11 @@ class CouponInputModal(ui.Modal):
     """Modal para coletar código de cupom (opcional)"""
     
     def __init__(self, user, guild, product):
-        super().__init__(title="Cupom de Desconto (Opcional)", timeout=600)
+        super().__init__(
+            title="Cupom de Desconto (Opcional)", 
+            timeout=600,
+            custom_id=f"modal_coupon_{user.id}_{product['id']}"
+        )
         self.user = user
         self.guild = guild
         self.product = product
@@ -1133,6 +1299,25 @@ class CouponInputModal(ui.Modal):
                     )
             except Exception as e2:
                 print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        """Handler de erros do modal"""
+        print(f"❌ ERRO NO MODAL CouponInputModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(
+                    f"❌ Erro ao processar cupom: {str(error)[:100]}", 
+                    ephemeral=True
+                )
+            else:
+                await interaction.followup.send(
+                    f"❌ Erro ao processar cupom: {str(error)[:100]}", 
+                    ephemeral=True
+                )
+        except Exception as e:
+            print(f"❌ Falha ao enviar mensagem de erro do on_error: {e}")
 
 class ProductSelect(ui.Select):
     """Select menu personalizado para escolher produto"""
@@ -1350,7 +1535,11 @@ class CreateCouponModal(ui.Modal):
     """Modal para criar cupom"""
     
     def __init__(self):
-        super().__init__(title="Criar Novo Cupom", timeout=600)
+        super().__init__(
+            title="Criar Novo Cupom", 
+            timeout=600,
+            custom_id="modal_create_coupon"
+        )
         
         self.add_item(ui.InputText(
             label="Código do Cupom",
@@ -1465,12 +1654,28 @@ class CreateCouponModal(ui.Modal):
                     await interaction.followup.send("❌ Erro ao criar cupom.", ephemeral=True)
             except Exception as e2:
                 print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL CreateCouponModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class SetupSupportModal(ui.Modal):
     """Modal para configurar o sistema de tickets de suporte com select menu"""
     
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(title="Configurar Tickets de Suporte", timeout=600)
+        super().__init__(
+            title="Configurar Tickets de Suporte", 
+            timeout=600,
+            custom_id="modal_setup_support"
+        )
         self.add_item(ui.InputText(
             label="Título da Mensagem", 
             placeholder="Ex: Central de Atendimento", 
@@ -1623,6 +1828,18 @@ class SetupSupportModal(ui.Modal):
                     await interaction.followup.send("❌ Erro ao configurar sistema de suporte.", ephemeral=True)
             except Exception as e2:
                 print(f"❌ Falha ao enviar mensagem de erro: {e2}")
+    
+    async def on_error(self, error: Exception, interaction: discord.Interaction):
+        print(f"❌ ERRO NO MODAL SetupSupportModal: {error}")
+        import traceback
+        traceback.print_exc()
+        try:
+            if not interaction.response.is_done():
+                await interaction.response.send_message(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+            else:
+                await interaction.followup.send(f"❌ Erro: {str(error)[:100]}", ephemeral=True)
+        except:
+            pass
 
 class CustomSupportTicketButton(ui.Button):
     """Botão customizado para criar ticket de suporte com categoria específica"""
