@@ -200,7 +200,7 @@ class SetupMessageModal(ui.Modal):
             if titulo:
                 embed.title = titulo
             if url_imagem and url_imagem.startswith(('http://', 'https://')):
-                embed.set_image(url=url_imagem)
+                    embed.set_image(url=url_imagem)
             if rodape:
                 embed.set_footer(text=rodape)
             
@@ -261,7 +261,7 @@ class TicketConfigView(ui.View):
         if self.message:
             await self.message.edit(view=self)
     
-    async def update_preview(self, interaction: discord.Interaction):
+    async def update_preview(self, interaction: disnake.Interaction):
         """Atualiza o preview do embed"""
         try:
             print(f"🔧 update_preview chamado para guild {self.guild_id}")
@@ -284,7 +284,7 @@ class TicketConfigView(ui.View):
     
     def _create_embed(self):
         """Cria o embed baseado na configuração"""
-            embed = discord.Embed(
+            embed = disnake.Embed(
             title=self.config['title'],
             description=self.config['description'],
             color=self.config['color']
@@ -324,7 +324,7 @@ class TicketConfigView(ui.View):
         
         return embed
 
-    async def finish_configuration(self, interaction: discord.Interaction):
+    async def finish_configuration(self, interaction: disnake.Interaction):
         """Finaliza a configuração e salva no banco"""
         try:
             print(f"🔧 Finalizando configuração para guild {self.guild_id}")
@@ -346,7 +346,7 @@ class TicketConfigView(ui.View):
                 return
             
             # Criar embed final
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title=self.config['title'],
                 description=self.config['description'],
                 color=self.config['color']
@@ -410,12 +410,12 @@ class TitleButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Título",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="📝",
             custom_id="edit_title"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         # Registrar que usuário está aguardando input
         waiting_for_input[interaction.user.id] = {
             'type': 'title',
@@ -437,12 +437,12 @@ class DescriptionButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Descrição",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="📄",
             custom_id="edit_description"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'description',
             'guild_id': interaction.guild_id,
@@ -463,12 +463,12 @@ class ColorButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Cor",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="🎨",
             custom_id="edit_color"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'color',
             'guild_id': interaction.guild_id,
@@ -489,12 +489,12 @@ class AuthorButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Autor",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="👤",
             custom_id="edit_author"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'author',
             'guild_id': interaction.guild_id,
@@ -515,12 +515,12 @@ class FieldsButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Campos",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="📋",
             custom_id="edit_fields"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'fields',
             'guild_id': interaction.guild_id,
@@ -543,12 +543,12 @@ class ImageButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Imagens",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="🖼️",
             custom_id="edit_images"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'images',
             'guild_id': interaction.guild_id,
@@ -572,12 +572,12 @@ class FooterButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Rodapé",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="🏷️",
             custom_id="edit_footer"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'footer',
             'guild_id': interaction.guild_id,
@@ -598,12 +598,12 @@ class ButtonNameButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Botão",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="🔘",
             custom_id="edit_button"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'button_name',
             'guild_id': interaction.guild_id,
@@ -624,12 +624,12 @@ class ProductFilterButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Produtos",
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji="🛍️",
             custom_id="edit_products"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         waiting_for_input[interaction.user.id] = {
             'type': 'product_filter',
             'guild_id': interaction.guild_id,
@@ -651,12 +651,12 @@ class PreviewButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Preview",
-            style=discord.ButtonStyle.primary,
+            style=disnake.ButtonStyle.primary,
             emoji="👁️",
             custom_id="update_preview"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         view = self.view
         await view.update_preview(interaction)
 
@@ -666,12 +666,12 @@ class FinishButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Finalizar",
-            style=discord.ButtonStyle.success,
+            style=disnake.ButtonStyle.success,
             emoji="✅",
             custom_id="finish_config"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         view = self.view
         await view.finish_configuration(interaction)
 
@@ -696,7 +696,7 @@ class SetupTicketModal(ui.Modal):
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
             value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
-            style=discord.InputTextStyle.paragraph,
+            style=disnake.TextInputStyle.paragraph,
             max_length=1000
         )
         
@@ -728,7 +728,7 @@ class SetupTicketModal(ui.Modal):
         self.add_item(self.nome_botao)
         self.add_item(self.cor)
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: disnake.Interaction):
         """Processa a configuração do sistema de tickets"""
         await interaction.response.defer(ephemeral=True)
         
@@ -786,7 +786,7 @@ class SetupTicketModal(ui.Modal):
                 cor_int = 0x0099ff
             
             # Criar embed
-            embed = discord.Embed(title=headline, description=descricao, color=cor_int)
+            embed = disnake.Embed(title=headline, description=descricao, color=cor_int)
                 embed.add_field(
                     name="🚀 Como Funciona?",
                     value="1. Clique no botão abaixo para criar um ticket\n2. Escolha o produto no modal\n3. Um canal privado será criado para você\n4. O bot irá guiá-lo para o pagamento e entrega",
@@ -890,7 +890,7 @@ class CouponInputModal(ui.Modal):
 class ProductSelect(ui.Select):
     """Select menu personalizado para escolher produto"""
     
-    def __init__(self, products: List[Dict], options: List[discord.SelectOption]):
+    def __init__(self, products: List[Dict], options: List[disnake.SelectOption]):
         super().__init__(
             placeholder="Escolha um produto...",
             min_values=1,
@@ -899,7 +899,7 @@ class ProductSelect(ui.Select):
         )
         self.products = products
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback do select menu - abre modal para cupom"""
         try:
             selected_product_id = int(self.values[0])
@@ -943,7 +943,7 @@ class ProductSelectView(ui.View):
         # Criar opções do select
         options = []
         for i, product in enumerate(products):
-            option = discord.SelectOption(
+            option = disnake.SelectOption(
                 label=product['name'],
                 description=f"R$ {product['price']:.2f} - {product.get('description', 'Sem descrição')[:50]}",
                 value=str(product['id'])
@@ -968,13 +968,13 @@ class TicketButton(ui.Button):
     def __init__(self, nome_botao="Criar Ticket de Compra"):
         super().__init__(
             label=f"🛒 {nome_botao}",
-            style=discord.ButtonStyle.primary,
+            style=disnake.ButtonStyle.primary,
             emoji="🎫",
             custom_id="create_ticket_button"
         )
         self.product_model = ProductModel()
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback do botão - carrega produtos e abre modal"""
         try:
             # Debug: Verificar configurações
@@ -1023,7 +1023,7 @@ class TicketButton(ui.Button):
             # Criar view com select menu
             view = ProductSelectView(products)
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="🛍️ Escolha seu Produto",
                 description="Selecione o produto que deseja comprar:",
                 color=0x0099ff
@@ -1053,12 +1053,12 @@ class CloseTicketButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="🔒 Fechar Ticket",
-            style=discord.ButtonStyle.danger,
+            style=disnake.ButtonStyle.danger,
             emoji="❌",
             custom_id="close_ticket_button"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback para fechar ticket"""
         try:
             # Verificar se é admin
@@ -1142,7 +1142,7 @@ class CreateCouponModal(ui.Modal):
             max_length=10
         ))
     
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: disnake.Interaction):
         """Processa criação do cupom"""
         await interaction.response.defer(ephemeral=True)
         
@@ -1203,7 +1203,7 @@ class CreateCouponModal(ui.Modal):
             )
             
             if success:
-                embed = discord.Embed(
+                embed = disnake.Embed(
                     title="✅ Cupom Criado!",
                     description=f"Cupom **{code}** criado com sucesso!",
                     color=0x00ff00
@@ -1249,7 +1249,7 @@ class SetupSupportModal(ui.Modal):
             label="Opções Menu (EMOJI|Nome|Descrição)", 
             placeholder="Uma por linha", 
             value="❤️|Parcerias|Para os interessados em colaborar conosco.\n💡|Dúvidas|Caso esteja com dúvidas em algo, abra um ticket.\n✅|Denúncias|Realize denúncias através desse ticket.\n🎁|Sorteios|Aqui você poderá resgatar sua premiação de sorteios.",
-            style=discord.InputTextStyle.paragraph,
+            style=disnake.TextInputStyle.paragraph,
             max_length=1000,
             required=True
         ))
@@ -1268,7 +1268,7 @@ class SetupSupportModal(ui.Modal):
             max_length=10
         ))
 
-    async def on_submit(self, interaction: discord.Interaction):
+    async def on_submit(self, interaction: disnake.Interaction):
         """Processa a configuração do sistema de tickets de suporte"""
         await interaction.response.defer(ephemeral=True)
         
@@ -1336,7 +1336,7 @@ class SetupSupportModal(ui.Modal):
                 cor_int = 0x5865F2
             
             # Criar embed
-            embed = discord.Embed(title=titulo, description=descricao if descricao else None, color=cor_int)
+            embed = disnake.Embed(title=titulo, description=descricao if descricao else None, color=cor_int)
             for opt in opcoes_config:
                 embed.add_field(name=f"{opt['emoji']} {opt['nome']}", value=opt['descricao'], inline=False)
             
@@ -1358,14 +1358,14 @@ class CustomSupportTicketButton(ui.Button):
     def __init__(self, emoji: str, nome: str, categoria: str):
         super().__init__(
             label=nome,
-            style=discord.ButtonStyle.secondary,
+            style=disnake.ButtonStyle.secondary,
             emoji=emoji,
             custom_id=f"support_ticket_{nome.lower().replace(' ', '_')}"
         )
         self.categoria = categoria
         self.nome_ticket = nome
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback do botão - cria ticket de suporte com categoria"""
         try:
             # Verificar se usuário já tem ticket ativo
@@ -1405,12 +1405,12 @@ class SupportTicketButton(ui.Button):
     def __init__(self, nome_botao="Abrir Ticket de Suporte"):
         super().__init__(
             label=nome_botao,
-            style=discord.ButtonStyle.danger,
+            style=disnake.ButtonStyle.danger,
             emoji="🆘",
             custom_id="create_support_ticket_button"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback do botão - cria ticket de suporte direto"""
         try:
             # Verificar se usuário já tem ticket ativo
@@ -1450,7 +1450,7 @@ class SupportCategorySelect(ui.Select):
         # Criar opções do select menu
         options = []
         for cat in categorias:
-            options.append(discord.SelectOption(
+            options.append(disnake.SelectOption(
                 label=cat['nome'],
                 description=cat['descricao'][:100],  # Discord limita a 100 chars
                 emoji=cat['emoji']
@@ -1465,7 +1465,7 @@ class SupportCategorySelect(ui.Select):
         )
         self.categorias = categorias
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback quando usuário seleciona uma categoria"""
         try:
             # Pegar categoria selecionada
@@ -1508,13 +1508,13 @@ class SupportSelectButton(ui.Button):
     def __init__(self, label: str, emoji: str, categorias: list):
         super().__init__(
             label=label,
-            style=discord.ButtonStyle.primary,
+            style=disnake.ButtonStyle.primary,
             emoji=emoji,
             custom_id="open_support_select"
         )
         self.categorias = categorias
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Abre o select menu de categorias"""
         try:
             # Criar view temporária com select menu
@@ -1560,12 +1560,12 @@ class GeneratePaymentButton(ui.Button):
     def __init__(self):
         super().__init__(
             label="Gerar Pagamento",
-            style=discord.ButtonStyle.success,
+            style=disnake.ButtonStyle.success,
             emoji="💳",
             custom_id="generate_payment_button"
         )
     
-    async def callback(self, interaction: discord.Interaction):
+    async def callback(self, interaction: disnake.Interaction):
         """Callback para gerar pagamento"""
         try:
             # Verificar se é canal de ticket
@@ -1645,7 +1645,7 @@ class GeneratePaymentButton(ui.Button):
                 })
                 
                 # Enviar pagamento
-                embed = discord.Embed(
+                embed = disnake.Embed(
                     title="✅ Pagamento Gerado!",
                     description=f"**Produto:** {product['name']}\n**Valor:** R$ {product['price']:.2f}",
                     color=0x00ff00
