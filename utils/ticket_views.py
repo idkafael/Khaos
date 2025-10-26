@@ -136,7 +136,6 @@ class TicketConfigView(ui.View):
         self.add_item(FooterButton())
         self.add_item(ButtonNameButton())
         self.add_item(ProductFilterButton())
-        self.add_item(PreviewButton())
         self.add_item(FinishButton())
     
     async def on_timeout(self):
@@ -764,21 +763,6 @@ class ProductFilterButton(ui.Button):
         current_product_ids = view.config.get('product_ids') or []
         modal = ProductFilterModal(current_product_ids)
         await interaction.response.send_modal(modal)
-
-class PreviewButton(ui.Button):
-    """Botão para atualizar preview"""
-    
-    def __init__(self):
-        super().__init__(
-            label="Preview",
-            style=disnake.ButtonStyle.primary,
-            emoji="👁️",
-            custom_id="update_preview"
-        )
-    
-    async def callback(self, interaction: disnake.Interaction):
-        view = self.view
-        await view.update_preview(interaction)
 
 class FinishButton(ui.Button):
     """Botão para finalizar configuração"""
