@@ -174,12 +174,12 @@ class SetupMessageModal(ui.Modal):
             import time
             start_time = time.time()
             
-            # Acessar valores via children
-            titulo = self.children[0].value.strip()
-            descricao = self.children[1].value.strip()
-            url_imagem = self.children[2].value.strip()
-            cor_hex = self.children[3].value.strip()
-            rodape = self.children[4].value.strip()
+            # Acessar valores via children com validação
+            titulo = self.children[0].value.strip() if self.children[0].value else ""
+            descricao = self.children[1].value.strip() if self.children[1].value else ""
+            url_imagem = self.children[2].value.strip() if self.children[2].value else ""
+            cor_hex = self.children[3].value.strip() if self.children[3].value else "#0099ff"
+            rodape = self.children[4].value.strip() if self.children[4].value else ""
             
             # Converter cor hex para int
             try:
@@ -684,60 +684,65 @@ class SetupTicketModal(ui.Modal):
     def __init__(self):
         super().__init__(title="Configurar Sistema de Tickets")
         
-        self.add_item(ui.InputText(
+        self.headline = ui.InputText(
             label="Headline", 
             placeholder="Ex: Sistema de Vendas Automatizado", 
             value="🛒 Sistema de Vendas Automatizado",
             max_length=100
-        ))
+        )
         
-        self.add_item(ui.InputText(
+        self.descricao = ui.InputText(
             label="Descrição", 
             placeholder="Ex: Clique no botão abaixo para criar um ticket de compra", 
             value="Clique no botão abaixo para criar um ticket de compra e ser atendido por nosso bot!",
             style=discord.InputTextStyle.paragraph,
             max_length=1000
-        ))
+        )
         
-        self.add_item(ui.InputText(
+        self.product_ids = ui.InputText(
             label="IDs dos Produtos (vazio = todos)", 
             placeholder="Ex: 1,2,3,5 ou deixe vazio para todos", 
             value="",
             required=False,
             max_length=200
-        ))
+        )
         
-        self.add_item(ui.InputText(
+        self.nome_botao = ui.InputText(
             label="Nome do Botão", 
             placeholder="Ex: Criar Ticket de Compra", 
             value="Criar Ticket de Compra",
             max_length=80
-        ))
+        )
         
-        self.add_item(ui.InputText(
+        self.cor = ui.InputText(
             label="Cor do Embed (Hex)", 
             placeholder="Ex: #0099ff ou 0x0099ff", 
             value="#0099ff",
             max_length=10
-        ))
+        )
+        
+        self.add_item(self.headline)
+        self.add_item(self.descricao)
+        self.add_item(self.product_ids)
+        self.add_item(self.nome_botao)
+        self.add_item(self.cor)
 
     async def on_submit(self, interaction: discord.Interaction):
         """Processa a configuração do sistema de tickets"""
         await interaction.response.defer(ephemeral=True)
         
         try:
-            import time
             import asyncio
             from models.guild_config_model import GuildConfigModel
             
             start_time = time.time()
             
-            # Acessar valores via children
-            headline = self.children[0].value
-            descricao = self.children[1].value
-            product_ids_input = self.children[2].value.strip()
-            nome_botao = self.children[3].value
-            cor_hex = self.children[4].value.strip()
+            # Acessar valores via atributos com validação
+            headline = self.headline.value.strip() if self.headline.value else "🛒 Sistema de Vendas"
+            descricao = self.descricao.value.strip() if self.descricao.value else "Clique no botão abaixo!"
+            product_ids_input = self.product_ids.value.strip() if self.product_ids.value else ""
+            nome_botao = self.nome_botao.value.strip() if self.nome_botao.value else "Criar Ticket de Compra"
+            cor_hex = self.cor.value.strip() if self.cor.value else "#0099ff"
             
             # Processar IDs dos produtos
             allowed_product_ids = None
@@ -750,13 +755,17 @@ class SetupTicketModal(ui.Modal):
 
             # Salvar configuração no banco
             guild_config = GuildConfigModel()
-            success = await asyncio.wait_for(
-                guild_config.set_ticket_product_filter(
-                    guild_id=interaction.guild_id,
-                    product_ids=allowed_product_ids
-                ),
-                timeout=10.0
-            )
+            try:
+                success = await asyncio.wait_for(
+                    guild_config.set_ticket_product_filter(
+                        guild_id=interaction.guild_id,
+                        product_ids=allowed_product_ids
+                    ),
+                    timeout=15.0
+                )
+            except asyncio.TimeoutError:
+                await interaction.followup.send("❌ **Timeout!** O banco demorou muito. Tente novamente.", ephemeral=True)
+                return
             
             if not success:
                 await interaction.followup.send("❌ Erro ao salvar configuração no banco de dados.", ephemeral=True)
@@ -792,17 +801,20 @@ class SetupTicketModal(ui.Modal):
 
             # Criar view com botão
             view = TicketView(nome_botao)
-            await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+            await interaction.followup.send(
+                "✅ **Sistema configurado com sucesso!**\nCopie e cole abaixo:",
+                embed=embed,
+                view=view,
+                ephemeral=True
+            )
             
             print(f"⏱️ SetupTicketModal processado em {time.time() - start_time:.2f}s")
 
-        except asyncio.TimeoutError:
-            await interaction.followup.send("❌ Operação demorou muito. Tente novamente.", ephemeral=True)
         except Exception as e:
             print(f"❌ Erro ao configurar sistema de tickets: {e}")
             import traceback
             traceback.print_exc()
-            await interaction.followup.send(f"❌ Erro: {str(e)[:100]}", ephemeral=True)
+            await interaction.followup.send(f"❌ Erro: {str(e)[:200]}", ephemeral=True)
 
 class CouponInputModal(ui.Modal):
     """Modal para coletar código de cupom (opcional)"""
@@ -1139,13 +1151,22 @@ class CreateCouponModal(ui.Modal):
             
             start_time = time.time()
             
-            # Acessar valores via children
-            code = self.children[0].value.upper().strip()
-            discount = float(self.children[1].value.strip())
-            max_uses_str = self.children[2].value.strip()
+            # Acessar valores via children com validação
+            code = self.children[0].value.upper().strip() if self.children[0].value else ""
+            discount_str = self.children[1].value.strip() if self.children[1].value else "0"
+            max_uses_str = self.children[2].value.strip() if self.children[2].value else "0"
+            one_per_user_str = self.children[3].value.strip() if self.children[3].value else "nao"
+            expires_str = self.children[4].value.strip() if self.children[4].value else ""
+            
+            # Convert
+            try:
+                discount = float(discount_str)
+            except ValueError:
+                await interaction.followup.send("❌ Desconto inválido! Use apenas números (ex: 10)", ephemeral=True)
+                return
+            
             max_uses = int(max_uses_str) if max_uses_str and max_uses_str != "0" else None
-            one_per_user = self.children[3].value.strip().lower() == "sim"
-            expires_str = self.children[4].value.strip()
+            one_per_user = one_per_user_str.lower() == "sim"
             
             # Validar desconto
             if discount < 1 or discount > 100:
@@ -1252,12 +1273,12 @@ class SetupSupportModal(ui.Modal):
             import time
             start_time = time.time()
             
-            # Acessar valores via children
-            titulo = self.children[0].value.strip()
-            descricao = self.children[1].value.strip()
-            opcoes_text = self.children[2].value.strip()
-            botao_config = self.children[3].value.strip()
-            cor_hex = self.children[4].value.strip()
+            # Acessar valores via children com validação
+            titulo = self.children[0].value.strip() if self.children[0].value else "🎫 Central de Atendimento"
+            descricao = self.children[1].value.strip() if self.children[1].value else "Clique no botão abaixo!"
+            opcoes_text = self.children[2].value.strip() if self.children[2].value else ""
+            botao_config = self.children[3].value.strip() if self.children[3].value else "Abrir Ticket | 🎫"
+            cor_hex = self.children[4].value.strip() if self.children[4].value else "#5865F2"
             
             # Processar configuração do botão
             label_botao = "Abrir Ticket"
