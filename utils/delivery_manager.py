@@ -60,7 +60,10 @@ class DeliveryManager:
             
             # 5. Se não foi reservado ainda, tentar reservar agora
             if not inventory_item:
-                inventory_item = await self.inventory_model.get_available_stock(transaction['product_id'])
+                inventory_item = await self.inventory_model.get_available_stock(
+                    transaction['product_id'],
+                    transaction['guild_id']
+                )
                 
                 if not inventory_item:
                     # Sem estoque disponível

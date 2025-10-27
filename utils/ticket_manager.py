@@ -314,7 +314,7 @@ class TicketManager:
                 from models.inventory_model import InventoryModel
                 inventory_model = InventoryModel()
                 
-                stock_counts = await inventory_model.get_stock_count(product['id'], guild_id)
+                stock_counts = await inventory_model.get_stock_count(product['id'])
                 print(f"📦 Estoque disponível: {stock_counts['available']} itens")
                 
                 if stock_counts['available'] == 0:
