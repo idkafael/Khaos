@@ -2,6 +2,7 @@ import disnake
 from models.transaction_model import TransactionModel
 from models.product_model import ProductModel
 from models.inventory_model import InventoryModel
+from models.guild_config_model import GuildConfigModel
 from utils.vip_manager import VipManager
 from typing import Optional
 from datetime import datetime
@@ -15,6 +16,7 @@ class DeliveryManager:
         self.product_model = ProductModel()
         self.inventory_model = InventoryModel()
         self.vip_manager = VipManager(bot)
+        self.guild_config = GuildConfigModel()
     
     async def process_payment_confirmation(self, transaction_id: int, payment_id: str = None) -> bool:
         """
@@ -498,9 +500,17 @@ class DeliveryManager:
                 inline=False
             )
             
+            # Buscar canal de feedback
+            guild_id_from_transaction = transaction.get('guild_id')
+            feedback_channel_id = await self._get_feedback_channel(guild_id_from_transaction)
+            if feedback_channel_id:
+                feedback_field = f"Avalie-nos em <#{feedback_channel_id}> - Sua opinião é muito importante!"
+            else:
+                feedback_field = "Sua opinião é muito importante para nós. Considere deixar uma avaliação!"
+            
             thank_you_embed.add_field(
                 name="⭐ Avalie-nos",
-                value="Sua opinião é muito importante para nós. Considere deixar uma avaliação!",
+                value=feedback_field,
                 inline=False
             )
             
@@ -630,9 +640,17 @@ class DeliveryManager:
                 inline=False
             )
             
+            # Buscar canal de feedback
+            guild_id_from_transaction = transaction.get('guild_id')
+            feedback_channel_id = await self._get_feedback_channel(guild_id_from_transaction)
+            if feedback_channel_id:
+                feedback_field = f"Avalie-nos em <#{feedback_channel_id}> - Sua opinião é muito importante!"
+            else:
+                feedback_field = "Sua opinião é muito importante para nós. Considere deixar uma avaliação!"
+            
             thank_you_embed.add_field(
                 name="⭐ Avalie-nos",
-                value="Sua opinião é muito importante para nós. Considere deixar uma avaliação!",
+                value=feedback_field,
                 inline=False
             )
             
@@ -692,6 +710,14 @@ class DeliveryManager:
                     print(f"🔒 Ticket fechado: {channel.name}")
         except Exception as e:
             print(f"Erro ao fechar ticket: {e}")
+    
+    async def _get_feedback_channel(self, guild_id: int) -> Optional[int]:
+        """Busca o canal de feedback do servidor"""
+        try:
+            return await self.guild_config.get_feedback_channel(guild_id)
+        except Exception as e:
+            print(f"Erro ao buscar canal de feedback: {e}")
+            return None
     
     async def _update_ticket_payment_status(self, channel: disnake.TextChannel, transaction: dict, status_text: str):
         """Atualiza a última mensagem de pagamento no ticket"""

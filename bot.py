@@ -254,6 +254,47 @@ async def setup_suporte_slash(inter: disnake.ApplicationCommandInteraction):
         )
         await inter.response.send_message(embed=embed, ephemeral=True)
 
+@bot.slash_command(name="set_feedback", description="[ADMIN] Configurar canal de feedback")
+@commands.has_permissions(administrator=True)
+async def set_feedback_slash(inter: disnake.ApplicationCommandInteraction, canal: disnake.TextChannel):
+    """Comando admin para configurar canal de feedback"""
+    try:
+        print(f"Comando set_feedback executado por {inter.user.name} - Canal: {canal.name}")
+        
+        from models.guild_config_model import GuildConfigModel
+        guild_config = GuildConfigModel()
+        
+        success = await guild_config.set_feedback_channel(inter.guild_id, canal.id)
+        
+        if success:
+            embed = disnake.Embed(
+                title="✅ Canal de Feedback Configurado",
+                description=f"Canal de feedback configurado com sucesso!\n\n📢 **Canal:** {canal.mention}",
+                color=0x8B5CF6
+            )
+            embed.add_field(
+                name="💡 Como Funciona",
+                value="Este canal será mencionado nas mensagens de agradecimento após vendas.",
+                inline=False
+            )
+            await inter.response.send_message(embed=embed, ephemeral=True)
+        else:
+            embed = disnake.Embed(
+                description="❌ Erro ao configurar canal de feedback.",
+                color=0xFF0000
+            )
+            await inter.response.send_message(embed=embed, ephemeral=True)
+            
+    except Exception as e:
+        print(f"Erro no comando set_feedback: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = disnake.Embed(
+            description="❌ Erro ao configurar canal de feedback.",
+            color=0xFF0000
+        )
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
 @bot.slash_command(name="setlog", description="[ADMIN] Configurar sistema de logs do servidor")
 @commands.has_permissions(administrator=True)
 async def setlog_slash(inter: disnake.ApplicationCommandInteraction, canal: disnake.TextChannel):
