@@ -2568,7 +2568,7 @@ async def admin_criar_produto(
 ):
     """Criar produto que atualiza diretamente no Supabase"""
     try:
-        await inter.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         product_data = {
             'name': nome,
@@ -2578,7 +2578,7 @@ async def admin_criar_produto(
             'unlimited_stock': estoque_ilimitado
         }
         
-        product = await product_model.create_product(inter.guild_id, product_data)
+        product = await product_model.create_product(ctx.guild_id, product_data)
         
         if product:
             embed = disnake.Embed(
@@ -2591,13 +2591,13 @@ async def admin_criar_produto(
             embed.add_field(name="Categoria", value=categoria, inline=True)
             embed.add_field(name="Estoque", value="♾️ Ilimitado" if estoque_ilimitado else "📦 Gerenciado", inline=True)
             
-            await inter.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed, ephemeral=True)
         else:
-            await inter.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
+            await ctx.followup.send("❌ Erro ao criar produto no Supabase.", ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao criar produto: {e}")
-        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 @bot.slash_command(name="admin_deletar_produto", description="[ADMIN] Deletar um ou mais produtos do servidor")
@@ -2742,7 +2742,7 @@ async def admin_criar_vip(
 ):
     """Criar produto VIP no Supabase"""
     try:
-        await inter.response.defer(ephemeral=True)
+        await ctx.response.defer(ephemeral=True)
         
         # Configuração VIP
         vip_config = {
@@ -2759,7 +2759,7 @@ async def admin_criar_vip(
             'unlimited_stock': True  # VIPs sempre têm estoque ilimitado
         }
         
-        product = await product_model.create_product(inter.guild_id, product_data)
+        product = await product_model.create_product(ctx.guild_id, product_data)
         
         if product:
             duracao_text = f"{duracao_dias} dias" if duracao_dias > 0 else "Vitalício"
@@ -2774,13 +2774,13 @@ async def admin_criar_vip(
             embed.add_field(name="Role", value=role_name, inline=True)
             embed.add_field(name="Duração", value=duracao_text, inline=True)
             
-            await inter.followup.send(embed=embed, ephemeral=True)
+            await ctx.followup.send(embed=embed, ephemeral=True)
         else:
-            await inter.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
+            await ctx.followup.send("❌ Erro ao criar produto VIP.", ephemeral=True)
             
     except Exception as e:
         print(f"Erro ao criar VIP: {e}")
-        await inter.followup.send(f"❌ Erro: {e}", ephemeral=True)
+        await ctx.followup.send(f"❌ Erro: {e}", ephemeral=True)
 
 
 # =============================================
