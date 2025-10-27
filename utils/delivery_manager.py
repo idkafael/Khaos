@@ -484,6 +484,30 @@ class DeliveryManager:
             
             await channel.send(embed=embed)
             
+            # Mensagem de agradecimento
+            thank_you_embed = disnake.Embed(
+                title="💜 Obrigado pela Sua Compra!",
+                description=f"{member.mention}, agradecemos por escolher nosso serviço!",
+                color=0x8B5CF6,
+                timestamp=datetime.now()
+            )
+            
+            thank_you_embed.add_field(
+                name="🙏 Suporte",
+                value="Se tiver qualquer dúvida ou precisar de ajuda, não hesite em nos contatar!",
+                inline=False
+            )
+            
+            thank_you_embed.add_field(
+                name="⭐ Avalie-nos",
+                value="Sua opinião é muito importante para nós. Considere deixar uma avaliação!",
+                inline=False
+            )
+            
+            thank_you_embed.set_footer(text="Esperamos que você aproveite seu VIP! 🌟")
+            
+            await channel.send(embed=thank_you_embed)
+            
             # Notificar admin sobre venda VIP
             await self._notify_admin_vip_sale(transaction, product, subscription)
             
@@ -591,6 +615,30 @@ class DeliveryManager:
             
             # Enviar no canal do ticket
             await channel.send(f"{user.mention}", embed=embed)
+            
+            # Mensagem de agradecimento
+            thank_you_embed = disnake.Embed(
+                title="💜 Obrigado pela Sua Compra!",
+                description=f"{user.mention}, agradecemos por escolher nosso serviço!",
+                color=0x8B5CF6,
+                timestamp=datetime.now()
+            )
+            
+            thank_you_embed.add_field(
+                name="🙏 Suporte",
+                value="Se tiver qualquer dúvida ou precisar de ajuda, não hesite em nos contatar!",
+                inline=False
+            )
+            
+            thank_you_embed.add_field(
+                name="⭐ Avalie-nos",
+                value="Sua opinião é muito importante para nós. Considere deixar uma avaliação!",
+                inline=False
+            )
+            
+            thank_you_embed.set_footer(text="Esperamos que você aproveite seu produto! 🌟")
+            
+            await channel.send(embed=thank_you_embed)
             
             # Atualizar transação como completada
             update_data = {
