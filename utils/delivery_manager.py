@@ -147,7 +147,7 @@ class DeliveryManager:
                     return False
             
             # Criar embed de entrega
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Produto Entregue!",
                 description=f"Seu pagamento foi confirmado e o produto foi entregue.",
                 color=0x00ff00,
@@ -205,7 +205,7 @@ class DeliveryManager:
             
             # Enviar também por DM (versão completa)
             try:
-                dm_embed = discord.Embed(
+                dm_embed = disnake.Embed(
                     title="🎉 Compra Confirmada!",
                     description=f"Olá {user.mention}! Seu pagamento foi confirmado com sucesso.",
                     color=0x00ff00,
@@ -275,7 +275,7 @@ class DeliveryManager:
                     delete_after=30
                 )
                 
-            except discord.Forbidden:
+            except disnake.Forbidden:
                 print(f"⚠️ {user.name} está com DMs desabilitadas")
                 await channel.send(
                     f"⚠️ {user.mention} Não consegui enviar uma cópia na sua DM. Verifique se suas mensagens diretas estão habilitadas!",
@@ -419,10 +419,10 @@ class DeliveryManager:
             await self.transaction_model.update_transaction(transaction['id'], update_data)
             
             # Enviar confirmação no canal do ticket
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ VIP Ativado com Sucesso!",
                 description=f"{member.mention} Sua assinatura VIP foi ativada!",
-                color=discord.Color.gold(),
+                color=disnake.Color.gold(),
                 timestamp=datetime.now()
             )
             
@@ -539,7 +539,7 @@ class DeliveryManager:
                     return False
             
             # Criar embed de entrega para produto ilimitado
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="✅ Produto Entregue!",
                 description=f"Seu pagamento foi confirmado e o produto foi entregue.",
                 color=0x00ff00,
@@ -652,7 +652,7 @@ class DeliveryManager:
                     if message.embeds and any('QR Code' in field.name for embed in message.embeds for field in embed.fields):
                         # Atualizar embed
                         new_embed = message.embeds[0]
-                        new_embed.color = discord.Color.green()
+                        new_embed.color = disnake.Color.green()
                         
                         # Atualizar título e adicionar status
                         if new_embed.fields:
