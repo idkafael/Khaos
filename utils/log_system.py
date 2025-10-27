@@ -94,7 +94,8 @@ class LogSystem:
             embed.set_footer(text=f"Evento: {event_type}")
             
             # Enviar log
-            await log_channel.send(embed=embed)
+            # Workaround para erro de '_files' no disnake
+            await log_channel.send(embed=embed, files=[])
             
         except Exception as e:
             print(f"❌ Erro ao enviar log: {e}")

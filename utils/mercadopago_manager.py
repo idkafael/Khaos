@@ -114,7 +114,12 @@ class MercadoPagoManager:
                 "payment_method_id": "pix",
                 "payer": payer_data,
                 "external_reference": str(transaction_id),  # Para rastrear
-                "statement_descriptor": "KHAOS DIGITAL"  # Nome que aparece na fatura (ganha 10 pontos!)
+                "statement_descriptor": "KHAOS DIGITAL",  # Nome que aparece na fatura (ganha 10 pontos!)
+                "metadata": {
+                    "platform": "discord_bot",
+                    "version": "2.0",
+                    "device_id": "discord_bot_khaos"  # Identificador do dispositivo (ganha 2 pontos!)
+                }
             }
             
             # Adicionar items se houver
