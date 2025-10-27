@@ -90,18 +90,22 @@ class MercadoPagoManager:
             items = []
             if item_title:
                 item_data = {
-                    "title": item_title or description,
-                    "description": description,
-                    "quantity": item_quantity,
-                    "unit_price": round(float(amount) / item_quantity, 2),
-                    "category_id": item_category or "digital_goods"
+                    "title": item_title or description,  # +2 pontos
+                    "description": description,  # +2 pontos
+                    "quantity": item_quantity,  # +2 pontos
+                    "unit_price": round(float(amount) / item_quantity, 2),  # +2 pontos
                 }
                 
+                # Categoria específica (ganha 3 pontos)
+                if item_category:
+                    item_data["category_id"] = item_category
+                
+                # ID do item (ganha 3 pontos)
                 if item_id:
                     item_data["id"] = str(item_id)
                 
                 items.append(item_data)
-                print(f"📦 [MP] Item: {item_title} (x{item_quantity})")
+                print(f"📦 [MP] Item: {item_title} (x{item_quantity}) - Categoria: {item_data.get('category_id', 'N/A')}")
             
             # Criar pagamento
             payment_data = {
@@ -109,7 +113,8 @@ class MercadoPagoManager:
                 "description": description,
                 "payment_method_id": "pix",
                 "payer": payer_data,
-                "external_reference": str(transaction_id)  # Para rastrear
+                "external_reference": str(transaction_id),  # Para rastrear
+                "statement_descriptor": "KHAOS DIGITAL"  # Nome que aparece na fatura (ganha 10 pontos!)
             }
             
             # Adicionar items se houver
