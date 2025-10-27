@@ -134,6 +134,9 @@ class DeliveryManager:
                 print(f"❌ Canal {channel_id} não encontrado")
                 return False
             
+            # Atualizar última mensagem do bot antes de enviar a entrega
+            await self._update_ticket_payment_status(channel, transaction, "✅ PAGO")
+            
             # Buscar usuário
             user = self.bot.get_user(transaction['user_id'])
             if not user:
@@ -633,4 +636,28 @@ class DeliveryManager:
                     print(f"🔒 Ticket fechado: {channel.name}")
         except Exception as e:
             print(f"Erro ao fechar ticket: {e}")
+    
+    async def _update_ticket_payment_status(self, channel: discord.TextChannel, transaction: dict, status_text: str):
+        """Atualiza a última mensagem de pagamento no ticket"""
+        try:
+            # Buscar últimas mensagens do bot
+            async for message in channel.history(limit=10):
+                if message.author == self.bot.user:
+                    # Verificar se é uma mensagem de pagamento
+                    if message.embeds and any('QR Code' in field.name for embed in message.embeds for field in embed.fields):
+                        # Atualizar embed
+                        new_embed = message.embeds[0]
+                        new_embed.color = discord.Color.green()
+                        
+                        # Atualizar título e adicionar status
+                        if new_embed.fields:
+                            for field in new_embed.fields:
+                                if 'Validade' in field.name:
+                                    field.value = status_text
+                        
+                        await message.edit(embed=new_embed)
+                        print(f"✅ Status do ticket atualizado para: {status_text}")
+                        break
+        except Exception as e:
+            print(f"Erro ao atualizar status do ticket: {e}")
 
