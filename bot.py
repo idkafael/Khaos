@@ -314,7 +314,7 @@ async def setlog_slash(inter: disnake.ApplicationCommandInteraction, canal: disn
 async def setlog_prefix(ctx, canal: disnake.TextChannel):
     """Comando prefixado para configurar logs do servidor"""
     try:
-        print(f"Comando ?setlog executado por {inter.author.name} - Canal: {canal.name}")
+        print(f"Comando ?setlog executado por {ctx.author.name} - Canal: {canal.name}")
         
         # Criar embed explicativo
         embed = disnake.Embed(
@@ -340,16 +340,16 @@ async def setlog_prefix(ctx, canal: disnake.TextChannel):
         
         # Importar View com Select Menu
         from utils.log_views import LogEventsSelectView
-        view = LogEventsSelectView(canal.id, inter.guild.id)
+        view = LogEventsSelectView(canal.id, ctx.guild.id)
         
-        await inter.send(embed=embed, view=view)
+        await ctx.send(embed=embed, view=view)
         print("View de seleção de eventos enviada com sucesso!")
         
     except Exception as e:
         print(f"Erro no comando ?setlog: {e}")
         import traceback
         traceback.print_exc()
-        await inter.send("❌ Erro ao configurar sistema de logs.")
+        await ctx.send("❌ Erro ao configurar sistema de logs.")
 
 @bot.command(name="clear", aliases=["limpar", "apagar"])
 @commands.has_permissions(manage_messages=True)
@@ -362,36 +362,36 @@ async def clear_messages(ctx, amount: int = 10):
     try:
         # Validar o número de mensagens
         if amount < 1:
-            await inter.send("❌ O número deve ser maior que 0!", delete_after=5)
+            await ctx.send("❌ O número deve ser maior que 0!", delete_after=5)
             return
         
         # Apagar mensagens (incluindo o comando)
         # Nota: Discord só permite apagar mensagens com menos de 14 dias em massa
-        deleted = await inter.channel.purge(limit=amount + 1)
+        deleted = await ctx.channel.purge(limit=amount + 1)
         
         # Enviar mensagem de confirmação (que será apagada após 5 segundos)
-        confirm_msg = await inter.send(
-            f"🗑️ {len(deleted) - 1} mensagens foram apagadas por {inter.author.mention}",
+        confirm_msg = await ctx.send(
+            f"🗑️ {len(deleted) - 1} mensagens foram apagadas por {ctx.author.mention}",
             delete_after=5
         )
         
-        print(f"✅ {inter.author.name} apagou {len(deleted) - 1} mensagens em #{inter.channel.name}")
+        print(f"✅ {ctx.author.name} apagou {len(deleted) - 1} mensagens em #{ctx.channel.name}")
         
     except disnake.Forbidden:
-        await inter.send("❌ Não tenho permissão para apagar mensagens neste canal!", delete_after=5)
+        await ctx.send("❌ Não tenho permissão para apagar mensagens neste canal!", delete_after=5)
     except disnake.HTTPException as e:
-        await inter.send(f"❌ Erro ao apagar mensagens: {e}", delete_after=5)
+        await ctx.send(f"❌ Erro ao apagar mensagens: {e}", delete_after=5)
     except Exception as e:
         print(f"Erro no comando ?clear: {e}")
-        await inter.send("❌ Ocorreu um erro ao apagar as mensagens.", delete_after=5)
+        await ctx.send("❌ Ocorreu um erro ao apagar as mensagens.", delete_after=5)
 
 @clear_messages.error
 async def clear_error(ctx, error):
     """Handler de erros do comando clear"""
     if isinstance(error, commands.MissingPermissions):
-        await inter.send("❌ Você não tem permissão para usar este comando! (Necessário: Gerenciar Mensagens)", delete_after=5)
+        await ctx.send("❌ Você não tem permissão para usar este comando! (Necessário: Gerenciar Mensagens)", delete_after=5)
     elif isinstance(error, commands.BadArgument):
-        await inter.send("❌ Uso correto: `?clear [número]` - Exemplo: `?clear 50`", delete_after=5)
+        await ctx.send("❌ Uso correto: `?clear [número]` - Exemplo: `?clear 50`", delete_after=5)
     else:
         print(f"Erro no comando clear: {error}")
 
@@ -1601,16 +1601,16 @@ active_tickets = {}
 # Função auxiliar para responder comandos
 async def respond_command(ctx, message, embed=None, ephemeral=False):
     """Responde comandos tanto slash quanto prefixo"""
-    if inter.interaction:
+    if hasattr(ctx, 'interaction') and ctx.interaction:
         if embed:
-            await inter.respond(embed=embed, ephemeral=ephemeral)
+            await ctx.interaction.response.send_message(embed=embed, ephemeral=ephemeral)
         else:
-            await inter.respond(message, ephemeral=ephemeral)
+            await ctx.interaction.response.send_message(message, ephemeral=ephemeral)
     else:
         if embed:
-            await inter.send(embed=embed)
+            await ctx.send(embed=embed)
         else:
-            await inter.send(message)
+            await ctx.send(message)
 
 async def respond_with_side_embed(ctx, message, embed=None, ephemeral=False):
     """Responde apenas com embed lateral roxo"""
@@ -1622,16 +1622,16 @@ async def respond_with_side_embed(ctx, message, embed=None, ephemeral=False):
     
     # Se já tem um embed principal, enviar apenas ambos embeds
     if embed:
-        if inter.interaction:
-            await inter.respond(embeds=[embed, side_embed], ephemeral=ephemeral)
+        if hasattr(ctx, 'interaction') and ctx.interaction:
+            await ctx.interaction.response.send_message(embeds=[embed, side_embed], ephemeral=ephemeral)
         else:
-            await inter.send(embeds=[embed, side_embed])
+            await ctx.send(embeds=[embed, side_embed])
     else:
         # Se não tem embed principal, enviar apenas embed lateral
-        if inter.interaction:
-            await inter.respond(embed=side_embed, ephemeral=ephemeral)
+        if hasattr(ctx, 'interaction') and ctx.interaction:
+            await ctx.interaction.response.send_message(embed=side_embed, ephemeral=ephemeral)
         else:
-            await inter.send(embed=side_embed)
+            await ctx.send(embed=side_embed)
 
 @bot.event
 async def on_ready():
@@ -1838,12 +1838,12 @@ async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
         return
     elif isinstance(error, commands.MissingRequiredArgument):
-        await inter.send(f"❌ Argumento obrigatório ausente: {error.param}")
+        await ctx.send(f"❌ Argumento obrigatório ausente: {error.param}")
     elif isinstance(error, commands.BadArgument):
-        await inter.send("❌ Argumento inválido fornecido.")
+        await ctx.send("❌ Argumento inválido fornecido.")
     else:
         print(f"Erro não tratado: {error}")
-        await inter.send("❌ Ocorreu um erro inesperado. Tente novamente.")
+        await ctx.send("❌ Ocorreu um erro inesperado. Tente novamente.")
 
 async def load_sample_products():
     """Carrega produtos de exemplo no banco de dados"""
@@ -2026,13 +2026,13 @@ async def buy_product(ctx, *, product_name):
         product = await product_model.get_product_by_name(product_name)
         
         if not product:
-            await inter.send("❌ Produto não encontrado. Use `?products` para ver os produtos disponíveis.")
+            await ctx.send("❌ Produto não encontrado. Use `?products` para ver os produtos disponíveis.")
             return
         
         # Verificar se o usuário tem um ticket ativo
-        user_id = inter.author.id
+        user_id = ctx.author.id
         if user_id not in active_tickets:
-            await inter.send("❌ Você precisa criar um ticket primeiro! Use o botão 'Criar Ticket de Compra' para começar.")
+            await ctx.send("❌ Você precisa criar um ticket primeiro! Use o botão 'Criar Ticket de Compra' para começar.")
             return
         
         # Criar transação
@@ -2047,8 +2047,8 @@ async def buy_product(ctx, *, product_name):
         payment_data = await payment_utils.create_pix_payment(
             amount=product['price'],
             description=f"Compra: {product['name']}",
-            customer_email=f"{inter.author.name}@discord.com",  # Email padrão baseado no nome
-            customer_name=inter.author.name
+            customer_email=f"{ctx.author.name}@discord.com",  # Email padrão baseado no nome
+            customer_name=ctx.author.name
         )
         
         if payment_data:
@@ -2057,7 +2057,7 @@ async def buy_product(ctx, *, product_name):
                 'payment_id': payment_data['id'],
                 'pix_code': payment_data['pix_code'],
                 'qr_code': payment_data['qr_code'],
-                'email': f"{inter.author.name}@discord.com"
+                'email': f"{ctx.author.name}@discord.com"
             })
             
             # Exibir informações de pagamento
@@ -2078,17 +2078,17 @@ async def buy_product(ctx, *, product_name):
             )
             embed.set_footer(text="Escaneie o QR Code ou copie o código Pix")
             
-            await inter.send(embed=embed)
+            await ctx.send(embed=embed)
             
             # Enviar QR Code como imagem se disponível
             if payment_data.get('qr_code_base64'):
                 # Usar QR Code base64 do Mercado Pago
                 qr_image = payment_utils.get_qr_code_image_from_base64(payment_data['qr_code_base64'])
                 if qr_image:
-                    await inter.send(file=disnake.File(qr_image, filename='qrcode.png'))
+                    await ctx.send(file=disnake.File(qr_image, filename='qrcode.png'))
             elif payment_data.get('qr_code_image'):
                 # Fallback para QR Code gerado localmente
-                await inter.send(file=disnake.File(payment_data['qr_code_image']))
+                await ctx.send(file=disnake.File(payment_data['qr_code_image']))
             
             # Atualizar status do ticket
             active_tickets[user_id]['transaction_id'] = transaction['id']
@@ -2099,11 +2099,11 @@ async def buy_product(ctx, *, product_name):
             asyncio.create_task(monitor_payment(transaction['id'], user_id))
             
         else:
-            await inter.send("❌ Erro ao gerar pagamento. Tente novamente.")
+            await ctx.send("❌ Erro ao gerar pagamento. Tente novamente.")
         
     except Exception as e:
         print(f"Erro ao iniciar compra: {e}")
-        await inter.send("❌ Erro ao iniciar processo de compra. Tente novamente.")
+        await ctx.send("❌ Erro ao iniciar processo de compra. Tente novamente.")
 
 
 async def monitor_payment(transaction_id, user_id):
@@ -2251,57 +2251,57 @@ async def monitor_payment(transaction_id, user_id):
 
 # Comando de teste via prefixo
 @bot.command(name='teste')
-async def teste_prefix(inter):
+async def teste_prefix(ctx):
     """Comando de teste via prefixo"""
-    print(f"🔧 Comando ?teste executado por {inter.author.name} em {inter.guild.name}")
-    await inter.send("✅ Comando ?teste funcionando via prefixo!")
+    print(f"🔧 Comando ?teste executado por {ctx.author.name} em {ctx.guild.name}")
+    await ctx.send("✅ Comando ?teste funcionando via prefixo!")
 
 # Comando para forçar sincronização de slash commands
 @bot.command(name='sync')
 @commands.has_permissions(administrator=True)
-async def sync_commands(inter):
+async def sync_commands(ctx):
     """Força a sincronização dos comandos slash"""
     try:
-        print(f"🔄 Comando de sincronização executado por {inter.author.name}")
+        print(f"🔄 Comando de sincronização executado por {ctx.author.name}")
         
         # Listar comandos registrados
         commands = getattr(bot, 'pending_application_commands', list(bot.application_commands))
-        await inter.send(f"📋 Comandos registrados: {len(commands)}")
+        await ctx.send(f"📋 Comandos registrados: {len(commands)}")
         for cmd in commands:
-            await inter.send(f"  - /{cmd.name}: {cmd.description}")
+            await ctx.send(f"  - /{cmd.name}: {cmd.description}")
         
         # Tentar sincronizar globalmente
         try:
             # Em disnake, use sync_all_commands
             if hasattr(bot, 'sync_all_commands'):
                 await bot.sync_all_commands()
-                await inter.send("✅ Comandos sincronizados usando sync_all_commands!")
+                await ctx.send("✅ Comandos sincronizados usando sync_all_commands!")
             else:
-                await inter.send("⚠️ sync_all_commands não disponível, usando sincronização automática")
+                await ctx.send("⚠️ sync_all_commands não disponível, usando sincronização automática")
         except Exception as e:
-            await inter.send(f"❌ Erro na sincronização global: {e}")
+            await ctx.send(f"❌ Erro na sincronização global: {e}")
             
             # Tentar sincronizar por guild
             try:
                 if hasattr(bot, 'sync_commands_force'):
-                    await bot.sync_commands_force([inter.guild.id])
-                    await inter.send("✅ Comandos sincronizados na guild usando sync_commands_force!")
+                    await bot.sync_commands_force([ctx.guild.id])
+                    await ctx.send("✅ Comandos sincronizados na guild usando sync_commands_force!")
                 else:
-                    await inter.send("⚠️ sync_commands_force não disponível")
+                    await ctx.send("⚠️ sync_commands_force não disponível")
             except Exception as guild_error:
-                await inter.send(f"❌ Erro na sincronização da guild: {guild_error}")
+                await ctx.send(f"❌ Erro na sincronização da guild: {guild_error}")
             
     except Exception as e:
-        await inter.send(f"❌ Erro: {e}")
+        await ctx.send(f"❌ Erro: {e}")
         import traceback
         traceback.print_exc()
 
 # Comando para recarregar produtos
 @bot.command(name='reload_products')
 @commands.has_permissions(administrator=True)
-async def reload_products(inter):
+async def reload_products(ctx):
     """Recarrega os produtos no banco de dados"""
-    await inter.send("⚠️ **Comando Obsoleto!**\n\n"
+    await ctx.send("⚠️ **Comando Obsoleto!**\n\n"
                   "Este comando não funciona mais com o sistema multi-servidor.\n\n"
                   "**Use os novos comandos:**\n"
                   "`/admin_criar_produto` - Criar produto\n"
@@ -2312,7 +2312,7 @@ async def reload_products(inter):
 # Comando para adicionar estoque via prefixo
 @bot.command(name='adicionar_estoque', aliases=['add_stock'])
 @commands.has_permissions(administrator=True)
-async def add_stock_prefix(inter):
+async def add_stock_prefix(ctx):
     """Adicionar itens ao estoque de um produto (versão prefixo)"""
     try:
         # Buscar todos os produtos
@@ -2321,7 +2321,7 @@ async def add_stock_prefix(inter):
         products = await product_model.get_all_products()
         
         if not products:
-            await inter.send("❌ Nenhum produto cadastrado.")
+            await ctx.send("❌ Nenhum produto cadastrado.")
             return
         
         # Criar embed com lista de produtos
@@ -2349,13 +2349,13 @@ async def add_stock_prefix(inter):
             inline=False
         )
         
-        await inter.send(embed=embed)
+        await ctx.send(embed=embed)
         
     except Exception as e:
         print(f"Erro no comando ?adicionar_estoque: {e}")
         import traceback
         traceback.print_exc()
-        await inter.send(f"❌ Erro: {str(e)}")
+        await ctx.send(f"❌ Erro: {str(e)}")
 
 # Comando auxiliar para adicionar estoque por ID
 @bot.command(name='add_stock_id')
@@ -2370,10 +2370,10 @@ async def add_stock_by_id(ctx, product_id: int):
         product = await product_model.get_product_by_id(product_id)
         
         if not product:
-            await inter.send(f"❌ Produto com ID {product_id} não encontrado.")
+            await ctx.send(f"❌ Produto com ID {product_id} não encontrado.")
             return
         
-        await inter.send(f"📦 **{product['name']}**\n\n"
+        await ctx.send(f"📦 **{product['name']}**\n\n"
                       f"Cole os códigos/keys abaixo (um por linha).\n"
                       f"Quando terminar, envie `?done` ou aguarde 30 segundos.")
         
@@ -2381,7 +2381,7 @@ async def add_stock_by_id(ctx, product_id: int):
         codes = []
         
         def check(m):
-            return m.author == inter.author and m.channel == inter.channel
+            return m.author == ctx.author and m.channel == ctx.channel
         
         for _ in range(100):  # Máximo 100 códigos por vez
             try:
@@ -2404,7 +2404,7 @@ async def add_stock_by_id(ctx, product_id: int):
                 break
         
         if not codes:
-            await inter.send("❌ Nenhum código fornecido.")
+            await ctx.send("❌ Nenhum código fornecido.")
             return
         
         # Adicionar ao estoque
@@ -2419,20 +2419,20 @@ async def add_stock_by_id(ctx, product_id: int):
             )
             embed.add_field(name="📦 Produto", value=product['name'], inline=True)
             embed.add_field(name="➕ Itens Adicionados", value=str(added), inline=True)
-            await inter.send(embed=embed)
+            await ctx.send(embed=embed)
         else:
-            await inter.send("❌ Erro ao adicionar estoque.")
+            await ctx.send("❌ Erro ao adicionar estoque.")
             
     except Exception as e:
         print(f"Erro ao adicionar estoque por ID: {e}")
         import traceback
         traceback.print_exc()
-        await inter.send(f"❌ Erro: {str(e)}")
+        await ctx.send(f"❌ Erro: {str(e)}")
 
 # Comando para ver estoque via prefixo
 @bot.command(name='ver_estoque', aliases=['stock', 'estoque'])
 @commands.has_permissions(administrator=True)
-async def view_stock_prefix(inter):
+async def view_stock_prefix(ctx):
     """Ver resumo do estoque de produtos (versão prefixo)"""
     try:
         from models.inventory_model import InventoryModel
@@ -2441,7 +2441,7 @@ async def view_stock_prefix(inter):
         summary = await inventory_model.get_all_stock_summary()
         
         if not summary:
-            await inter.send("❌ Nenhum produto com estoque.")
+            await ctx.send("❌ Nenhum produto com estoque.")
             return
         
         # Criar embed com resumo
@@ -2465,13 +2465,13 @@ async def view_stock_prefix(inter):
             )
         
         embed.set_footer(text="Use /adicionar_estoque para adicionar mais itens")
-        await inter.send(embed=embed)
+        await ctx.send(embed=embed)
         
     except Exception as e:
         print(f"Erro no comando !ver_estoque: {e}")
         import traceback
         traceback.print_exc()
-        await inter.send(f"❌ Erro: {str(e)}")
+        await ctx.send(f"❌ Erro: {str(e)}")
 
 # Comando para configurar ticket com imagem e personalização
 @bot.command(name='setup_ticket_img')
@@ -2484,19 +2484,19 @@ async def setup_ticket_with_image(ctx, *, args=""):
     """
     try:
         # Verificar se há anexos
-        if not inter.message.attachments:
-            await inter.send("❌ **Como usar:**\n"
+        if not ctx.message.attachments:
+            await ctx.send("❌ **Como usar:**\n"
                           "1. Arraste uma imagem para o chat\n"
                           "2. Use: `!setup_ticket_img [título] [cor] [nome_botão]`\n"
                           "3. Ex: `!setup_ticket_img \"🛒 Vendas Premium\" \"#ff0000\" \"Comprar Agora\"`")
             return
         
         # Pegar a primeira imagem
-        attachment = inter.message.attachments[0]
+        attachment = ctx.message.attachments[0]
         
         # Verificar se é uma imagem
         if not attachment.content_type or not attachment.content_type.startswith('image/'):
-            await inter.send("❌ O arquivo deve ser uma imagem!")
+            await ctx.send("❌ O arquivo deve ser uma imagem!")
             return
         
         # Processar argumentos
@@ -2540,8 +2540,8 @@ async def setup_ticket_with_image(ctx, *, args=""):
         from utils.ticket_views import TicketView
         view = TicketView(nome_botao)
         
-        await inter.send(embed=embed, view=view)
-        await inter.send(f"✅ Sistema de tickets configurado!\n"
+        await ctx.send(embed=embed, view=view)
+        await ctx.send(f"✅ Sistema de tickets configurado!\n"
                       f"**Título:** {titulo}\n"
                       f"**Cor:** {cor} (0x{cor_hex})\n"
                       f"**Botão:** {nome_botao}")
@@ -2550,7 +2550,7 @@ async def setup_ticket_with_image(ctx, *, args=""):
         print(f"Erro no setup_ticket_img: {e}")
         import traceback
         traceback.print_exc()
-        await inter.send("❌ Erro ao configurar sistema de tickets.")
+        await ctx.send("❌ Erro ao configurar sistema de tickets.")
 
 # ========================================
 # COMANDOS ADMIN MULTI-SERVIDOR
@@ -3387,11 +3387,11 @@ async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
             return
         
         # Criar Select Menu com produtos
-        class ProductSelect(discord.ui.Select):
+        class ProductSelect(disnake.ui.Select):
             def __init__(self, products):
                 self.products = products
                 options = [
-                    discord.SelectOption(
+                    disnake.SelectOption(
                         label=p['name'][:100],
                         description=f"R$ {p['price']:.2f} • ID: {p['id']}",
                         value=str(p['id'])
@@ -3400,17 +3400,17 @@ async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
                 ]
                 super().__init__(placeholder="Escolha um produto...", options=options)
             
-            async def callback(self, interaction: discord.Interaction):
+            async def callback(self, interaction: disnake.ModalInteraction):
                 try:
                     product_id = int(self.values[0])
                     product = next((p for p in self.products if p['id'] == product_id), None)
                     
                     if product:
                         # Registrar que está esperando códigos deste usuário
-                        waiting_for_stock[inter.user.id] = {
+                        waiting_for_stock[interaction.user.id] = {
                             'product': product,
-                            'guild_id': inter.guild_id,
-                            'channel_id': inter.channel_id
+                            'guild_id': interaction.guild_id,
+                            'channel_id': interaction.channel_id
                         }
                         
                         embed = disnake.Embed(
@@ -3427,16 +3427,16 @@ async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
                         )
                         embed.set_footer(text="Você tem 5 minutos para enviar os códigos")
                         
-                        await inter.response.send_message(embed=embed, ephemeral=True)
+                        await interaction.response.send_message(embed=embed, ephemeral=True)
                     else:
-                        await inter.response.send_message("❌ Produto não encontrado.", ephemeral=True)
+                        await interaction.response.send_message("❌ Produto não encontrado.", ephemeral=True)
                 except Exception as e:
                     print(f"Erro no select callback: {e}")
                     import traceback
                     traceback.print_exc()
-                    await inter.response.send_message(f"❌ Erro: {e}", ephemeral=True)
+                    await interaction.response.send_message(f"❌ Erro: {e}", ephemeral=True)
         
-        class ProductSelectView(discord.ui.View):
+        class ProductSelectView(disnake.ui.View):
             def __init__(self, products):
                 super().__init__(timeout=300)
                 self.add_item(ProductSelect(products))
