@@ -418,6 +418,9 @@ class DeliveryManager:
             
             await self.transaction_model.update_transaction(transaction['id'], update_data)
             
+            # Atualizar status do pagamento no ticket
+            await self._update_ticket_payment_status(channel, transaction, "✅ PAGO")
+            
             # Enviar confirmação no canal do ticket
             embed = disnake.Embed(
                 title="✅ VIP Ativado com Sucesso!",
