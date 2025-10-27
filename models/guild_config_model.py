@@ -416,6 +416,46 @@ class GuildConfigModel:
         
         return config.get('feedback_channel_id')
     
+    async def set_deliveries_channel(self, guild_id: int, deliveries_channel_id: int) -> bool:
+        """
+        Define o canal de entregas/compras do servidor
+        
+        Args:
+            guild_id: ID do servidor
+            deliveries_channel_id: ID do canal de entregas
+        
+        Returns:
+            True se salvou com sucesso
+        """
+        try:
+            result = await self.create_or_update_config(
+                guild_id=guild_id,
+                deliveries_channel_id=deliveries_channel_id
+            )
+            return result is not None
+        except Exception as e:
+            print(f"❌ Erro ao definir canal de entregas: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    async def get_deliveries_channel(self, guild_id: int) -> Optional[int]:
+        """
+        Retorna o ID do canal de entregas do servidor
+        
+        Args:
+            guild_id: ID do servidor
+        
+        Returns:
+            ID do canal de entregas ou None
+        """
+        config = await self.get_config(guild_id)
+        
+        if not config:
+            return None
+        
+        return config.get('deliveries_channel_id')
+    
     async def get_log_config(self, guild_id: int) -> Optional[Dict]:
         """
         Retorna configuração de logs do servidor

@@ -126,6 +126,9 @@ class DeliveryManager:
                         amount=transaction.get('final_amount', transaction.get('amount', 0)),
                         channel=channel
                     )
+                    
+                # Publicar no canal de entregas (anônimo para autoridade)
+                await self._publish_delivery_anonymous(transaction, product)
             
             # 9. Atualizar transação como completada
             update_data = {
@@ -774,4 +777,73 @@ class DeliveryManager:
                         break
         except Exception as e:
             print(f"Erro ao atualizar status do ticket: {e}")
+    
+    async def _publish_delivery_anonymous(self, transaction: dict, product: dict):
+        """
+        Publica entrega anônima no canal de entregas para gerar autoridade
+        
+        Args:
+            transaction: Dados da transação
+            product: Dados do produto
+        """
+        try:
+            # Buscar canal de entregas
+            deliveries_channel_id = await self.guild_config.get_deliveries_channel(transaction['guild_id'])
+            
+            if not deliveries_channel_id:
+                print("⚠️ Canal de entregas não configurado")
+                return
+            
+            deliveries_channel = self.bot.get_channel(deliveries_channel_id)
+            
+            if not deliveries_channel:
+                print(f"❌ Canal de entregas {deliveries_channel_id} não encontrado")
+                return
+            
+            # Criar embed de entrega (anônimo)
+            embed = disnake.Embed(
+                title="✅ Seu Pedido Foi Entregue!",
+                description="Já validamos seu pagamento, agora é só aguardar que estaremos realizando a sua entrega! 🛍️",
+                color=0x00FF00,
+                timestamp=datetime.now()
+            )
+            
+            # Adicionar informações do produto
+            embed.add_field(
+                name="📦 Produto",
+                value=f"**{product['name']}**",
+                inline=True
+            )
+            
+            # Mostrar valor se disponível
+            amount = transaction.get('final_amount', transaction.get('amount', 0))
+            if amount > 0:
+                embed.add_field(
+                    name="💰 Valor",
+                    value=f"R$ {amount:.2f}",
+                    inline=True
+                )
+            
+            embed.add_field(
+                name="📅 Data",
+                value=f"<t:{int(datetime.now().timestamp())}:D>",
+                inline=True
+            )
+            
+            # Adicionar mensagem de agradecimento
+            embed.add_field(
+                name="💜 Agradecimento",
+                value="Obrigado por confiar em nossos serviços! Se tiver qualquer dúvida, estamos à disposição.",
+                inline=False
+            )
+            
+            embed.set_footer(text="Pedido aprovado e entregue com sucesso! 🎉")
+            
+            await deliveries_channel.send(embed=embed)
+            print(f"✅ Entrega anônima publicada no canal de entregas")
+            
+        except Exception as e:
+            print(f"❌ Erro ao publicar entrega anônima: {e}")
+            import traceback
+            traceback.print_exc()
 
