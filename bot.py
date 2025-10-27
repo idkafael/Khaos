@@ -1978,13 +1978,13 @@ async def load_sample_products():
 
 
 @bot.command(name='products')
-async def show_products(inter):
+async def show_products(ctx):
     """Exibe os produtos disponíveis"""
     try:
         products = await product_model.get_all_products()
         
         if not products:
-            await inter.send("❌ Nenhum produto disponível no momento.")
+            await ctx.send("❌ Nenhum produto disponível no momento.")
             return
         
         embed = disnake.Embed(
@@ -2001,11 +2001,11 @@ async def show_products(inter):
             )
         
         embed.set_footer(text="Use ?buy <nome_do_produto> para comprar")
-        await inter.send(embed=embed)
+        await ctx.send(embed=embed)
         
     except Exception as e:
         print(f"Erro ao carregar produtos: {e}")
-        await inter.send("❌ Erro ao carregar produtos. Tente novamente.")
+        await ctx.send("❌ Erro ao carregar produtos. Tente novamente.")
 
 # ==================== SLASH COMMANDS ====================
 
