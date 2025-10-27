@@ -1,4 +1,4 @@
-import discord
+import disnake
 from models.transaction_model import TransactionModel
 from models.product_model import ProductModel
 from models.inventory_model import InventoryModel
@@ -309,7 +309,7 @@ class DeliveryManager:
             # Notificar cliente
             channel = self.bot.get_channel(transaction.get('delivery_channel_id'))
             if channel:
-                embed = discord.Embed(
+                embed = disnake.Embed(
                     title="⚠️ Estoque Temporariamente Esgotado",
                     description=f"O produto **{product['name']}** está temporariamente sem estoque.",
                     color=0xffa500
@@ -393,12 +393,17 @@ class DeliveryManager:
                 print(f"❌ Falha ao processar compra VIP")
                 
                 # Notificar no canal
-                embed = discord.Embed(
+                embed = disnake.Embed(
                     title="❌ Erro ao Ativar VIP",
                     description="Houve um erro ao ativar sua assinatura VIP. A equipe foi notificada e resolverá em breve.",
-                    color=discord.Color.red()
+                    color=disnake.Color.red()
                 )
-                await channel.send(f"{member.mention}", embed=embed)
+                try:
+                    await channel.send(f"{member.mention}", embed=embed)
+                except AttributeError:
+                    # Workaround para erro de '_files'
+                    await channel.send(f"{member.mention}")
+                    await channel.send(embed=embed)
                 
                 return False
             
@@ -623,7 +628,7 @@ class DeliveryManager:
             if channel_id:
                 channel = self.bot.get_channel(channel_id)
                 if channel:
-                    embed = discord.Embed(
+                    embed = disnake.Embed(
                         title="🔒 Ticket Fechado",
                         description="Este ticket foi fechado automaticamente após a entrega do produto.",
                         color=0x808080
@@ -637,7 +642,7 @@ class DeliveryManager:
         except Exception as e:
             print(f"Erro ao fechar ticket: {e}")
     
-    async def _update_ticket_payment_status(self, channel: discord.TextChannel, transaction: dict, status_text: str):
+    async def _update_ticket_payment_status(self, channel: disnake.TextChannel, transaction: dict, status_text: str):
         """Atualiza a última mensagem de pagamento no ticket"""
         try:
             # Buscar últimas mensagens do bot

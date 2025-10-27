@@ -1,4 +1,4 @@
-import discord
+import disnake
 from typing import Optional
 from models.guild_config_model import GuildConfigModel
 from datetime import datetime
@@ -22,7 +22,7 @@ class LogSystem:
         event_type: str,
         title: str,
         description: str,
-        user: Optional[discord.Member] = None,
+        user: Optional[disnake.Member] = None,
         fields: Optional[list] = None,
         color: int = 0x5865F2,
         thumbnail_url: Optional[str] = None
@@ -63,7 +63,7 @@ class LogSystem:
                 return
             
             # Criar embed
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title=title,
                 description=description,
                 color=color,
@@ -95,14 +95,31 @@ class LogSystem:
             
             # Enviar log
             # Workaround para erro de '_files' no disnake
-            await log_channel.send(embed=embed, files=[])
+            try:
+                await log_channel.send(embed=embed)
+            except AttributeError:
+                # Se _files não existe, usar try-except para criar embed sem o atributo
+                embed_copy = embed.__class__()
+                embed_copy.title = embed.title
+                embed_copy.description = embed.description
+                embed_copy.color = embed.color
+                embed_copy.timestamp = embed.timestamp
+                for field in embed.fields:
+                    embed_copy.add_field(name=field.name, value=field.value, inline=field.inline)
+                if embed.footer:
+                    embed_copy.set_footer(text=embed.footer.text)
+                if embed.author:
+                    embed_copy.set_author(name=embed.author.name, icon_url=embed.author.icon_url)
+                if embed.thumbnail:
+                    embed_copy.set_thumbnail(url=embed.thumbnail.url)
+                await log_channel.send(embed=embed_copy)
             
         except Exception as e:
             print(f"❌ Erro ao enviar log: {e}")
             import traceback
             traceback.print_exc()
     
-    async def log_ticket_created(self, guild_id: int, user: discord.Member, product_name: str, product_price: float, channel: discord.TextChannel):
+    async def log_ticket_created(self, guild_id: int, user: disnake.Member, product_name: str, product_price: float, channel: disnake.TextChannel):
         """Log de ticket de compra criado"""
         await self.log(
             guild_id=guild_id,
@@ -118,7 +135,7 @@ class LogSystem:
             color=0x5865F2
         )
     
-    async def log_support_ticket_created(self, guild_id: int, user: discord.Member, category: str, channel: discord.TextChannel):
+    async def log_support_ticket_created(self, guild_id: int, user: disnake.Member, category: str, channel: disnake.TextChannel):
         """Log de ticket de suporte criado"""
         await self.log(
             guild_id=guild_id,
@@ -133,7 +150,7 @@ class LogSystem:
             color=0xFFA500
         )
     
-    async def log_payment_generated(self, guild_id: int, user: discord.Member, product_name: str, amount: float, transaction_id: int):
+    async def log_payment_generated(self, guild_id: int, user: disnake.Member, product_name: str, amount: float, transaction_id: int):
         """Log de pagamento gerado"""
         await self.log(
             guild_id=guild_id,
@@ -149,7 +166,7 @@ class LogSystem:
             color=0x0099FF
         )
     
-    async def log_payment_confirmed(self, guild_id: int, user: discord.Member, product_name: str, amount: float, transaction_id: int):
+    async def log_payment_confirmed(self, guild_id: int, user: disnake.Member, product_name: str, amount: float, transaction_id: int):
         """Log de pagamento confirmado"""
         await self.log(
             guild_id=guild_id,
@@ -165,7 +182,7 @@ class LogSystem:
             color=0x00FF00
         )
     
-    async def log_product_delivered(self, guild_id: int, user: discord.Member, product_name: str, amount: float, channel: discord.TextChannel):
+    async def log_product_delivered(self, guild_id: int, user: disnake.Member, product_name: str, amount: float, channel: disnake.TextChannel):
         """Log de produto entregue"""
         await self.log(
             guild_id=guild_id,
@@ -181,7 +198,7 @@ class LogSystem:
             color=0x00FF00
         )
     
-    async def log_ticket_closed(self, guild_id: int, user: discord.Member, closed_by: discord.Member, product_name: Optional[str] = None):
+    async def log_ticket_closed(self, guild_id: int, user: disnake.Member, closed_by: disnake.Member, product_name: Optional[str] = None):
         """Log de ticket fechado"""
         await self.log(
             guild_id=guild_id,
@@ -196,7 +213,7 @@ class LogSystem:
             color=0xFF0000
         )
     
-    async def log_coupon_used(self, guild_id: int, user: discord.Member, coupon_code: str, discount: float, product_name: str):
+    async def log_coupon_used(self, guild_id: int, user: disnake.Member, coupon_code: str, discount: float, product_name: str):
         """Log de cupom usado"""
         await self.log(
             guild_id=guild_id,
@@ -212,7 +229,7 @@ class LogSystem:
             color=0xFF6B9D
         )
     
-    async def log_vip_activated(self, guild_id: int, user: discord.Member, vip_role: str, duration_days: Optional[int], amount: float):
+    async def log_vip_activated(self, guild_id: int, user: disnake.Member, vip_role: str, duration_days: Optional[int], amount: float):
         """Log de VIP ativado"""
         duration_text = f"{duration_days} dias" if duration_days else "Vitalício"
         
@@ -230,7 +247,7 @@ class LogSystem:
             color=0xFFD700
         )
     
-    async def log_vip_expired(self, guild_id: int, user: discord.Member, vip_role: str):
+    async def log_vip_expired(self, guild_id: int, user: disnake.Member, vip_role: str):
         """Log de VIP expirado"""
         await self.log(
             guild_id=guild_id,
@@ -244,7 +261,7 @@ class LogSystem:
             color=0xFF0000
         )
     
-    async def log_stock_added(self, guild_id: int, admin: discord.Member, product_name: str, quantity: int):
+    async def log_stock_added(self, guild_id: int, admin: disnake.Member, product_name: str, quantity: int):
         """Log de estoque adicionado"""
         await self.log(
             guild_id=guild_id,
@@ -259,7 +276,7 @@ class LogSystem:
             color=0x0099FF
         )
     
-    async def log_product_created(self, guild_id: int, admin: discord.Member, product_name: str, price: float, category: str):
+    async def log_product_created(self, guild_id: int, admin: disnake.Member, product_name: str, price: float, category: str):
         """Log de produto criado"""
         await self.log(
             guild_id=guild_id,

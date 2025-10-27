@@ -1,5 +1,5 @@
-import discord
-from discord import Role, Member, Guild
+import disnake
+from disnake import Role, Member, Guild
 from models.vip_model import VipModel
 from typing import Optional, Dict
 from datetime import datetime, timedelta
@@ -13,12 +13,12 @@ class VipManager:
         
         # Configurações de cores para cada role VIP
         self.role_colors = {
-            'KHAOS': discord.Color.from_rgb(138, 43, 226),          # Roxo (Blue Violet)
-            'VIP Bronze': discord.Color.from_rgb(205, 127, 50),    # Bronze
-            'VIP Prata': discord.Color.from_rgb(192, 192, 192),     # Prata
-            'VIP Ouro': discord.Color.from_rgb(255, 215, 0),        # Ouro
-            'VIP Platina': discord.Color.from_rgb(229, 228, 226),   # Platina
-            'VIP Diamante': discord.Color.from_rgb(185, 242, 255),  # Diamante
+            'KHAOS': disnake.Color.from_rgb(138, 43, 226),          # Roxo (Blue Violet)
+            'VIP Bronze': disnake.Color.from_rgb(205, 127, 50),    # Bronze
+            'VIP Prata': disnake.Color.from_rgb(192, 192, 192),     # Prata
+            'VIP Ouro': disnake.Color.from_rgb(255, 215, 0),        # Ouro
+            'VIP Platina': disnake.Color.from_rgb(229, 228, 226),   # Platina
+            'VIP Diamante': disnake.Color.from_rgb(185, 242, 255),  # Diamante
         }
     
     async def grant_vip_role(
@@ -42,7 +42,7 @@ class VipManager:
             guild = member.guild
             
             # Buscar role existente
-            role = discord.utils.get(guild.roles, name=role_name)
+            role = disnake.utils.get(guild.roles, name=role_name)
             
             # Criar role se não existir
             if not role and create_if_not_exists:
@@ -126,7 +126,7 @@ class VipManager:
             embed = discord.Embed(
                 title="🎉 Bem-vindo ao VIP!",
                 description=f"Parabéns {member.mention}! Sua assinatura VIP foi ativada com sucesso.",
-                color=discord.Color.gold(),
+                color=disnake.Color.gold(),
                 timestamp=datetime.now()
             )
             
@@ -208,7 +208,7 @@ class VipManager:
             embed = discord.Embed(
                 title="⚠️ Seu VIP está próximo de expirar!",
                 description=f"Olá {member.mention}! Sua assinatura VIP **{subscription['role_name']}** está próxima do vencimento.",
-                color=discord.Color.orange(),
+                color=disnake.Color.orange(),
                 timestamp=datetime.now()
             )
             
@@ -272,7 +272,7 @@ class VipManager:
             embed = discord.Embed(
                 title="⏰ Seu VIP Expirou",
                 description=f"Olá {member.mention}! Sua assinatura VIP **{subscription['role_name']}** expirou.",
-                color=discord.Color.red(),
+                color=disnake.Color.red(),
                 timestamp=datetime.now()
             )
             
@@ -426,7 +426,7 @@ class VipManager:
         """
         try:
             # Obter cor para a role
-            color = self.role_colors.get(role_name, discord.Color.purple())
+            color = self.role_colors.get(role_name, disnake.Color.purple())
             
             # Criar role
             role = await guild.create_role(
