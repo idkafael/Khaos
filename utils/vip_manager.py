@@ -61,7 +61,7 @@ class VipManager:
             
             return role
             
-        except discord.Forbidden:
+        except disnake.Forbidden:
             print(f"❌ Sem permissão para adicionar role a {member.name}")
             return None
         except Exception as e:
@@ -101,7 +101,7 @@ class VipManager:
             
             return True
             
-        except discord.Forbidden:
+        except disnake.Forbidden:
             print(f"❌ Sem permissão para remover role")
             return False
         except Exception as e:
@@ -123,7 +123,7 @@ class VipManager:
             True se enviou com sucesso
         """
         try:
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="🎉 Bem-vindo ao VIP!",
                 description=f"Parabéns {member.mention}! Sua assinatura VIP foi ativada com sucesso.",
                 color=disnake.Color.gold(),
@@ -175,7 +175,7 @@ class VipManager:
             
             return True
             
-        except discord.Forbidden:
+        except disnake.Forbidden:
             print(f"⚠️ {member.name} está com DMs desabilitadas")
             return False
         except Exception as e:
@@ -205,7 +205,7 @@ class VipManager:
             expires_at = datetime.fromisoformat(subscription['expires_at'].replace('Z', '+00:00'))
             days_left = (expires_at.replace(tzinfo=None) - datetime.now()).days
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="⚠️ Seu VIP está próximo de expirar!",
                 description=f"Olá {member.mention}! Sua assinatura VIP **{subscription['role_name']}** está próxima do vencimento.",
                 color=disnake.Color.orange(),
@@ -243,7 +243,7 @@ class VipManager:
             
             return True
             
-        except discord.Forbidden:
+        except disnake.Forbidden:
             print(f"⚠️ Não foi possível enviar aviso de expiração (DMs desabilitadas)")
             return False
         except Exception as e:
@@ -269,7 +269,7 @@ class VipManager:
             if not member:
                 return False
             
-            embed = discord.Embed(
+            embed = disnake.Embed(
                 title="⏰ Seu VIP Expirou",
                 description=f"Olá {member.mention}! Sua assinatura VIP **{subscription['role_name']}** expirou.",
                 color=disnake.Color.red(),
@@ -311,7 +311,7 @@ class VipManager:
             
             return True
             
-        except discord.Forbidden:
+        except disnake.Forbidden:
             print(f"⚠️ Não foi possível enviar notificação de expiração (DMs desabilitadas)")
             return False
         except Exception as e:
@@ -441,7 +441,7 @@ class VipManager:
             
             return role
             
-        except discord.Forbidden:
+        except disnake.Forbidden:
             print(f"❌ Sem permissão para criar role no servidor {guild.name}")
             return None
         except Exception as e:
