@@ -15,10 +15,10 @@ class Config:
     SUPABASE_URL = os.getenv('SUPABASE_URL', '')
     SUPABASE_KEY = os.getenv('SUPABASE_KEY', '')
     
-    # Configurações da API PushinPay
-    PUSHINPAY_API_KEY = os.getenv('PUSHINPAY_API_KEY', '')
-    PUSHINPAY_WEBHOOK_SECRET = os.getenv('PUSHINPAY_WEBHOOK_SECRET', '')
-    PUSHINPAY_SANDBOX = os.getenv('PUSHINPAY_SANDBOX', 'false').lower() == 'true'
+    # Configurações do Mercado Pago
+    MERCADOPAGO_ACCESS_TOKEN = os.getenv('MERCADOPAGO_ACCESS_TOKEN', '')
+    MERCADOPAGO_PUBLIC_KEY = os.getenv('MERCADOPAGO_PUBLIC_KEY', '')
+    MERCADOPAGO_WEBHOOK_SECRET = os.getenv('MERCADOPAGO_WEBHOOK_SECRET', '')
     WEBHOOK_BASE_URL = os.getenv('WEBHOOK_BASE_URL', '')
     
     # Configurações do bot
@@ -49,7 +49,7 @@ class Config:
             ('DISCORD_TOKEN', cls.DISCORD_TOKEN),
             ('SUPABASE_URL', cls.SUPABASE_URL),
             ('SUPABASE_KEY', cls.SUPABASE_KEY),
-            ('PUSHINPAY_API_KEY', cls.PUSHINPAY_API_KEY)
+            ('MERCADOPAGO_ACCESS_TOKEN', cls.MERCADOPAGO_ACCESS_TOKEN)
         ]
         
         missing_configs = []

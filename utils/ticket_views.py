@@ -60,7 +60,7 @@ class RoleSelect(ui.Select):
         previous_embed = disnake.Embed(
             title="⚙️ Configuração de Ticket",
             description=f"**Objetivo:** {'💳 Pagamentos Automatizados' if self.ticket_type == 'payment' else ('🎫 Tickets Manuais' if self.ticket_type == 'manual' else '❓ Somente Suporte')}\n\n👤 **Escolha o cargo que será mencionado quando o ticket for criado:**",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         previous_view = ui.View(timeout=300)
         previous_role_select = RoleSelect(self.ticket_type, interaction.guild)
@@ -72,7 +72,7 @@ class RoleSelect(ui.Select):
             embed = disnake.Embed(
                 title="⚙️ Configuração de Ticket",
                 description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {role_mention}\n\n🛍️ **Escolha os produtos que estarão disponíveis neste ticket:**",
-                color=0x0099ff
+                color=0x8B5CF6
             )
             
             # Criar select de produtos
@@ -91,7 +91,7 @@ class RoleSelect(ui.Select):
             embed = disnake.Embed(
                 title="⚙️ Configuração de Ticket",
                 description=f"**Objetivo:** {'🎫 Tickets Manuais' if self.ticket_type == 'manual' else '❓ Somente Suporte'}\n**Cargo:** {role_mention}\n\n✅ Prosseguindo para configurações detalhadas...",
-                color=0x0099ff
+                color=0x8B5CF6
             )
             
             # Criar view temporária com botão voltar
@@ -159,7 +159,7 @@ class ProductSelectionSelect(ui.Select):
             previous_embed = disnake.Embed(
                 title="⚙️ Configuração de Ticket",
                 description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {'Nenhum' if not self.mention_role else f'<@&{self.mention_role}>'}\n\n🛍️ **Escolha os produtos que estarão disponíveis neste ticket:**",
-                color=0x0099ff
+                color=0x8B5CF6
             )
             previous_view = ui.View(timeout=300)
             previous_product_select = ProductSelectionSelect(self.ticket_type, self.mention_role)
@@ -171,7 +171,7 @@ class ProductSelectionSelect(ui.Select):
             embed = disnake.Embed(
                 title="⚙️ Configuração de Ticket",
                 description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {'Nenhum' if not self.mention_role else f'<@&{self.mention_role}>'}\n**Produtos:** Todos os produtos\n\n✅ Prosseguindo para configurações detalhadas...",
-                color=0x0099ff
+                color=0x8B5CF6
             )
             temp_view = ui.View(timeout=300)
             temp_view.add_item(BackButton(previous_view, previous_embed))
@@ -235,7 +235,7 @@ class ProductFilterModalForSetup(ui.Modal):
         progress_embed = disnake.Embed(
             title="⚙️ Configuração de Ticket",
             description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {'Nenhum' if not mention_role else f'<@&{mention_role}>'}\n**Produtos:** {', '.join(map(str, product_ids))}\n\n✅ Prosseguindo para configurações detalhadas...",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         await interaction.followup.send(embed=progress_embed, ephemeral=True)
         
@@ -247,7 +247,7 @@ class ProductFilterModalForSetup(ui.Modal):
         previous_embed = disnake.Embed(
             title="⚙️ Configuração de Ticket",
             description=f"**Objetivo:** 💳 Pagamentos Automatizados\n**Cargo:** {role_mention}\n\n🛍️ **Escolha os produtos que estarão disponíveis neste ticket:**",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         previous_view = ui.View(timeout=300)
         previous_product_select = ProductSelectionSelect(setup_data.get('ticket_type', 'payment'), mention_role)
@@ -332,7 +332,7 @@ class ObjectiveSelect(ui.Select):
         initial_embed = disnake.Embed(
             title="⚙️ Configuração de Sistema de Tickets",
             description="Selecione o objetivo do ticket que deseja configurar:",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         initial_view = ObjectiveSelectionView(interaction.guild_id)
         
@@ -345,7 +345,7 @@ class ObjectiveSelect(ui.Select):
         embed = disnake.Embed(
             title="⚙️ Configuração de Ticket",
             description=f"**Objetivo:** {selected_label}\n\n👤 **Escolha o cargo que será mencionado quando o ticket for criado:**",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         
         # Criar view com o select de cargo e botão voltar
@@ -763,7 +763,7 @@ class TitleButton(ui.Button):
         super().__init__(
             label="Título",
             style=disnake.ButtonStyle.secondary,
-            emoji="📝",
+            emoji="💜",
             custom_id="edit_title"
         )
     
@@ -810,7 +810,7 @@ class DescriptionButton(ui.Button):
         super().__init__(
             label="Descrição",
             style=disnake.ButtonStyle.secondary,
-            emoji="📄",
+            emoji="🔮",
             custom_id="edit_description"
         )
     
@@ -934,7 +934,7 @@ class ColorButton(ui.Button):
         super().__init__(
             label="Cor",
             style=disnake.ButtonStyle.secondary,
-            emoji="🎨",
+            emoji="🌸",
             custom_id="edit_color"
         )
     
@@ -987,7 +987,7 @@ class AuthorButton(ui.Button):
         super().__init__(
             label="Autor",
             style=disnake.ButtonStyle.secondary,
-            emoji="👤",
+            emoji="👑",
             custom_id="edit_author"
         )
     
@@ -1055,7 +1055,7 @@ class FieldsButton(ui.Button):
         super().__init__(
             label="Campos",
             style=disnake.ButtonStyle.secondary,
-            emoji="📋",
+            emoji="💎",
             custom_id="edit_fields"
         )
     
@@ -1110,7 +1110,7 @@ class ImageButton(ui.Button):
         super().__init__(
             label="Imagens",
             style=disnake.ButtonStyle.secondary,
-            emoji="🖼️",
+            emoji="🟣",
             custom_id="edit_images"
         )
     
@@ -1158,7 +1158,7 @@ class FooterButton(ui.Button):
         super().__init__(
             label="Rodapé",
             style=disnake.ButtonStyle.secondary,
-            emoji="🏷️",
+            emoji="🎀",
             custom_id="edit_footer"
         )
     
@@ -1204,7 +1204,7 @@ class ButtonNameButton(ui.Button):
         super().__init__(
             label="Botão",
             style=disnake.ButtonStyle.secondary,
-            emoji="🔘",
+            emoji="⭐",
             custom_id="edit_button"
         )
     
@@ -1263,7 +1263,7 @@ class ProductFilterButton(ui.Button):
         super().__init__(
             label="Produtos",
             style=disnake.ButtonStyle.secondary,
-            emoji="🛍️",
+            emoji="🟣",
             custom_id="edit_products"
         )
     
@@ -1322,7 +1322,7 @@ class TicketTypeButton(ui.Button):
         super().__init__(
             label="Tipo",
             style=disnake.ButtonStyle.secondary,
-            emoji="🎯",
+            emoji="💫",
             custom_id="edit_ticket_type"
         )
     
@@ -1396,7 +1396,7 @@ class MentionRoleButton(ui.Button):
         super().__init__(
             label="Cargo",
             style=disnake.ButtonStyle.secondary,
-            emoji="👤",
+            emoji="🤴",
             custom_id="edit_mention_role"
         )
     
@@ -1710,9 +1710,9 @@ class TicketButton(ui.Button):
     
     def __init__(self, nome_botao="Criar Ticket de Compra"):
         super().__init__(
-            label=f"🛒 {nome_botao}",
+            label=f"💜 {nome_botao}",
             style=disnake.ButtonStyle.primary,
-            emoji="🎫",
+            emoji="💜",
             custom_id="create_ticket_button"
         )
         self.product_model = ProductModel()
@@ -1769,7 +1769,7 @@ class TicketButton(ui.Button):
             embed = disnake.Embed(
                 title="🛍️ Escolha seu Produto",
                 description="Selecione o produto que deseja comprar:",
-                color=0x0099ff
+                color=0x8B5CF6
             )
             
             await interaction.response.send_message(embed=embed, view=view, ephemeral=True)

@@ -95,7 +95,7 @@ async def get_emotes(ctx):
         embed = disnake.Embed(
             title=f"📋 Emojis do Servidor: {guild.name}",
             description=f"Total de emojis: **{len(emojis)}**",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         
         # Dividir em chunks de 10 para evitar limite do Discord
@@ -153,7 +153,7 @@ async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
         embed = disnake.Embed(
             title="⚙️ Configuração de Sistema de Tickets",
             description="**Selecione o objetivo do ticket:**\n\nEscolha uma das opções abaixo para configurar o tipo de ticket desejado.",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         embed.add_field(
             name="💡 Dica",
@@ -1990,7 +1990,7 @@ async def show_products(inter):
         embed = disnake.Embed(
             title="🛍️ Produtos Disponíveis",
             description="Escolha um produto para comprar:",
-            color=0x0099ff
+            color=0x8B5CF6
         )
         
         for product in products:
@@ -2328,7 +2328,7 @@ async def add_stock_prefix(inter):
         embed = disnake.Embed(
             title="➕ Adicionar Estoque",
             description="**Produtos disponíveis:**",
-            color=0x3498db
+            color=0x8B5CF6
         )
         
         for i, p in enumerate(products[:10], 1):  # Limitar a 10 produtos
@@ -2448,7 +2448,7 @@ async def view_stock_prefix(inter):
         embed = disnake.Embed(
             title="📊 Resumo de Estoque",
             description="Status de estoque de todos os produtos",
-            color=0x3498db
+            color=0x8B5CF6
         )
         
         for item in summary:

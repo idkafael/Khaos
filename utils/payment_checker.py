@@ -67,7 +67,8 @@ class PaymentChecker:
                 # Verificar status na API
                 payment_status = await self._check_payment_status(transaction)
                 
-                if payment_status == 'paid':
+                # Mercado Pago usa 'approved' para pagamento confirmado
+                if payment_status == 'approved' or payment_status == 'paid':
                     # Processar entrega
                     success = await self.delivery_manager.process_payment_confirmation(
                         transaction['id'],
@@ -75,7 +76,7 @@ class PaymentChecker:
                     )
                     if success:
                         confirmed += 1
-                elif payment_status == 'expired' or payment_status == 'failed':
+                elif payment_status == 'expired' or payment_status == 'failed' or payment_status == 'rejected':
                     await self._expire_transaction(transaction)
                     expired += 1
                 
@@ -93,34 +94,35 @@ class PaymentChecker:
             traceback.print_exc()
     
     async def _check_payment_status(self, transaction: dict) -> Optional[str]:
-        """Verifica o status de um pagamento específico na API PushinPay"""
+        """Verifica o status de um pagamento específico na API Mercado Pago"""
         try:
             payment_id = transaction.get('payment_id')
             if not payment_id:
                 print(f"⚠️ Transação #{transaction['id']} sem payment_id")
                 return None
             
-            # Consultar API PushinPay
-            import requests
-            url = f"{self.payment_utils.base_url}/api/transactions/{payment_id}"
+            # Usar Gateway Selector para verificar status (Mercado Pago)
+            from utils.gateway_selector import GatewaySelector
+            gateway_selector = GatewaySelector()
             
-            response = requests.get(url, headers=self.payment_utils.headers, timeout=10)
+            # Verificar no Mercado Pago
+            from utils.mercadopago_manager import MercadoPagoManager
+            mp_manager = MercadoPagoManager()
             
-            if response.status_code == 200:
-                data = response.json()
-                status = data.get('status')
-                
-                print(f"📊 Transação #{transaction['id']} - Status API: {status}")
+            payment_info = await mp_manager.check_payment_status(payment_id)
+            
+            if payment_info:
+                status = payment_info.get('status')
+                print(f"📊 Transação #{transaction['id']} - Status Mercado Pago: {status}")
                 return status
-            elif response.status_code == 404:
-                print(f"⚠️ Pagamento {payment_id} não encontrado na API")
-                return None
             else:
-                print(f"⚠️ Erro ao consultar API: {response.status_code}")
+                print(f"⚠️ Pagamento {payment_id} não encontrado no Mercado Pago")
                 return None
                 
         except Exception as e:
             print(f"❌ Erro ao verificar status do pagamento: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     async def _expire_transaction(self, transaction: dict):

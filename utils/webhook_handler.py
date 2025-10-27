@@ -62,26 +62,28 @@ class WebhookHandler:
     async def handle_mercadopago_webhook(self, request):
         """Processa webhooks do Mercado Pago"""
         try:
-            # Mercado Pago envia dados via query params e body
+            # Mercado Pago pode enviar via query params OU body JSON
+            body = await request.json() if request.can_read_body else {}
             query_params = request.rel_url.query
             
-            # Tipo de notificação
-            topic = query_params.get('topic') or query_params.get('type')
-            resource_id = query_params.get('id')
+            # Identificar tipo e ID do recurso
+            webhook_type = body.get('type') or query_params.get('type')  # "payment"
+            action = body.get('action') or ''  # "payment.updated"
+            resource_id = body.get('data', {}).get('id') or query_params.get('id')
             
-            print(f"📨 Webhook Mercado Pago - Topic: {topic}, ID: {resource_id}")
+            print(f"📨 Webhook Mercado Pago - Type: {webhook_type}, Action: {action}, ID: {resource_id}")
             
             # Mercado Pago pode enviar vários tipos de notificação
-            # Nos interessa apenas 'payment' e 'merchant_order'
-            if topic not in ['payment', 'merchant_order']:
-                print(f"⚠️ Tipo de webhook ignorado: {topic}")
+            # Nos interessa apenas 'payment'
+            if webhook_type not in ['payment']:
+                print(f"⚠️ Tipo de webhook ignorado: {webhook_type}")
                 return web.json_response({'status': 'ignored'})
             
             # Buscar informações do pagamento via API
             from utils.mercadopago_manager import MercadoPagoManager
             mp_manager = MercadoPagoManager()
             
-            if topic == 'payment':
+            if webhook_type == 'payment':
                 payment_info = await mp_manager.check_payment_status(resource_id)
                 
                 if not payment_info:

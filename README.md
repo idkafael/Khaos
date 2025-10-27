@@ -1,6 +1,6 @@
 # Bot de Vendas no Discord com Sistema de Tickets e Pagamento via Pix
 
-Bot moderno de vendas no Discord com sistema de tickets automatizado, interface com botões e modals, comandos slash, e integração completa com **Supabase** e **PushinPay** para processamento de pagamentos via Pix.
+Bot moderno de vendas no Discord com sistema de tickets automatizado, interface com botões e modals, comandos slash, e integração completa com **Supabase** e **Mercado Pago** para processamento de pagamentos via Pix.
 
 ---
 
@@ -52,7 +52,7 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
   - Discord Token: `842c8e29352ebd03e85b29f8c1c4ed6ee2e981194ad0236c153e3bb234c3848f`
   - Application ID: `784058182515425310`
   - Supabase URL: `https://sxsaxcqliuiolktypwkf.supabase.co`
-  - PushinPay API Key: `50790|dakuggRtFoHjIZb2XpYYbDoa2exlT5NPspJayboI40bfb10f`
+  - Mercado Pago Access Token: `APP_USR-xxxxxxxxxxxxxxx`
   - Sandbox Mode: `true`
 
 - ✅ **Supabase Configurado** 
@@ -197,9 +197,9 @@ python bot.py
 ## 🛠️ Tecnologias
 
 - **Linguagem**: Python 3.8+
-- **Discord API**: py-cord
+- **Discord API**: disnake (py-cord)
 - **Banco de Dados**: Supabase (PostgreSQL)
-- **Pagamento via Pix**: PushinPay API
+- **Pagamento via Pix**: Mercado Pago API (100% foco)
 - **QR Code**: qrcode library
 
 ## 📋 Pré-requisitos
@@ -207,7 +207,7 @@ python bot.py
 - Python 3.8 ou superior
 - Conta no Discord (para criar o bot)
 - Conta no Supabase (para o banco de dados)
-- Conta na PushinPay (para pagamentos via Pix)
+- Conta no Mercado Pago (para pagamentos via Pix)
 
 ## 🔧 Instalação
 
