@@ -4,6 +4,7 @@ from models.product_model import ProductModel
 from models.inventory_model import InventoryModel
 from models.guild_config_model import GuildConfigModel
 from utils.vip_manager import VipManager
+from utils.log_system import LogSystem
 from typing import Optional
 from datetime import datetime
 
@@ -17,6 +18,7 @@ class DeliveryManager:
         self.inventory_model = InventoryModel()
         self.vip_manager = VipManager(bot)
         self.guild_config = GuildConfigModel()
+        self.log_system = LogSystem(bot)
     
     async def process_payment_confirmation(self, transaction_id: int, payment_id: str = None) -> bool:
         """
@@ -95,7 +97,37 @@ class DeliveryManager:
                 print(f"❌ Falha ao entregar produto para transação #{transaction_id}")
                 return False
             
-            # 8. Atualizar transação como completada
+            # 8. Enviar logs de pagamento confirmado e entrega
+            # Buscar usuário para o log
+            user = self.bot.get_user(transaction['user_id'])
+            if not user:
+                try:
+                    user = await self.bot.fetch_user(transaction['user_id'])
+                except:
+                    pass
+            
+            # Log de pagamento confirmado
+            if user:
+                await self.log_system.log_payment_confirmed(
+                    guild_id=transaction['guild_id'],
+                    user=user,
+                    product_name=product['name'],
+                    amount=transaction.get('final_amount', transaction.get('amount', 0)),
+                    transaction_id=transaction_id
+                )
+                
+                # Log de produto entregue
+                channel = self.bot.get_channel(transaction.get('delivery_channel_id'))
+                if channel:
+                    await self.log_system.log_product_delivered(
+                        guild_id=transaction['guild_id'],
+                        user=user,
+                        product_name=product['name'],
+                        amount=transaction.get('final_amount', transaction.get('amount', 0)),
+                        channel=channel
+                    )
+            
+            # 9. Atualizar transação como completada
             update_data = {
                 'status': 'completed',
                 'delivered_at': datetime.now().isoformat(),
@@ -107,10 +139,10 @@ class DeliveryManager:
             
             await self.transaction_model.update_transaction(transaction_id, update_data)
             
-            # 9. Notificar admin
+            # 10. Notificar admin
             await self._notify_admin_delivery_success(transaction, product)
             
-            # 10. Fechar ticket após 5 minutos
+            # 11. Fechar ticket após 5 minutos
             await self._schedule_ticket_close(transaction)
             
             print(f"✅ Produto entregue com sucesso para transação #{transaction_id}")
