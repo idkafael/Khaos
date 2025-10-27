@@ -1,6 +1,6 @@
-import discord
-from discord.ext import commands
-from discord import Interaction
+import disnake
+from disnake.ext import commands
+from disnake import Interaction
 from typing import Callable
 from models.guild_config_model import GuildConfigModel
 

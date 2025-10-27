@@ -1,5 +1,5 @@
-import discord
-from discord import ui
+import disnake
+from disnake import ui
 from models.guild_config_model import GuildConfigModel
 
 # Todos os eventos disponíveis para log
