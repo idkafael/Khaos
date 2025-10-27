@@ -1337,7 +1337,7 @@ async def adicionar_vip_slash(
         # Adicionar role
         role = await vip_manager.grant_vip_role(membro, role_vip)
         if not role:
-            await inter.response.send_message(
+            await ctx.response.send_message(
                 f"❌ Erro ao adicionar role {role_vip}. Verifique se o bot tem permissões adequadas.",
                 ephemeral=True
             )
@@ -1346,7 +1346,7 @@ async def adicionar_vip_slash(
         # Criar assinatura no banco
         subscription = await vip_model.create_subscription(
             user_id=membro.id,
-            guild_id=inter.guild.id,
+            guild_id=ctx.guild.id,
             role_id=role.id,
             role_name=role_vip,
             product_id=0,  # 0 indica adição manual
@@ -1355,7 +1355,7 @@ async def adicionar_vip_slash(
         )
         
         if not subscription:
-            await inter.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
+            await ctx.response.send_message("❌ Erro ao criar assinatura no banco.", ephemeral=True)
             return
         
         # Criar embed de confirmação
@@ -1384,11 +1384,11 @@ async def adicionar_vip_slash(
         
         embed.add_field(
             name="👤 Admin",
-            value=inter.user.mention,
+            value=ctx.user.mention,
             inline=True
         )
         
-        await inter.response.send_message(embed=embed, ephemeral=True)
+        await ctx.response.send_message(embed=embed, ephemeral=True)
         
         # Enviar DM para o usuário (criar produto fictício para a mensagem)
         fake_product = {
@@ -1402,7 +1402,7 @@ async def adicionar_vip_slash(
         print(f"Erro no comando adicionar_vip: {e}")
         import traceback
         traceback.print_exc()
-        await inter.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
+        await ctx.response.send_message("❌ Erro ao adicionar VIP.", ephemeral=True)
 
 @bot.slash_command(name="remover_vip", description="[ADMIN] Remover VIP de um usuário")
 @commands.has_permissions(administrator=True)
