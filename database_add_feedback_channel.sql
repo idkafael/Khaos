@@ -6,3 +6,5 @@ ADD COLUMN IF NOT EXISTS feedback_channel_id BIGINT;
 CREATE INDEX IF NOT EXISTS idx_guild_config_feedback_channel 
 ON guild_config(feedback_channel_id);
 
+-- Comentário para documentar a coluna
+COMMENT ON COLUMN guild_config.feedback_channel_id IS 'ID do canal de feedback para mencionar nas mensagens de agradecimento';
