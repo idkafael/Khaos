@@ -168,6 +168,10 @@ class LogSystem:
     
     async def log_payment_confirmed(self, guild_id: int, user: disnake.Member, product_name: str, amount: float, transaction_id: int):
         """Log de pagamento confirmado"""
+        # Garantir que amount não seja None
+        if amount is None:
+            amount = 0.0
+        
         await self.log(
             guild_id=guild_id,
             event_type="payment_confirmed",
@@ -184,6 +188,10 @@ class LogSystem:
     
     async def log_product_delivered(self, guild_id: int, user: disnake.Member, product_name: str, amount: float, channel: disnake.TextChannel):
         """Log de produto entregue"""
+        # Garantir que amount não seja None
+        if amount is None:
+            amount = 0.0
+        
         await self.log(
             guild_id=guild_id,
             event_type="product_delivered",

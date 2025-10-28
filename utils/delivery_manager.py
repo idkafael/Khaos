@@ -59,10 +59,25 @@ class DeliveryManager:
             if product.get('unlimited_stock'):
                 return await self._process_unlimited_stock_delivery(transaction, product, payment_id)
             
-            # 4. Buscar item do estoque (se já foi reservado)
+            # 4. Verificar se canal ainda existe
+            channel_id = transaction.get('delivery_channel_id')
+            if not channel_id:
+                print(f"⚠️ Canal de entrega não encontrado para transação #{transaction_id}")
+                # Marcar como completed para não reprocessar
+                await self.transaction_model.update_transaction(transaction_id, {'status': 'completed'})
+                return False
+            
+            channel = self.bot.get_channel(channel_id)
+            if not channel:
+                print(f"❌ Canal {channel_id} não encontrado para transação #{transaction_id}")
+                # Marcar como completed para não reprocessar
+                await self.transaction_model.update_transaction(transaction_id, {'status': 'completed'})
+                return False
+            
+            # 5. Buscar item do estoque (se já foi reservado)
             inventory_item = await self.inventory_model.get_inventory_by_transaction(transaction_id)
             
-            # 5. Se não foi reservado ainda, tentar reservar agora
+            # 6. Se não foi reservado ainda, tentar reservar agora
             if not inventory_item:
                 inventory_item = await self.inventory_model.get_available_stock(
                     transaction['product_id'],
@@ -90,14 +105,14 @@ class DeliveryManager:
             if not sold:
                 print(f"⚠️ Falha ao marcar estoque como vendido (transação #{transaction_id})")
             
-            # 7. Enviar produto para o usuário
+            # 8. Enviar produto para o usuário
             delivery_success = await self._deliver_product(transaction, product, inventory_item)
             
             if not delivery_success:
                 print(f"❌ Falha ao entregar produto para transação #{transaction_id}")
                 return False
             
-            # 8. Enviar logs de pagamento confirmado e entrega
+            # 10. Enviar logs de pagamento confirmado e entrega
             # Buscar usuário para o log
             user = self.bot.get_user(transaction['user_id'])
             if not user:
@@ -108,29 +123,31 @@ class DeliveryManager:
             
             # Log de pagamento confirmado
             if user:
+                # Garantir que amount não seja None
+                amount = transaction.get('final_amount') or transaction.get('amount') or 0
+                
                 await self.log_system.log_payment_confirmed(
                     guild_id=transaction['guild_id'],
                     user=user,
                     product_name=product['name'],
-                    amount=transaction.get('final_amount', transaction.get('amount', 0)),
+                    amount=amount,
                     transaction_id=transaction_id
                 )
                 
                 # Log de produto entregue
-                channel = self.bot.get_channel(transaction.get('delivery_channel_id'))
                 if channel:
                     await self.log_system.log_product_delivered(
                         guild_id=transaction['guild_id'],
                         user=user,
                         product_name=product['name'],
-                        amount=transaction.get('final_amount', transaction.get('amount', 0)),
+                        amount=amount,
                         channel=channel
                     )
                     
-                # Publicar no canal de entregas (anônimo para autoridade)
-                await self._publish_delivery_anonymous(transaction, product)
+                    # Publicar no canal de entregas (anônimo para autoridade)
+                    await self._publish_delivery_anonymous(transaction, product)
             
-            # 9. Atualizar transação como completada
+            # 11. Atualizar transação como completada
             update_data = {
                 'status': 'completed',
                 'delivered_at': datetime.now().isoformat(),
@@ -142,10 +159,10 @@ class DeliveryManager:
             
             await self.transaction_model.update_transaction(transaction_id, update_data)
             
-            # 10. Notificar admin
+            # 12. Notificar admin
             await self._notify_admin_delivery_success(transaction, product)
             
-            # 11. Fechar ticket após 5 minutos
+            # 13. Fechar ticket após 5 minutos
             await self._schedule_ticket_close(transaction)
             
             print(f"✅ Produto entregue com sucesso para transação #{transaction_id}")
