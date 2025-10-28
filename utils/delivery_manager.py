@@ -559,6 +559,9 @@ class DeliveryManager:
             
             await channel.send(embed=thank_you_embed)
             
+            # Publicar no canal de entregas (anônimo para autoridade)
+            await self._publish_delivery_anonymous(transaction, product)
+            
             # Notificar admin sobre venda VIP
             await self._notify_admin_vip_sale(transaction, product, subscription)
             
