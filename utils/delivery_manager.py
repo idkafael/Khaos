@@ -211,8 +211,8 @@ class DeliveryManager:
                 )
             else:
                 valor_pago = transaction.get('final_amount') or transaction.get('amount', 0)
-if valor_pago is None:
-    valor_pago = 0
+                if valor_pago is None:
+                    valor_pago = 0
                 embed.add_field(
                     name="💰 Valor Pago",
                     value=f"R$ {valor_pago:.2f}",
@@ -644,8 +644,8 @@ if valor_pago is None:
                 )
             else:
                 valor_pago = transaction.get('final_amount') or transaction.get('amount', 0)
-if valor_pago is None:
-    valor_pago = 0
+                if valor_pago is None:
+                    valor_pago = 0
                 embed.add_field(
                     name="💰 Valor Pago",
                     value=f"R$ {valor_pago:.2f}",
