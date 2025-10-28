@@ -75,16 +75,13 @@ class MercadoPagoManager:
             
             print(f"📧 [MP] Email do pagador: {payer_email}")
             
-            # Preparar dados do pagador (para ganhar pontos no MP)
-            payer_data = {"email": payer_email}
-            
-            if payer_first_name:
-                payer_data["first_name"] = payer_first_name
-                print(f"👤 [MP] Nome: {payer_first_name}")
-            
-            if payer_last_name:
-                payer_data["last_name"] = payer_last_name
-                print(f"👤 [MP] Sobrenome: {payer_last_name}")
+            # Preparar dados do pagador (para ganhar pontos no MP) - SEMPRE enviar nome e sobrenome
+            payer_data = {
+                "email": payer_email,
+                "first_name": payer_first_name or "Cliente",
+                "last_name": payer_last_name or "Khaos"
+            }
+            print(f"👤 [MP] Nome completo: {payer_data['first_name']} {payer_data['last_name']}")
             
             # Preparar items (para ganhar pontos no MP) - SEMPRE criar item
             items = []
@@ -112,28 +109,18 @@ class MercadoPagoManager:
             print(f"📦 [MP] Item completo: {item_data}")
             print(f"📦 [MP] Pontos esperados: title(2) + description(2) + quantity(2) + unit_price(2) + category_id(3) + id(3) = 14 pontos")
             
-            # Criar pagamento com statement_descriptor para ganhar 10 pontos
+            # Criar pagamento Pix
             payment_data = {
                 "transaction_amount": round(float(amount), 2),  # Sempre 2 casas decimais
                 "description": description,
                 "payment_method_id": "pix",
                 "payer": payer_data,
                 "external_reference": str(transaction_id),  # Para rastrear
-                "statement_descriptor": "KHAOS DIGITAL",  # Nome que aparece na fatura (ganha 10 pontos!)
                 "metadata": {
                     "platform": "discord_bot",
                     "version": "2.0",
-                    "device_id": "discord_bot_khaos"  # Identificador do dispositivo (ganha 2 pontos!)
-                },
-                "payment_methods": {
-                    "excluded_payment_methods": [
-                        {"id": "account_money"}  # Excluir efectivo em cuenta que não é válido
-                    ],
-                    "excluded_payment_types": [
-                        {"id": "ticket"},  # Excluir outros meios exceto Pix
-                        {"id": "atm"}
-                    ],
-                    "installments": 1
+                    "device_id": "discord_bot_khaos",  # Identificador do dispositivo (ganha 2 pontos!)
+                    "statement_descriptor": "KHAOS DIGITAL"  # Custom metadata para identificação
                 }
             }
             
