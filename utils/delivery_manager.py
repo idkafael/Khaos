@@ -862,8 +862,8 @@ class DeliveryManager:
             )
             
             # Mostrar valor se disponível
-            amount = transaction.get('final_amount', transaction.get('amount', 0))
-            if amount > 0:
+            amount = transaction.get('final_amount') or transaction.get('amount', 0)
+            if amount and amount > 0:
                 embed.add_field(
                     name="💰 Valor",
                     value=f"R$ {amount:.2f}",
