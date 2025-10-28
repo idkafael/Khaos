@@ -41,8 +41,8 @@ class DeliveryManager:
                 return False
             
             # 2. Verificar se já foi entregue
-            if transaction.get('status') == 'completed':
-                print(f"⚠️ Transação #{transaction_id} já foi entregue anteriormente")
+            if transaction.get('status') == 'completed' or transaction.get('delivered_at'):
+                print(f"⚠️ Transação #{transaction_id} já foi entregue anteriormente (status: {transaction.get('status')}, delivered_at: {transaction.get('delivered_at')})")
                 return False
             
             # 3. Buscar produto

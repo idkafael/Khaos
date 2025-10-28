@@ -42,10 +42,14 @@ class PaymentChecker:
     async def _check_pending_payments(self):
         """Verifica todos os pagamentos pendentes"""
         try:
-            # Buscar transações pendentes criadas há menos de 30 minutos
+            # Buscar transações pendentes E approved (para processar entregas) criadas há menos de 30 minutos
             pending_transactions = await self.transaction_model.get_transactions_by_status('pending')
+            approved_transactions = await self.transaction_model.get_transactions_by_status('approved')
             
-            if not pending_transactions:
+            # Combinar ambas listas
+            all_transactions = pending_transactions + approved_transactions
+            
+            if not all_transactions:
                 return
             
             now = datetime.now()
@@ -53,15 +57,27 @@ class PaymentChecker:
             confirmed = 0
             expired = 0
             
-            for transaction in pending_transactions:
+            for transaction in all_transactions:
                 # Verificar idade da transação
                 created_at = datetime.fromisoformat(transaction['created_at'].replace('Z', '+00:00'))
                 age_minutes = (now - created_at.replace(tzinfo=None)).total_seconds() / 60
                 
-                # Expirar transações com mais de 30 minutos
-                if age_minutes > 30:
+                # Expirar transações com mais de 30 minutos E status pending
+                if age_minutes > 30 and transaction.get('status') == 'pending':
                     await self._expire_transaction(transaction)
                     expired += 1
+                    continue
+                
+                # Se já está approved, processar entrega diretamente
+                if transaction.get('status') == 'approved':
+                    # Processar entrega
+                    success = await self.delivery_manager.process_payment_confirmation(
+                        transaction['id'],
+                        transaction.get('payment_id')
+                    )
+                    if success:
+                        confirmed += 1
+                    checked += 1
                     continue
                 
                 # Verificar status na API
