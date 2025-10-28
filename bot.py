@@ -391,6 +391,150 @@ async def setlog_slash(inter: disnake.ApplicationCommandInteraction, canal: disn
         )
         await inter.response.send_message(embed=embed, ephemeral=True)
 
+# ========================================
+# COMANDOS DE SPLIT DE PAGAMENTO (ADMIN)
+# ========================================
+
+@bot.slash_command(name="configurar_pix", description="[ADMIN] Configurar split de pagamento")
+@commands.has_permissions(administrator=True)
+async def configurar_pix_slash(inter: disnake.ApplicationCommandInteraction):
+    """Comando admin para configurar split de pagamento"""
+    try:
+        print(f"Comando configurar_pix executado por {inter.user.name}")
+        
+        # Importar view de configuração
+        from utils.ticket_views import MercadoPagoConfigView
+        view = MercadoPagoConfigView()
+        
+        # Embed explicativo
+        embed = disnake.Embed(
+            title="🔧 Configuração de Split de Pagamento",
+            description="Configure sua conta Mercado Pago para receber pagamentos diretamente!",
+            color=0x5865F2
+        )
+        
+        embed.add_field(
+            name="💡 Como Funciona",
+            value="• Cliente paga via Pix\n"
+                  "• Mercado Pago divide automaticamente\n"
+                  "• Você recebe: Valor total - R$ 0,80\n"
+                  "• Plataforma recebe: R$ 0,80 (comissão fixa)",
+            inline=False
+        )
+        
+        embed.add_field(
+            name="📋 Pré-requisitos",
+            value="• Conta Mercado Pago verificada\n"
+                  "• Account ID válido\n"
+                  "• Permissões de administrador",
+            inline=False
+        )
+        
+        embed.set_footer(text="Clique no botão abaixo para configurar")
+        
+        await inter.response.send_message(embed=embed, view=view, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando configurar_pix: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = disnake.Embed(
+            description="❌ Erro ao abrir configuração de split.",
+            color=0xFF0000
+        )
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
+@bot.slash_command(name="status_pix", description="[ADMIN] Ver status da configuração de split")
+@commands.has_permissions(administrator=True)
+async def status_pix_slash(inter: disnake.ApplicationCommandInteraction):
+    """Comando admin para verificar status da configuração de split"""
+    try:
+        print(f"Comando status_pix executado por {inter.user.name}")
+        
+        # Importar guild_config_model
+        from models.guild_config_model import GuildConfigModel
+        guild_config = GuildConfigModel()
+        
+        # Buscar status do split
+        split_status = await guild_config.get_split_status(inter.guild_id)
+        
+        # Criar embed baseado no status
+        if split_status['status'] == 'configured':
+            embed = disnake.Embed(
+                title="✅ Split Configurado",
+                description=f"**Account ID:** `{split_status['masked_id']}`\n\n"
+                           f"💰 **Comissão:** R$ 0,80 por venda\n"
+                           f"📊 **Status:** Ativo e funcionando",
+                color=0x00FF00
+            )
+            
+            embed.add_field(
+                name="💡 Próximas Vendas",
+                value="• Cliente paga via Pix\n"
+                      "• Dinheiro divide automaticamente\n"
+                      "• Você recebe direto na conta MP",
+                inline=False
+            )
+            
+        elif split_status['status'] == 'not_configured':
+            embed = disnake.Embed(
+                title="⚠️ Split Não Configurado",
+                description="Configure sua conta Mercado Pago para receber pagamentos diretamente.",
+                color=0xFFA500
+            )
+            
+            embed.add_field(
+                name="📋 Como Configurar",
+                value="1. Use `/configurar_pix`\n"
+                      "2. Digite seu Account ID\n"
+                      "3. Teste fazendo uma venda",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="💡 Benefícios",
+                value="• Recebe dinheiro direto na conta\n"
+                      "• Sem necessidade de repasse manual\n"
+                      "• Transparência total para clientes",
+                inline=False
+            )
+            
+        elif split_status['status'] == 'invalid':
+            embed = disnake.Embed(
+                title="❌ Account ID Inválido",
+                description="O Account ID configurado não é válido.",
+                color=0xFF0000
+            )
+            
+            embed.add_field(
+                name="🔧 Como Corrigir",
+                value="1. Use `/configurar_pix` novamente\n"
+                      "2. Digite um Account ID válido\n"
+                      "3. Verifique se está correto",
+                inline=False
+            )
+            
+        else:  # error
+            embed = disnake.Embed(
+                title="❌ Erro no Sistema",
+                description="Não foi possível verificar a configuração.",
+                color=0xFF0000
+            )
+        
+        embed.set_footer(text="💡 Use /configurar_pix para configurar ou alterar")
+        
+        await inter.response.send_message(embed=embed, ephemeral=True)
+        
+    except Exception as e:
+        print(f"Erro no comando status_pix: {e}")
+        import traceback
+        traceback.print_exc()
+        embed = disnake.Embed(
+            description="❌ Erro ao verificar status do split.",
+            color=0xFF0000
+        )
+        await inter.response.send_message(embed=embed, ephemeral=True)
+
 @bot.command(name="setlog", aliases=["configurar_logs", "logs"])
 @commands.has_permissions(administrator=True)
 async def setlog_prefix(ctx, canal: disnake.TextChannel):

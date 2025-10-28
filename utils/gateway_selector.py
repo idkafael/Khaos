@@ -202,6 +202,7 @@ class GatewaySelector:
                     amount=amount,
                     description=description,
                     transaction_id=transaction_id,
+                    guild_id=guild_id,
                     payer_email=user_email,
                     payer_first_name=payer_first_name,
                     payer_last_name=payer_last_name,

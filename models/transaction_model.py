@@ -33,7 +33,12 @@ class TransactionModel:
                 'inventory_id': kwargs.get('inventory_id'),
                 'delivered_at': kwargs.get('delivered_at'),
                 'delivery_channel_id': kwargs.get('delivery_channel_id'),
-                'guild_id': kwargs.get('guild_id')  # Adicionar guild_id explicitamente
+                'guild_id': kwargs.get('guild_id'),  # Adicionar guild_id explicitamente
+                # Campos de split de pagamento
+                'platform_fee': kwargs.get('platform_fee', 0.80),
+                'vendor_amount': kwargs.get('vendor_amount'),
+                'vendor_account_id': kwargs.get('vendor_account_id'),
+                'split_applied': kwargs.get('split_applied', False)
             }
             
             # Adicionar outros campos do kwargs que não foram listados acima

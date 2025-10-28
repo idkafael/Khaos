@@ -400,15 +400,22 @@ class TicketManager:
             )
             
             if payment_data:
-                # Atualizar transação com dados do pagamento
-                await transaction_model.update_transaction(transaction['id'], {
-                    'payment_id': payment_data.get('id'),
-                    'pix_code': payment_data.get('pix_code'),
+                # Atualizar transação com dados do pagamento e split
+                update_data = {
+                    'payment_id': payment_data.get('payment_id'),
+                    'pix_code': payment_data.get('qr_code'),
                     'qr_code': payment_data.get('qr_code'),
-                    'email': f"{user.name.lower().replace(' ', '')}@khaos.com"
-                })
+                    'email': f"{user.name.lower().replace(' ', '')}@khaos.com",
+                    # Dados de split
+                    'split_applied': payment_data.get('split_applied', False),
+                    'vendor_account_id': payment_data.get('vendor_account_id'),
+                    'platform_fee': payment_data.get('platform_fee', 0.0),
+                    'vendor_amount': payment_data.get('vendor_amount')
+                }
                 
-                print(f"✅ Pagamento gerado com sucesso! ID: {payment_data.get('id')}")
+                await transaction_model.update_transaction(transaction['id'], update_data)
+                
+                print(f"✅ Pagamento gerado com sucesso! ID: {payment_data.get('payment_id')}")
                 
                 # LOG: Pagamento gerado
                 if self.bot and hasattr(self.bot, 'log_system'):

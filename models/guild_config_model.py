@@ -496,4 +496,176 @@ class GuildConfigModel:
         except Exception as e:
             print(f"[ERROR] Erro ao desabilitar logs: {e}")
             return False
+    
+    # ===== MÉTODOS PARA SPLIT DE PAGAMENTO =====
+    
+    async def set_mercadopago_account(self, guild_id: int, account_id: str) -> bool:
+        """
+        Configura Account ID do Mercado Pago para split automático
+        
+        Args:
+            guild_id: ID do servidor Discord
+            account_id: Account ID do Mercado Pago
+            
+        Returns:
+            True se configurado com sucesso
+        """
+        try:
+            # Validar formato do Account ID
+            if not self.validate_mercadopago_account(account_id):
+                print(f"[ERROR] Account ID inválido: {account_id}")
+                return False
+            
+            result = await self.create_or_update_config(
+                guild_id=guild_id,
+                mercadopago_account_id=account_id
+            )
+            
+            if result:
+                print(f"[OK] Account ID configurado para guild {guild_id}: {account_id}")
+                return True
+            else:
+                print(f"[ERROR] Falha ao configurar Account ID para guild {guild_id}")
+                return False
+                
+        except Exception as e:
+            print(f"[ERROR] Erro ao configurar Account ID: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    async def get_mercadopago_account(self, guild_id: int) -> Optional[str]:
+        """
+        Busca Account ID do Mercado Pago do servidor
+        
+        Args:
+            guild_id: ID do servidor Discord
+            
+        Returns:
+            Account ID ou None se não configurado
+        """
+        try:
+            config = await self.get_config(guild_id)
+            
+            if not config:
+                return None
+            
+            account_id = config.get('mercadopago_account_id')
+            
+            if account_id and self.validate_mercadopago_account(account_id):
+                return account_id
+            else:
+                print(f"[WARNING] Account ID inválido para guild {guild_id}: {account_id}")
+                return None
+                
+        except Exception as e:
+            print(f"[ERROR] Erro ao buscar Account ID: {e}")
+            return None
+    
+    def validate_mercadopago_account(self, account_id: str) -> bool:
+        """
+        Valida formato do Account ID do Mercado Pago
+        
+        Args:
+            account_id: Account ID para validar
+            
+        Returns:
+            True se válido
+        """
+        if not account_id:
+            return False
+        
+        # Remover espaços e caracteres especiais
+        clean_id = str(account_id).strip()
+        
+        # Deve ser numérico
+        if not clean_id.isdigit():
+            print(f"[WARNING] Account ID deve ser numérico: {account_id}")
+            return False
+        
+        # Deve ter entre 8-12 dígitos (formato típico do MP)
+        if len(clean_id) < 8 or len(clean_id) > 12:
+            print(f"[WARNING] Account ID deve ter 8-12 dígitos: {account_id} (len: {len(clean_id)})")
+            return False
+        
+        # Não pode ser igual ao Account ID da plataforma
+        platform_account_id = Config.MERCADOPAGO_ACCOUNT_ID if hasattr(Config, 'MERCADOPAGO_ACCOUNT_ID') else None
+        if platform_account_id and clean_id == str(platform_account_id):
+            print(f"[WARNING] Account ID não pode ser igual ao da plataforma: {account_id}")
+            return False
+        
+        return True
+    
+    async def remove_mercadopago_account(self, guild_id: int) -> bool:
+        """
+        Remove configuração de Account ID (volta para modo centralizado)
+        
+        Args:
+            guild_id: ID do servidor Discord
+            
+        Returns:
+            True se removido com sucesso
+        """
+        try:
+            result = await self.create_or_update_config(
+                guild_id=guild_id,
+                mercadopago_account_id=None
+            )
+            
+            if result:
+                print(f"[OK] Account ID removido para guild {guild_id}")
+                return True
+            else:
+                print(f"[ERROR] Falha ao remover Account ID para guild {guild_id}")
+                return False
+                
+        except Exception as e:
+            print(f"[ERROR] Erro ao remover Account ID: {e}")
+            return False
+    
+    async def get_split_status(self, guild_id: int) -> Dict:
+        """
+        Retorna status da configuração de split
+        
+        Args:
+            guild_id: ID do servidor Discord
+            
+        Returns:
+            Dict com informações do split
+        """
+        try:
+            config = await self.get_config(guild_id)
+            
+            if not config:
+                return {
+                    'configured': False,
+                    'account_id': None,
+                    'status': 'not_configured'
+                }
+            
+            account_id = config.get('mercadopago_account_id')
+            
+            if not account_id:
+                return {
+                    'configured': False,
+                    'account_id': None,
+                    'status': 'not_configured'
+                }
+            
+            is_valid = self.validate_mercadopago_account(account_id)
+            
+            return {
+                'configured': is_valid,
+                'account_id': account_id if is_valid else None,
+                'status': 'configured' if is_valid else 'invalid',
+                'masked_id': f"{account_id[:4]}****{account_id[-4:]}" if is_valid else account_id
+            }
+            
+        except Exception as e:
+            print(f"[ERROR] Erro ao buscar status do split: {e}")
+            return {
+                'configured': False,
+                'account_id': None,
+                'status': 'error'
+            }
 

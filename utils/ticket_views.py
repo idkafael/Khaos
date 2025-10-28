@@ -2566,5 +2566,185 @@ class TicketChannelView(ui.View):
         super().__init__(timeout=None)
         self.add_item(GeneratePaymentButton())
         self.add_item(CloseTicketButton())
+
+# ===== MODAL PARA CONFIGURAÇÃO DE SPLIT DE PAGAMENTO =====
+
+class MercadoPagoConfigModal(ui.Modal):
+    """Modal para configurar Account ID do Mercado Pago"""
+    
+    def __init__(self):
+        super().__init__(
+            title="🔧 Configurar Split de Pagamento",
+            custom_id="mp_config_modal",
+            timeout=300
+        )
+        
+        # Campo para Account ID
+        self.account_id_input = ui.TextInput(
+            label="Account ID do Mercado Pago",
+            placeholder="Ex: 1796829370",
+            custom_id="mp_account_id",
+            required=True,
+            max_length=20,
+            style=disnake.TextInputStyle.short
+        )
+        
+        self.add_item(self.account_id_input)
+    
+    async def callback(self, interaction: disnake.Interaction):
+        """Callback quando modal é submetido"""
+        try:
+            account_id = self.account_id_input.value.strip()
+            
+            # Validar permissão de administrador
+            if not interaction.user.guild_permissions.administrator:
+                await interaction.response.send_message(
+                    "❌ Apenas administradores podem configurar split de pagamento!",
+                    ephemeral=True
+                )
+                return
+            
+            # Importar guild_config_model aqui para evitar import circular
+            from models.guild_config_model import GuildConfigModel
+            guild_config = GuildConfigModel()
+            
+            # Validar Account ID
+            if not guild_config.validate_mercadopago_account(account_id):
+                embed = disnake.Embed(
+                    title="❌ Account ID Inválido",
+                    description="O Account ID deve ser:\n• Numérico\n• Entre 8-12 dígitos\n• Válido no Mercado Pago",
+                    color=0xFF0000
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                return
+            
+            # Configurar Account ID
+            success = await guild_config.set_mercadopago_account(
+                interaction.guild_id, 
+                account_id
+            )
+            
+            if success:
+                # Embed de sucesso
+                embed = disnake.Embed(
+                    title="✅ Split Configurado com Sucesso!",
+                    description=f"**Account ID:** `{account_id[:4]}****{account_id[-4:]}`\n\n"
+                               f"Agora todas as vendas serão divididas automaticamente:\n"
+                               f"💰 **Para você:** Valor total - R$ 0,80\n"
+                               f"💰 **Para plataforma:** R$ 0,80 (comissão fixa)\n\n"
+                               f"💡 **Como funciona:**\n"
+                               f"• Cliente paga via Pix\n"
+                               f"• Mercado Pago divide automaticamente\n"
+                               f"• Você recebe direto na sua conta MP\n"
+                               f"• Bot entrega produto automaticamente",
+                    color=0x00FF00
+                )
+                
+                embed.add_field(
+                    name="📋 Próximos Passos",
+                    value="1. Teste fazendo uma venda\n"
+                          "2. Verifique se o dinheiro chegou na sua conta\n"
+                          "3. Use `/status_pix` para monitorar",
+                    inline=False
+                )
+                
+                embed.set_footer(text="💡 Use /status_pix para verificar configuração")
+                
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+            else:
+                embed = disnake.Embed(
+                    title="❌ Erro na Configuração",
+                    description="Não foi possível configurar o Account ID.\n"
+                               "Verifique se o ID está correto e tente novamente.",
+                    color=0xFF0000
+                )
+                await interaction.response.send_message(embed=embed, ephemeral=True)
+                
+        except Exception as e:
+            print(f"[ERROR] Erro no modal de configuração MP: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            await interaction.response.send_message(
+                "❌ Erro interno. Tente novamente em alguns minutos.",
+                ephemeral=True
+            )
+
+class MercadoPagoConfigView(ui.View):
+    """View com botão para abrir modal de configuração"""
+    
+    def __init__(self):
+        super().__init__(timeout=300)
+    
+    @ui.button(
+        label="🔧 Configurar Split de Pagamento",
+        style=disnake.ButtonStyle.primary,
+        custom_id="mp_config_button"
+    )
+    async def config_button(self, button: ui.Button, interaction: disnake.Interaction):
+        """Botão para abrir modal de configuração"""
+        try:
+            # Verificar permissão de administrador
+            if not interaction.user.guild_permissions.administrator:
+                await interaction.response.send_message(
+                    "❌ Apenas administradores podem configurar split de pagamento!",
+                    ephemeral=True
+                )
+                return
+            
+            # Mostrar instruções primeiro
+            embed = disnake.Embed(
+                title="🔧 Configuração de Split de Pagamento",
+                description="Configure sua conta Mercado Pago para receber pagamentos diretamente!",
+                color=0x5865F2
+            )
+            
+            embed.add_field(
+                name="📋 Como Encontrar seu Account ID:",
+                value="1. Acesse: https://www.mercadopago.com.br/developers\n"
+                      "2. Faça login na sua conta\n"
+                      "3. Vá em **\"Suas aplicações\"** ou **\"Credenciais\"**\n"
+                      "4. Copie o **\"User ID\"** ou **\"Account ID\"**\n"
+                      "5. Cole no campo abaixo",
+                inline=False
+                )
+            
+            embed.add_field(
+                name="💡 Exemplo:",
+                value="`1796829370` (número de 8-12 dígitos)",
+                inline=False
+            )
+            
+            embed.add_field(
+                name="⚠️ Importante:",
+                value="• Sua conta MP deve estar **verificada**\n"
+                      "• Você receberá **R$ 0,80 a menos** por venda\n"
+                      "• Dinheiro cairá **direto na sua conta**",
+                inline=False
+            )
+            
+            embed.set_footer(text="Clique no botão abaixo para configurar")
+            
+            await interaction.response.send_message(embed=embed, ephemeral=True)
+            
+            # Aguardar um pouco e mostrar modal
+            await asyncio.sleep(2)
+            
+            modal = MercadoPagoConfigModal()
+            await interaction.followup.send("Digite seu Account ID:", view=self, ephemeral=True)
+            
+            # Mostrar modal após um delay
+            await asyncio.sleep(1)
+            await interaction.followup.send("Abrindo configuração...", ephemeral=True)
+            
+        except Exception as e:
+            print(f"[ERROR] Erro no botão de configuração MP: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            await interaction.response.send_message(
+                "❌ Erro interno. Tente novamente.",
+                ephemeral=True
+            )
 # Force redeploy - fix InputText default to value
 # Force deploy - 10/24/2025 16:37:09

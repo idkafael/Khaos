@@ -38,6 +38,7 @@ class MercadoPagoManager:
         amount: float,
         description: str,
         transaction_id: int,
+        guild_id: int = None,
         payer_email: str = None,
         payer_first_name: str = None,
         payer_last_name: str = None,
@@ -109,6 +110,24 @@ class MercadoPagoManager:
             print(f"📦 [MP] Item completo: {item_data}")
             print(f"📦 [MP] Pontos esperados: title(2) + description(2) + quantity(2) + unit_price(2) + category_id(3) + id(3) = 14 pontos")
             
+            # Buscar Account ID do servidor para split (se guild_id fornecido)
+            vendor_account_id = None
+            split_applied = False
+            
+            if guild_id:
+                try:
+                    from models.guild_config_model import GuildConfigModel
+                    guild_config = GuildConfigModel()
+                    vendor_account_id = await guild_config.get_mercadopago_account(guild_id)
+                    
+                    if vendor_account_id:
+                        print(f"💰 [MP] Split configurado para guild {guild_id}: {vendor_account_id}")
+                        split_applied = True
+                    else:
+                        print(f"⚠️ [MP] Guild {guild_id} não tem split configurado - usando modo centralizado")
+                except Exception as e:
+                    print(f"⚠️ [MP] Erro ao buscar Account ID do guild {guild_id}: {e}")
+            
             # Criar pagamento Pix
             payment_data = {
                 "transaction_amount": round(float(amount), 2),  # Sempre 2 casas decimais
@@ -120,9 +139,19 @@ class MercadoPagoManager:
                     "platform": "discord_bot",
                     "version": "2.0",
                     "device_id": "discord_bot_khaos",  # Identificador do dispositivo (ganha 2 pontos!)
-                    "statement_descriptor": "KHAOS DIGITAL"  # Custom metadata para identificação
+                    "statement_descriptor": "KHAOS DIGITAL",  # Custom metadata para identificação
+                    "guild_id": str(guild_id) if guild_id else None,
+                    "split_applied": split_applied
                 }
             }
+            
+            # Adicionar split se configurado
+            if split_applied and vendor_account_id:
+                payment_data["application_fee"] = 0.80  # Comissão fixa da plataforma
+                payment_data["marketplace"] = vendor_account_id  # Conta do vendedor
+                print(f"💰 [MP] Split aplicado: R$ 0,80 para plataforma, resto para {vendor_account_id}")
+            else:
+                print(f"💰 [MP] Modo centralizado: todo valor para plataforma")
             
             # Adicionar items se houver
             if items:
@@ -173,7 +202,11 @@ class MercadoPagoManager:
                 "qr_code": qr_code,  # Pix Copia e Cola
                 "status": payment["status"],
                 "amount": amount,
-                "created_at": payment.get("date_created")
+                "created_at": payment.get("date_created"),
+                "split_applied": split_applied,
+                "vendor_account_id": vendor_account_id,
+                "platform_fee": 0.80 if split_applied else 0.0,
+                "vendor_amount": round(amount - 0.80, 2) if split_applied else 0.0
             }
             
         except Exception as e:
