@@ -35,7 +35,7 @@ async def teste_slash(inter: disnake.ApplicationCommandInteraction):
     """Comando de teste simples"""
     print(f"Comando /teste executado por {inter.user.name} em {inter.guild.name}")
     embed = disnake.Embed(
-        description="✅ Comando de teste funcionando!",
+        description="[OK] Comando de teste funcionando!",
         color=0x8B5CF6
     )
     await inter.response.send_message(embed=embed)
@@ -48,13 +48,13 @@ async def teste_modal_slash(inter: disnake.ApplicationCommandInteraction):
         print(f"🔧 Comando teste_modal executado por {inter.user.name}")
         
         from utils.ticket_views import SetupMessageModal
-        print("✅ SetupMessageModal importado com sucesso!")
+        print("[OK] SetupMessageModal importado com sucesso!")
         
         modal = SetupMessageModal()
-        print("✅ Modal de teste criado com sucesso!")
+        print("[OK] Modal de teste criado com sucesso!")
         
         await inter.response.send_modal(modal)
-        print("✅ Modal de teste enviado com sucesso!")
+        print("[OK] Modal de teste enviado com sucesso!")
         
     except ImportError as e:
         print(f"❌ Erro de importação: {e}")
@@ -143,11 +143,11 @@ async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
         print(f"🔧 Comando setup_ticket executado por {inter.user.name}")
         
         from utils.ticket_views import ObjectiveSelectionView
-        print("✅ ObjectiveSelectionView importado com sucesso!")
+        print("[OK] ObjectiveSelectionView importado com sucesso!")
         
         # Criar view de seleção de objetivo
         view = ObjectiveSelectionView(inter.guild_id)
-        print("✅ View de seleção criada com sucesso!")
+        print("[OK] View de seleção criada com sucesso!")
         
         # Criar embed inicial
         embed = disnake.Embed(
@@ -163,7 +163,7 @@ async def setup_ticket_slash(inter: disnake.ApplicationCommandInteraction):
         
         # Enviar view inicial
         await inter.response.send_message(embed=embed, view=view, ephemeral=True)
-        print("✅ View inicial enviada com sucesso!")
+        print("[OK] View inicial enviada com sucesso!")
         
     except ImportError as e:
         print(f"❌ Erro de importação: {e}")
@@ -268,7 +268,7 @@ async def set_feedback_slash(inter: disnake.ApplicationCommandInteraction, canal
         
         if success:
             embed = disnake.Embed(
-                title="✅ Canal de Feedback Configurado",
+                title="[OK] Canal de Feedback Configurado",
                 description=f"Canal de feedback configurado com sucesso!\n\n📢 **Canal:** {canal.mention}",
                 color=0x8B5CF6
             )
@@ -309,7 +309,7 @@ async def set_entregas_slash(inter: disnake.ApplicationCommandInteraction, canal
         
         if success:
             embed = disnake.Embed(
-                title="✅ Canal de Entregas Configurado",
+                title="[OK] Canal de Entregas Configurado",
                 description=f"Canal de entregas configurado com sucesso!\n\n📦 **Canal:** {canal.mention}",
                 color=0x8B5CF6
             )
@@ -457,7 +457,7 @@ async def clear_messages(ctx, amount: int = 10):
             delete_after=5
         )
         
-        print(f"✅ {ctx.author.name} apagou {len(deleted) - 1} mensagens em #{ctx.channel.name}")
+        print(f"[OK] {ctx.author.name} apagou {len(deleted) - 1} mensagens em #{ctx.channel.name}")
         
     except disnake.Forbidden:
         await ctx.send("❌ Não tenho permissão para apagar mensagens neste canal!", delete_after=5)
@@ -561,7 +561,7 @@ async def status_slash(inter: disnake.ApplicationCommandInteraction):
         elif status == 'completed':
             # Pagamento confirmado e produto entregue
             embed = disnake.Embed(
-                title="✅ Produto Entregue",
+                title="[OK] Produto Entregue",
                 description=f"Seu pagamento foi confirmado e o produto foi entregue.",
                 color=0x00ff00
             )
@@ -693,7 +693,7 @@ async def comprar_slash(inter: disnake.ApplicationCommandInteraction, produto: s
                 )
             else:
                 # Cupom inválido - informar e continuar sem desconto
-                await inter.channel.send(f"⚠️ {message} - Continuando sem desconto.")
+                await inter.channel.send(f"[WARNING] {message} - Continuando sem desconto.")
                 coupon_data = None
         
         # Criar transação
@@ -1055,7 +1055,7 @@ async def deletar_cupom_slash(inter: disnake.ApplicationCommandInteraction, codi
         
         if success:
             embed = disnake.Embed(
-                title="✅ Cupom Desativado",
+                title="[OK] Cupom Desativado",
                 description=message,
                 color=0x00ff00
             )
@@ -1122,9 +1122,9 @@ async def meu_vip_slash(inter: disnake.ApplicationCommandInteraction):
             days_left = (expires_at.replace(tzinfo=None) - datetime.now()).days
             
             if days_left <= 3:
-                status_emoji = "⚠️"
+                status_emoji = "[WARNING]"
             else:
-                status_emoji = "✅"
+                status_emoji = "[OK]"
             
             status_text = f"{status_emoji} **{days_left} dia(s) restante(s)**\nExpira: <t:{int(expires_at.timestamp())}:R>"
         
@@ -1289,7 +1289,7 @@ async def historico_vip_slash(inter: disnake.ApplicationCommandInteraction):
         
         for i, sub in enumerate(history[:10], 1):  # Limitar a 10
             status_emoji = {
-                'active': '✅',
+                'active': '[OK]',
                 'expired': '⏰',
                 'cancelled': '🚫'
             }.get(sub['status'], '❓')
@@ -1442,7 +1442,7 @@ async def adicionar_vip_slash(
         
         # Criar embed de confirmação
         embed = disnake.Embed(
-            title="✅ VIP Adicionado Manualmente",
+            title="[OK] VIP Adicionado Manualmente",
             description=f"VIP adicionado com sucesso para {membro.mention}",
             color=disnake.Color.green()
         )
@@ -1560,7 +1560,7 @@ async def vip_stats_slash(inter: disnake.ApplicationCommandInteraction):
         )
         
         embed.add_field(
-            name="✅ VIPs Ativos",
+            name="[OK] VIPs Ativos",
             value=str(stats['total_active']),
             inline=True
         )
@@ -1723,12 +1723,12 @@ async def on_ready():
     
     # Inicializar sistema de logs
     bot.log_system = LogSystem(bot)
-    print("✅ Sistema de logs inicializado")
+    print("[OK] Sistema de logs inicializado")
     
     # Inicializar ticket manager com bot
     global ticket_manager
     ticket_manager = TicketManager(bot)
-    print("✅ Ticket Manager inicializado")
+    print("[OK] Ticket Manager inicializado")
     
     # Listar guilds conectadas
     for guild in bot.guilds:
@@ -1766,10 +1766,10 @@ async def on_ready():
             # Em disnake, sync_commands é um método estático
             if hasattr(bot, 'sync_all_commands'):
                 synced = await bot.sync_all_commands()
-                print(f"✅ Comandos sincronizados usando sync_all_commands!")
+                print(f"[OK] Comandos sincronizados usando sync_all_commands!")
             else:
                 # Fallback: tentar await para sincronização automática
-                print("⚠️ sync_all_commands não disponível, usando sincronização automática")
+                print("[WARNING] sync_all_commands não disponível, usando sincronização automática")
             
             # Aguardar um pouco para a sincronização se propagar
             await asyncio.sleep(3)
@@ -1785,9 +1785,9 @@ async def on_ready():
                     # Em disnake, use bot.sync_commands_force() com guild_id
                     if hasattr(bot, 'sync_commands_force'):
                         synced = await bot.sync_commands_force([guild.id])
-                        print(f"✅ Comandos sincronizados na guild {guild.name} usando sync_commands_force!")
+                        print(f"[OK] Comandos sincronizados na guild {guild.name} usando sync_commands_force!")
                     else:
-                        print(f"⚠️ sync_commands_force não disponível")
+                        print(f"[WARNING] sync_commands_force não disponível")
                     
                     # Aguardar um pouco entre sincronizações
                     await asyncio.sleep(1)
@@ -1843,7 +1843,7 @@ async def on_ready():
         bot.webhook_handler = WebhookHandler(bot, port=webhook_port)
         asyncio.create_task(bot.webhook_handler.start())
     except Exception as e:
-        print(f"⚠️ Erro ao iniciar webhook server: {e}")
+        print(f"[WARNING] Erro ao iniciar webhook server: {e}")
     
     # Iniciar payment checker (polling)
     try:
@@ -1851,7 +1851,7 @@ async def on_ready():
         bot.payment_checker = PaymentChecker(bot)
         asyncio.create_task(bot.payment_checker.start_checking())
     except Exception as e:
-        print(f"⚠️ Erro ao iniciar payment checker: {e}")
+        print(f"[WARNING] Erro ao iniciar payment checker: {e}")
     
     # Iniciar task para liberar reservas expiradas
     from disnake.ext import tasks
@@ -1905,7 +1905,7 @@ async def on_ready():
         from commands.admin_commands import setup_admin_commands
         await setup_admin_commands(bot)
     except Exception as e:
-        print(f"⚠️ Erro ao carregar comandos de admin: {e}")
+        print(f"[WARNING] Erro ao carregar comandos de admin: {e}")
         import traceback
         traceback.print_exc()
     
@@ -1913,7 +1913,7 @@ async def on_ready():
     bot.add_view(TicketView())
     bot.add_view(TicketChannelView())
     
-    print("✅ Bot inicializado com sistema de tickets e entrega automática!")
+    print("[OK] Bot inicializado com sistema de tickets e entrega automática!")
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -1937,7 +1937,7 @@ async def load_sample_products():
         # Limpar produtos antigos
         for product in products:
             await product_model.delete_product(product['id'])
-        print("✅ Produtos antigos removidos")
+        print("[OK] Produtos antigos removidos")
     
     # Carregar novos produtos digitais
     sample_products = [
@@ -2056,7 +2056,7 @@ async def load_sample_products():
     for product in sample_products:
         await product_model.create_product(product)
     
-    print(f"✅ {len(sample_products)} produtos digitais carregados com sucesso!")
+    print(f"[OK] {len(sample_products)} produtos digitais carregados com sucesso!")
 
 
 @bot.command(name='products')
@@ -2252,7 +2252,7 @@ async def monitor_payment(transaction_id, user_id):
                         
                         # Entrega do produto
                         embed = disnake.Embed(
-                            title="✅ Produto Entregue!",
+                            title="[OK] Produto Entregue!",
                             description="🎊 Sua compra foi concluída com sucesso! 🎊",
                             color=0x00ff00
                         )
@@ -2336,7 +2336,7 @@ async def monitor_payment(transaction_id, user_id):
 async def teste_prefix(ctx):
     """Comando de teste via prefixo"""
     print(f"🔧 Comando ?teste executado por {ctx.author.name} em {ctx.guild.name}")
-    await ctx.send("✅ Comando ?teste funcionando via prefixo!")
+    await ctx.send("[OK] Comando ?teste funcionando via prefixo!")
 
 # Comando para forçar sincronização de slash commands
 @bot.command(name='sync')
@@ -2357,9 +2357,9 @@ async def sync_commands(ctx):
             # Em disnake, use sync_all_commands
             if hasattr(bot, 'sync_all_commands'):
                 await bot.sync_all_commands()
-                await ctx.send("✅ Comandos sincronizados usando sync_all_commands!")
+                await ctx.send("[OK] Comandos sincronizados usando sync_all_commands!")
             else:
-                await ctx.send("⚠️ sync_all_commands não disponível, usando sincronização automática")
+                await ctx.send("[WARNING] sync_all_commands não disponível, usando sincronização automática")
         except Exception as e:
             await ctx.send(f"❌ Erro na sincronização global: {e}")
             
@@ -2367,9 +2367,9 @@ async def sync_commands(ctx):
             try:
                 if hasattr(bot, 'sync_commands_force'):
                     await bot.sync_commands_force([ctx.guild.id])
-                    await ctx.send("✅ Comandos sincronizados na guild usando sync_commands_force!")
+                    await ctx.send("[OK] Comandos sincronizados na guild usando sync_commands_force!")
                 else:
-                    await ctx.send("⚠️ sync_commands_force não disponível")
+                    await ctx.send("[WARNING] sync_commands_force não disponível")
             except Exception as guild_error:
                 await ctx.send(f"❌ Erro na sincronização da guild: {guild_error}")
             
@@ -2485,7 +2485,7 @@ async def help_command(ctx):
 @commands.has_permissions(administrator=True)
 async def reload_products(ctx):
     """Recarrega os produtos no banco de dados"""
-    await ctx.send("⚠️ **Comando Obsoleto!**\n\n"
+    await ctx.send("[WARNING] **Comando Obsoleto!**\n\n"
                   "Este comando não funciona mais com o sistema multi-servidor.\n\n"
                   "**Use os novos comandos:**\n"
                   "`/admin_criar_produto` - Criar produto\n"
@@ -2582,7 +2582,7 @@ async def add_stock_by_id(ctx, product_id: int):
                         codes.append(line)
                 
                 if len(codes) > 0:
-                    await msg.add_reaction('✅')
+                    await msg.add_reaction('[OK]')
                     
             except TimeoutError:
                 break
@@ -2597,7 +2597,7 @@ async def add_stock_by_id(ctx, product_id: int):
         
         if added > 0:
             embed = disnake.Embed(
-                title="✅ Estoque Adicionado",
+                title="[OK] Estoque Adicionado",
                 description=f"**{added}** itens foram adicionados ao produto **{product['name']}**.",
                 color=0x00ff00
             )
@@ -2636,7 +2636,7 @@ async def view_stock_prefix(ctx):
         )
         
         for item in summary:
-            status_emoji = "✅" if item['available'] > 0 else "❌"
+            status_emoji = "[OK]" if item['available'] > 0 else "❌"
             value = f"{status_emoji} Disponível: **{item['available']}**\n"
             value += f"🔒 Reservado: {item['reserved']}\n"
             value += f"💰 Vendido: {item['sold']}\n"
@@ -2725,7 +2725,7 @@ async def setup_ticket_with_image(ctx, *, args=""):
         view = TicketView(nome_botao)
         
         await ctx.send(embed=embed, view=view)
-        await ctx.send(f"✅ Sistema de tickets configurado!\n"
+        await ctx.send(f"[OK] Sistema de tickets configurado!\n"
                       f"**Título:** {titulo}\n"
                       f"**Cor:** {cor} (0x{cor_hex})\n"
                       f"**Botão:** {nome_botao}")
@@ -2766,7 +2766,7 @@ async def admin_criar_produto(
         
         if product:
             embed = disnake.Embed(
-                title="✅ Produto Criado no Supabase",
+                title="[OK] Produto Criado no Supabase",
                 description=f"Produto **{nome}** criado com sucesso!",
                 color=disnake.Color.green()
             )
@@ -2833,7 +2833,7 @@ async def admin_deletar_produto(inter: disnake.ApplicationCommandInteraction, pr
         
         if deleted:
             embed.add_field(
-                name=f"✅ Deletados ({len(deleted)})",
+                name=f"[OK] Deletados ({len(deleted)})",
                 value="\n".join(deleted),
                 inline=False
             )
@@ -2847,7 +2847,7 @@ async def admin_deletar_produto(inter: disnake.ApplicationCommandInteraction, pr
         
         if errors:
             embed.add_field(
-                name=f"⚠️ Erros ao Deletar ({len(errors)})",
+                name=f"[WARNING] Erros ao Deletar ({len(errors)})",
                 value=", ".join(map(str, errors)),
                 inline=False
             )
@@ -2949,7 +2949,7 @@ async def admin_criar_vip(
             duracao_text = f"{duracao_dias} dias" if duracao_dias > 0 else "Vitalício"
             
             embed = disnake.Embed(
-                title="✅ Produto VIP Criado no Supabase",
+                title="[OK] Produto VIP Criado no Supabase",
                 description=f"VIP **{nome}** criado com sucesso!",
                 color=disnake.Color.gold()
             )
@@ -3042,7 +3042,7 @@ async def saldo_cmd(inter: disnake.ApplicationCommandInteraction):
             )
         else:
             embed.add_field(
-                name="⚠️ Chave Pix",
+                name="[WARNING] Chave Pix",
                 value="Use `/configurar_pix` para cadastrar",
                 inline=False
             )
@@ -3094,7 +3094,7 @@ async def configurar_pix_cmd(inter: disnake.ApplicationCommandInteraction, chave
                 masked = f"{result[:5]}***{result[-4:]}"
             
             embed = disnake.Embed(
-                title="✅ Chave Pix Cadastrada",
+                title="[OK] Chave Pix Cadastrada",
                 description=f"Chave Pix salva com sucesso!",
                 color=disnake.Color.green()
             )
@@ -3323,7 +3323,7 @@ async def historico_saques_cmd(inter: disnake.ApplicationCommandInteraction):
             status_icons = {
                 'pending': '⏳',
                 'processing': '🔄',
-                'completed': '✅',
+                'completed': '[OK]',
                 'failed': '❌',
                 'rejected': '🚫',
                 'cancelled': '⛔'
@@ -3378,7 +3378,7 @@ async def verificar_pagamentos_cmd(inter: disnake.ApplicationCommandInteraction)
         pending_transactions = result.data if result.data else []
         
         if not pending_transactions:
-            await inter.followup.send("✅ Nenhum pagamento pendente encontrado!", ephemeral=True)
+            await inter.followup.send("[OK] Nenhum pagamento pendente encontrado!", ephemeral=True)
             return
         
         # Verificar cada transação
@@ -3397,7 +3397,7 @@ async def verificar_pagamentos_cmd(inter: disnake.ApplicationCommandInteraction)
             payment_info = await mp_manager.check_payment_status(payment_id)
             
             if payment_info and payment_info.get('status') == 'approved':
-                print(f"✅ Pagamento {payment_id} APROVADO!")
+                print(f"[OK] Pagamento {payment_id} APROVADO!")
                 approved += 1
                 
                 # Atualizar transação
@@ -3426,7 +3426,7 @@ async def verificar_pagamentos_cmd(inter: disnake.ApplicationCommandInteraction)
                     await delivery_manager.deliver_product(transaction['id'])
                     print(f"📦 Produto entregue!")
                 except Exception as delivery_error:
-                    print(f"⚠️ Erro ao entregar produto: {delivery_error}")
+                    print(f"[WARNING] Erro ao entregar produto: {delivery_error}")
         
         # Resposta
         embed = disnake.Embed(
@@ -3435,13 +3435,13 @@ async def verificar_pagamentos_cmd(inter: disnake.ApplicationCommandInteraction)
         )
         
         embed.add_field(name="📊 Total verificado", value=str(checked), inline=True)
-        embed.add_field(name="✅ Aprovados", value=str(approved), inline=True)
+        embed.add_field(name="[OK] Aprovados", value=str(approved), inline=True)
         embed.add_field(name="⏳ Pendentes", value=str(checked - approved), inline=True)
         
         if approved > 0:
             embed.add_field(
                 name="💰 Ação tomada",
-                value=f"✅ {approved} pagamento(s) processado(s)\n"
+                value=f"[OK] {approved} pagamento(s) processado(s)\n"
                       f"💵 Carteira creditada\n"
                       f"📦 Produto(s) entregue(s)",
                 inline=False
@@ -3508,17 +3508,17 @@ async def on_message(message):
                 
                 # Embed de sucesso
                 embed = disnake.Embed(
-                    title="✅ Estoque Adicionado",
+                    title="[OK] Estoque Adicionado",
                     description=f"Códigos adicionados ao produto **{data['product']['name']}**",
                     color=disnake.Color.green()
                 )
                 embed.add_field(name="📦 Produto", value=data['product']['name'], inline=True)
-                embed.add_field(name="✅ Adicionados", value=f"{added_count} códigos", inline=True)
+                embed.add_field(name="[OK] Adicionados", value=f"{added_count} códigos", inline=True)
                 embed.add_field(name="❌ Falharam", value=f"{len(codes) - added_count}", inline=True)
                 
                 if added_count < len(codes):
                     embed.add_field(
-                        name="⚠️ Atenção",
+                        name="[WARNING] Atenção",
                         value=f"{len(codes) - added_count} código(s) já existem ou falharam.",
                         inline=False
                     )
@@ -3558,7 +3558,7 @@ async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
         
         if not products_with_stock:
             embed = disnake.Embed(
-                title="⚠️ Nenhum Produto com Estoque Gerenciado",
+                title="[WARNING] Nenhum Produto com Estoque Gerenciado",
                 description="Todos os produtos do servidor são ilimitados ou VIPs (não precisam de estoque).",
                 color=disnake.Color.orange()
             )
