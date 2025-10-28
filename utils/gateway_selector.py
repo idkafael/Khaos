@@ -176,9 +176,14 @@ class GatewaySelector:
                             product = await product_model.get_product_by_id(transaction['product_id'])
                             if product:
                                 item_title = product.get('name')
+                                # Garantir categoria válida para Mercado Pago
                                 item_category = product.get('category', 'digital_goods')
+                                # Se categoria for 'produto', usar categoria padrão do MP
+                                if item_category == 'produto':
+                                    item_category = 'digital_goods'
                                 item_id = product.get('id')
                                 print(f"📦 [GatewaySelector] Produto encontrado: {item_title}")
+                                print(f"📦 [GatewaySelector] Categoria: {item_category}")
                     except Exception as e:
                         print(f"⚠️ [GatewaySelector] Erro ao buscar produto: {e}")
                 

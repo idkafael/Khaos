@@ -86,26 +86,31 @@ class MercadoPagoManager:
                 payer_data["last_name"] = payer_last_name
                 print(f"👤 [MP] Sobrenome: {payer_last_name}")
             
-            # Preparar items (para ganhar pontos no MP)
+            # Preparar items (para ganhar pontos no MP) - SEMPRE criar item
             items = []
-            if item_title:
-                item_data = {
-                    "title": item_title or description,  # +2 pontos
-                    "description": description,  # +2 pontos
-                    "quantity": item_quantity,  # +2 pontos
-                    "unit_price": round(float(amount) / item_quantity, 2),  # +2 pontos
-                }
-                
-                # Categoria específica (ganha 3 pontos)
-                if item_category:
-                    item_data["category_id"] = item_category
-                
-                # ID do item (ganha 3 pontos)
-                if item_id:
-                    item_data["id"] = str(item_id)
-                
-                items.append(item_data)
-                print(f"📦 [MP] Item: {item_title} (x{item_quantity}) - Categoria: {item_data.get('category_id', 'N/A')}")
+            # Sempre criar um item, mesmo sem título específico
+            item_data = {
+                "title": item_title or description,  # +2 pontos
+                "description": description,  # +2 pontos
+                "quantity": item_quantity,  # +2 pontos
+                "unit_price": round(float(amount) / item_quantity, 2),  # +2 pontos
+            }
+            
+            # Categoria específica (ganha 3 pontos) - SEMPRE adicionar
+            if item_category:
+                item_data["category_id"] = item_category
+            else:
+                item_data["category_id"] = "digital_goods"  # Categoria padrão
+            
+            # ID do item (ganha 3 pontos) - SEMPRE adicionar
+            if item_id:
+                item_data["id"] = str(item_id)
+            else:
+                item_data["id"] = str(transaction_id)  # Usar transaction_id como fallback
+            
+            items.append(item_data)
+            print(f"📦 [MP] Item completo: {item_data}")
+            print(f"📦 [MP] Pontos esperados: title(2) + description(2) + quantity(2) + unit_price(2) + category_id(3) + id(3) = 14 pontos")
             
             # Criar pagamento
             payment_data = {
@@ -127,6 +132,9 @@ class MercadoPagoManager:
                 payment_data["additional_info"] = {
                     "items": items
                 }
+                print(f"📦 [MP] Additional info adicionado: {payment_data['additional_info']}")
+            else:
+                print("⚠️ [MP] Nenhum item para adicionar ao pagamento")
             
             # Adicionar notification_url apenas se WEBHOOK_URL estiver configurado
             webhook_url = os.getenv('WEBHOOK_URL', '').strip()
@@ -138,6 +146,7 @@ class MercadoPagoManager:
             
             print(f"📤 [MP] Enviando dados para API Mercado Pago...")
             print(f"💰 [MP] Valor: R$ {payment_data['transaction_amount']}")
+            print(f"📋 [MP] Dados completos do pagamento: {payment_data}")
             
             payment_response = self.sdk.payment().create(payment_data)
             
