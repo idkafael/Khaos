@@ -22,17 +22,17 @@ class PaymentChecker:
             return
         
         self.is_running = True
-        print("🔄 Payment checker iniciado - Verificando a cada 2 minutos")
+        print("🔄 Payment checker iniciado - Verificando a cada 10 segundos")
         
         while self.is_running:
             try:
                 await self._check_pending_payments()
-                await asyncio.sleep(120)  # 2 minutos
+                await asyncio.sleep(10)  # 10 segundos
             except Exception as e:
                 print(f"❌ Erro no payment checker: {e}")
                 import traceback
                 traceback.print_exc()
-                await asyncio.sleep(120)
+                await asyncio.sleep(10)
     
     def stop_checking(self):
         """Para o loop de verificação"""
