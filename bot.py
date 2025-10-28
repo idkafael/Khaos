@@ -3646,7 +3646,7 @@ async def adicionar_estoque(inter: disnake.ApplicationCommandInteraction):
 # Executar o bot
 if __name__ == "__main__":
     try:
-        print("🚀 Iniciando bot...")
+        print("[START] Iniciando bot...")
         bot.run(Config.DISCORD_TOKEN)
     except Exception as e:
         print(f"Erro ao iniciar o bot: {e}")

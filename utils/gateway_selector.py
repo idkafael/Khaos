@@ -39,7 +39,7 @@ class GatewaySelector:
             return 'mercadopago'
             
         except Exception as e:
-            print(f"❌ Erro ao buscar gateway preferido: {e}")
+            print(f"[ERROR] Erro ao buscar gateway preferido: {e}")
             return 'mercadopago'
     
     async def set_preferred_gateway(self, guild_id: int, gateway: str) -> bool:
@@ -57,7 +57,7 @@ class GatewaySelector:
             valid_gateways = ['mercadopago', 'pushinpay', 'asaas', 'stripe']
             
             if gateway not in valid_gateways:
-                print(f"❌ Gateway inválido: {gateway}")
+                print(f"[ERROR] Gateway inválido: {gateway}")
                 return False
             
             await self.guild_config_model.create_or_update_config(
@@ -65,11 +65,11 @@ class GatewaySelector:
                 preferred_gateway=gateway
             )
             
-            print(f"✅ Gateway preferido definido: {gateway}")
+            print(f"[OK] Gateway preferido definido: {gateway}")
             return True
             
         except Exception as e:
-            print(f"❌ Erro ao salvar gateway: {e}")
+            print(f"[ERROR] Erro ao salvar gateway: {e}")
             return False
     
     def is_gateway_available(self, gateway: str) -> bool:
@@ -127,16 +127,16 @@ class GatewaySelector:
 
             if payment:
                 payment['gateway_used'] = preferred_gateway
-                print(f"✅ Pagamento criado via {preferred_gateway}")
+                print(f"[OK] Pagamento criado via {preferred_gateway}")
                 return payment
 
             # SEM FALLBACK - se Mercado Pago falhar, falha completamente
-            print(f"❌ Gateway {preferred_gateway} falhou - sem alternativas disponíveis")
-            print(f"💡 Sistema configurado para usar APENAS Mercado Pago")
+            print(f"[ERROR] Gateway {preferred_gateway} falhou - sem alternativas disponíveis")
+            print(f"[INFO] Sistema configurado para usar APENAS Mercado Pago")
             return None
             
         except Exception as e:
-            print(f"❌ Erro ao criar pagamento: {e}")
+            print(f"[ERROR] Erro ao criar pagamento: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -182,10 +182,10 @@ class GatewaySelector:
                                 if item_category == 'produto':
                                     item_category = 'digital_goods'
                                 item_id = product.get('id')
-                                print(f"📦 [GatewaySelector] Produto encontrado: {item_title}")
-                                print(f"📦 [GatewaySelector] Categoria: {item_category}")
+                                print(f"[PRODUCT] [GatewaySelector] Produto encontrado: {item_title}")
+                                print(f"[PRODUCT] [GatewaySelector] Categoria: {item_category}")
                     except Exception as e:
-                        print(f"⚠️ [GatewaySelector] Erro ao buscar produto: {e}")
+                        print(f"[WARNING] [GatewaySelector] Erro ao buscar produto: {e}")
                 
                 # Extrair nome/sobrenome do email se possível
                 payer_first_name = None
@@ -213,16 +213,16 @@ class GatewaySelector:
             
             elif gateway == 'pushinpay':
                 # PushinPay REMOVIDO COMPLETAMENTE - foco 100% Mercado Pago
-                print(f"❌ PushinPay não está mais disponível - Sistema usa apenas Mercado Pago")
+                print(f"[ERROR] PushinPay não está mais disponível - Sistema usa apenas Mercado Pago")
                 return None
 
             else:
                 # Gateway não implementado - apenas Mercado Pago é suportado
-                print(f"❌ Gateway não implementado: {gateway} - Use Mercado Pago")
+                print(f"[ERROR] Gateway não implementado: {gateway} - Use Mercado Pago")
                 return None
                 
         except Exception as e:
-            print(f"❌ Erro ao criar pagamento no {gateway}: {e}")
+            print(f"[ERROR] Erro ao criar pagamento no {gateway}: {e}")
             return None
     
     def get_available_gateways(self) -> list:
@@ -264,7 +264,7 @@ class GatewaySelector:
             },
             'pushinpay': {
                 'name': 'PushinPay',
-                'icon': '❌',
+                'icon': '[ERROR]',
                 'description': 'REMOVIDO - Sistema usa apenas Mercado Pago',
                 'features': [],
                 'configured': False

@@ -23,11 +23,11 @@ class MercadoPagoManager:
         self.public_key = os.getenv('MERCADOPAGO_PUBLIC_KEY')
         
         if not self.access_token:
-            print("⚠️ MERCADOPAGO_ACCESS_TOKEN não configurado no .env")
+            print("[WARNING] MERCADOPAGO_ACCESS_TOKEN não configurado no .env")
             self.sdk = None
         else:
             self.sdk = mercadopago.SDK(self.access_token)
-            print("✅ Mercado Pago SDK inicializado")
+            print("[OK] Mercado Pago SDK inicializado")
     
     def is_configured(self) -> bool:
         """Verifica se Mercado Pago está configurado"""

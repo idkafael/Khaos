@@ -14,9 +14,9 @@ class PaymentUtils:
         self.gateway_selector = GatewaySelector()
 
         # Debug: Verificar configuração
-        print(f"💳 PaymentUtils: Usando Mercado Pago (gateway único)")
+        print(f"[PAYMENT] PaymentUtils: Usando Mercado Pago (gateway único)")
         gateways_disponiveis = self.gateway_selector.get_available_gateways()
-        print(f"✅ Gateway disponível: {', '.join(gateways_disponiveis)}")
+        print(f"[OK] Gateway disponível: {', '.join(gateways_disponiveis)}")
     
     async def create_pix_payment(self, amount: float, description: str, customer_email: str, customer_name: str, split_config: Optional[Dict] = None, guild_id: int = None, transaction_id: int = None) -> Optional[Dict]:
         """Cria um pagamento via Pix usando Mercado Pago (100% foco, sem fallback)
@@ -31,13 +31,13 @@ class PaymentUtils:
             transaction_id: ID da transação no banco
         """
         try:
-            print(f"💳 Iniciando pagamento - Valor: R$ {amount:.2f}")
+            print(f"[PAYMENT] Iniciando pagamento - Valor: R$ {amount:.2f}")
             print(f"📧 Cliente: {customer_name} ({customer_email})")
             print(f"📝 Descrição: {description}")
             
             # Validar valor mínimo (R$ 0,50)
             if amount < 0.50:
-                print("❌ Valor mínimo é R$ 0,50")
+                print("[ERROR] Valor mínimo é R$ 0,50")
                 return None
             
             # Usar Gateway Selector para criar pagamento (100% Mercado Pago)
@@ -50,12 +50,12 @@ class PaymentUtils:
             )
             
             if not payment_data:
-                print("❌ Falha ao criar pagamento em TODOS os gateways")
+                print("[ERROR] Falha ao criar pagamento em TODOS os gateways")
                 return None
             
             # Identificar qual gateway foi usado
             gateway_used = payment_data.get('gateway_used', 'mercadopago')
-            print(f"✅ Pagamento criado via {gateway_used.upper()}")
+            print(f"[OK] Pagamento criado via {gateway_used.upper()}")
             
             # Normalizar resposta para formato esperado
             if gateway_used == 'mercadopago':
@@ -63,7 +63,7 @@ class PaymentUtils:
                 qr_code_data = payment_data.get('qr_code', '')
                 payment_id = payment_data.get('payment_id', '')
                 
-                print(f"✅ [PaymentUtils] Mercado Pago payment created: ID {payment_id}")
+                print(f"[OK] [PaymentUtils] Mercado Pago payment created: ID {payment_id}")
                 
                 # Gerar QR Code visual
                 qr_code_image = self._generate_qr_code(qr_code_data) if qr_code_data else None
@@ -101,11 +101,11 @@ class PaymentUtils:
                 }
             
             else:
-                print(f"⚠️ Gateway desconhecido: {gateway_used}")
+                print(f"[WARNING] Gateway desconhecido: {gateway_used}")
                 return None
                 
         except Exception as e:
-            print(f"❌ Erro ao criar pagamento Pix: {e}")
+            print(f"[ERROR] Erro ao criar pagamento Pix: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -135,18 +135,18 @@ class PaymentUtils:
                 
                 if payment_info:
                     status = payment_info.get('status', 'pending')
-                    print(f"✅ [PaymentUtils] Status MP: {status}")
+                    print(f"[OK] [PaymentUtils] Status MP: {status}")
                     return status
                 else:
-                    print(f"⚠️ [PaymentUtils] Pagamento não encontrado no MP")
+                    print(f"[WARNING] [PaymentUtils] Pagamento não encontrado no MP")
                     return 'pending'
             else:
                 # Gateway não suportado (apenas Mercado Pago é aceito)
-                print(f"⚠️ [PaymentUtils] Gateway {gateway_used} não suportado - use Mercado Pago")
+                print(f"[WARNING] [PaymentUtils] Gateway {gateway_used} não suportado - use Mercado Pago")
                 return 'pending'
                 
         except Exception as e:
-            print(f"❌ [PaymentUtils] Erro ao verificar status: {e}")
+            print(f"[ERROR] [PaymentUtils] Erro ao verificar status: {e}")
             import traceback
             traceback.print_exc()
             return 'pending'
@@ -181,8 +181,8 @@ class PaymentUtils:
         try:
             # Mercado Pago não oferece cancelamento direto via API
             # Os pagamentos expiram automaticamente após o tempo limite
-            print(f"⚠️ Cancelamento manual não disponível para Mercado Pago")
-            print(f"💡 O pagamento {payment_id} expirará automaticamente")
+            print(f"[WARNING] Cancelamento manual não disponível para Mercado Pago")
+            print(f"[INFO] O pagamento {payment_id} expirará automaticamente")
             return False
 
         except Exception as e:
@@ -200,7 +200,7 @@ class PaymentUtils:
             return payment_info
                 
         except Exception as e:
-            print(f"❌ [PaymentUtils] Erro ao obter detalhes do pagamento: {e}")
+            print(f"[ERROR] [PaymentUtils] Erro ao obter detalhes do pagamento: {e}")
             return None
     
     def format_pix_code(self, pix_code: str) -> str:
