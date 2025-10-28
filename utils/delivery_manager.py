@@ -889,7 +889,7 @@ class DeliveryManager:
                 print(f"❌ Canal de entregas {deliveries_channel_id} não encontrado")
                 return
             
-            # Criar embed de entrega (anônimo)
+            # Criar embed de entrega (anônimo) - SEM mostrar produto ou valor
             embed = disnake.Embed(
                 title="✅ Seu Pedido Foi Entregue!",
                 description="Já validamos seu pagamento, agora é só aguardar que estaremos realizando a sua entrega! 🛍️",
@@ -897,22 +897,7 @@ class DeliveryManager:
                 timestamp=datetime.now()
             )
             
-            # Adicionar informações do produto
-            embed.add_field(
-                name="📦 Produto",
-                value=f"**{product['name']}**",
-                inline=True
-            )
-            
-            # Mostrar valor se disponível
-            amount = transaction.get('final_amount') or transaction.get('amount', 0)
-            if amount and amount > 0:
-                embed.add_field(
-                    name="💰 Valor",
-                    value=f"R$ {amount:.2f}",
-                    inline=True
-                )
-            
+            # Adicionar apenas data
             embed.add_field(
                 name="📅 Data",
                 value=f"<t:{int(datetime.now().timestamp())}:D>",
