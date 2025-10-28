@@ -2378,6 +2378,108 @@ async def sync_commands(ctx):
         import traceback
         traceback.print_exc()
 
+# Comando de ajuda
+@bot.command(name='help', aliases=['ajuda'])
+async def help_command(ctx):
+    """Exibe a lista de comandos disponíveis"""
+    embed = disnake.Embed(
+        title="🛠️ Comandos do Bot",
+        description="Lista de comandos organizados por categoria",
+        color=0x8B5CF6
+    )
+    
+    # Comandos de Compras (mais importantes)
+    embed.add_field(
+        name="🛒 Comandos de Compra",
+        value=(
+            "`?produtos` ou `/produtos` - Ver produtos disponíveis\n"
+            "`?buy` ou `/comprar` - Iniciar compra de produto\n"
+            "`/status` - Ver status do pagamento"
+        ),
+        inline=False
+    )
+    
+    # Comandos VIP
+    embed.add_field(
+        name="👑 Comandos VIP",
+        value=(
+            "`/meu_vip` - Ver status da sua assinatura\n"
+            "`/renovar_vip` - Ver planos VIP disponíveis\n"
+            "`/historico_vip` - Ver histórico de assinaturas"
+        ),
+        inline=False
+    )
+    
+    # Comandos de Carteira
+    embed.add_field(
+        name="💰 Comandos de Carteira",
+        value=(
+            "`/saldo` - Ver saldo disponível\n"
+            "`/solicitar_saque` - Solicitar saque via Pix\n"
+            "`/configurar_pix` - Cadastrar chave Pix\n"
+            "`/historico_saques` - Ver saques processados\n"
+            "`/historico_vendas` - Ver histórico de vendas"
+        ),
+        inline=False
+    )
+    
+    # Comandos Admin
+    embed.add_field(
+        name="⚙️ Comandos Admin",
+        value=(
+            "`/admin_criar_produto` - Criar produto\n"
+            "`/admin_criar_vip` - Criar VIP\n"
+            "`/admin_listar_produtos` - Listar produtos\n"
+            "`/admin_deletar_produto` - Deletar produtos\n"
+            "`/adicionar_estoque` - Adicionar códigos\n"
+            "`/criar_cupom` - Criar cupom\n"
+            "`/listar_cupons` - Listar cupons\n"
+            "`/setlog` - Configurar logs\n"
+            "`/set_entregas` - Configurar canal de entregas\n"
+            "`/set_feedback` - Configurar canal de feedback"
+        ),
+        inline=False
+    )
+    
+    # Comandos Admin VIP
+    embed.add_field(
+        name="👑 Comandos Admin VIP",
+        value=(
+            "`/adicionar_vip` - Adicionar VIP manualmente\n"
+            "`/remover_vip` - Remover VIP\n"
+            "`/listar_vips` - Listar VIPs ativos\n"
+            "`/vip_stats` - Estatísticas de VIPs"
+        ),
+        inline=False
+    )
+    
+    # Comandos Admin Comandos
+    embed.add_field(
+        name="🎫 Comandos Admin Tickets",
+        value=(
+            "`/setup_ticket` - Configurar sistema de tickets\n"
+            "`/setup_suporte` - Configurar suporte\n"
+            "`/setup_msg` - Criar mensagem embed\n"
+            "`/verificar_pagamentos` - Verificar pagamentos pendentes"
+        ),
+        inline=False
+    )
+    
+    # Comandos Gerais
+    embed.add_field(
+        name="🔧 Comandos Gerais",
+        value=(
+            "`/ajuda` - Exibe esta mensagem\n"
+            "`?get_emotes` - Listar emojis do servidor\n"
+            "`?clear` - Apagar mensagens"
+        ),
+        inline=False
+    )
+    
+    embed.set_footer(text="Use ? antes do comando ou / para comandos slash")
+    
+    await ctx.send(embed=embed)
+
 # Comando para recarregar produtos
 @bot.command(name='reload_products')
 @commands.has_permissions(administrator=True)
