@@ -758,25 +758,60 @@ class DeliveryManager:
         """Atualiza a última mensagem de pagamento no ticket"""
         try:
             # Buscar últimas mensagens do bot
-            async for message in channel.history(limit=10):
-                if message.author == self.bot.user:
-                    # Verificar se é uma mensagem de pagamento
-                    if message.embeds and any('QR Code' in field.name for embed in message.embeds for field in embed.fields):
-                        # Atualizar embed
-                        new_embed = message.embeds[0]
-                        new_embed.color = disnake.Color.green()
+            async for message in channel.history(limit=20):
+                if message.author == self.bot.user and message.embeds:
+                    embed = message.embeds[0]
+                    
+                    # Verificar se é uma mensagem de pagamento (QR Code)
+                    is_payment_message = False
+                    if embed.fields:
+                        for field in embed.fields:
+                            # Verificar se tem QR Code ou Pix
+                            if 'QR Code' in field.name or 'Pix' in field.name or 'Copiar' in field.name:
+                                is_payment_message = True
+                                break
+                    
+                    if is_payment_message:
+                        # Criar novo embed com status atualizado
+                        new_embed = disnake.Embed(
+                            title=embed.title if embed.title else "💳 Pagamento Pix",
+                            description=embed.description if embed.description else "Seu pagamento foi aprovado!",
+                            color=disnake.Color.green(),
+                            timestamp=datetime.now()
+                        )
                         
-                        # Atualizar título e adicionar status
-                        if new_embed.fields:
-                            for field in new_embed.fields:
-                                if 'Validade' in field.name:
-                                    field.value = status_text
+                        # Copiar campos relevantes (exceto o campo de QR Code)
+                        if embed.fields:
+                            for field in embed.fields:
+                                # Não copiar o QR Code
+                                if 'QR Code' not in field.name and 'Pix' not in field.name:
+                                    new_embed.add_field(
+                                        name=field.name,
+                                        value=field.value,
+                                        inline=field.inline
+                                    )
                         
+                        # Adicionar campo de status
+                        new_embed.add_field(
+                            name="✅ Status",
+                            value=status_text,
+                            inline=False
+                        )
+                        
+                        # Atualizar footer se existir
+                        if embed.footer:
+                            new_embed.set_footer(text="✅ Pagamento Confirmado")
+                        else:
+                            new_embed.set_footer(text="✅ Pagamento Confirmado")
+                        
+                        # Editar a mensagem
                         await message.edit(embed=new_embed)
                         print(f"✅ Status do ticket atualizado para: {status_text}")
                         break
         except Exception as e:
             print(f"Erro ao atualizar status do ticket: {e}")
+            import traceback
+            traceback.print_exc()
     
     async def _publish_delivery_anonymous(self, transaction: dict, product: dict):
         """
