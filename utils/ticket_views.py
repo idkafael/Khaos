@@ -284,6 +284,13 @@ class BackButton(ui.Button):
     async def callback(self, interaction: disnake.Interaction):
         """Callback do botão voltar"""
         if self.return_view and self.return_embed:
+            # Se estamos voltando para a configuração detalhada, adicionar os botões extras
+            if isinstance(self.return_view, TicketConfigView):
+                # Adicionar botões Tipo, Cargo e Produtos
+                self.return_view.add_item(TicketTypeButton())
+                self.return_view.add_item(MentionRoleButton())
+                self.return_view.add_item(ProductFilterButton())
+            
             await interaction.response.edit_message(embed=self.return_embed, view=self.return_view)
         else:
             await interaction.response.send_message("❌ Não foi possível voltar.", ephemeral=True)
@@ -515,9 +522,6 @@ class TicketConfigView(ui.View):
         self.add_item(ImageButton())
         self.add_item(FooterButton())
         self.add_item(ButtonNameButton())
-        self.add_item(TicketTypeButton())
-        self.add_item(MentionRoleButton())
-        self.add_item(ProductFilterButton())
         self.add_item(FinishButton())
     
     async def on_timeout(self):

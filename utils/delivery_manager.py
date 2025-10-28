@@ -527,37 +527,50 @@ class DeliveryManager:
             
             await channel.send(embed=embed)
             
-            # Mensagem de agradecimento
-            thank_you_embed = disnake.Embed(
-                title="💜 Obrigado pela Sua Compra!",
-                description=f"{member.mention}, agradecemos por escolher nosso serviço!",
-                color=0x8B5CF6,
-                timestamp=datetime.now()
-            )
-            
-            thank_you_embed.add_field(
-                name="🙏 Suporte",
-                value="Se tiver qualquer dúvida ou precisar de ajuda, não hesite em nos contatar!",
-                inline=False
-            )
-            
-            # Buscar canal de feedback
-            guild_id_from_transaction = transaction.get('guild_id')
-            feedback_channel_id = await self._get_feedback_channel(guild_id_from_transaction)
-            if feedback_channel_id:
-                feedback_field = f"Avalie-nos em <#{feedback_channel_id}> - Sua opinião é muito importante!"
+            # Verificar se agradecimento já foi enviado para evitar spam
+            transaction_id = transaction.get('id')
+            if not hasattr(self, '_sent_thanks') or transaction_id not in self._sent_thanks:
+                # Inicializar set se não existir
+                if not hasattr(self, '_sent_thanks'):
+                    self._sent_thanks = set()
+                
+                # Marcar como enviado
+                self._sent_thanks.add(transaction_id)
+                
+                # Mensagem de agradecimento
+                thank_you_embed = disnake.Embed(
+                    title="💜 Obrigado pela Sua Compra!",
+                    description=f"{member.mention}, agradecemos por escolher nosso serviço!",
+                    color=0x8B5CF6,
+                    timestamp=datetime.now()
+                )
+                
+                thank_you_embed.add_field(
+                    name="🙏 Suporte",
+                    value="Se tiver qualquer dúvida ou precisar de ajuda, não hesite em nos contatar!",
+                    inline=False
+                )
+                
+                # Buscar canal de feedback
+                guild_id_from_transaction = transaction.get('guild_id')
+                feedback_channel_id = await self._get_feedback_channel(guild_id_from_transaction)
+                if feedback_channel_id:
+                    feedback_field = f"Avalie-nos em <#{feedback_channel_id}> - Sua opinião é muito importante!"
+                else:
+                    feedback_field = "Sua opinião é muito importante para nós. Considere deixar uma avaliação!"
+                
+                thank_you_embed.add_field(
+                    name="⭐ Avalie-nos",
+                    value=feedback_field,
+                    inline=False
+                )
+                
+                thank_you_embed.set_footer(text="Esperamos que você aproveite seu VIP! 🌟")
+                
+                await channel.send(embed=thank_you_embed)
+                print(f"✅ Agradecimento enviado para transação #{transaction_id}")
             else:
-                feedback_field = "Sua opinião é muito importante para nós. Considere deixar uma avaliação!"
-            
-            thank_you_embed.add_field(
-                name="⭐ Avalie-nos",
-                value=feedback_field,
-                inline=False
-            )
-            
-            thank_you_embed.set_footer(text="Esperamos que você aproveite seu VIP! 🌟")
-            
-            await channel.send(embed=thank_you_embed)
+                print(f"⚠️ Agradecimento já enviado para transação #{transaction_id}, pulando...")
             
             # Publicar no canal de entregas (anônimo para autoridade)
             await self._publish_delivery_anonymous(transaction, product)
@@ -672,37 +685,50 @@ class DeliveryManager:
             # Enviar no canal do ticket
             await channel.send(f"{user.mention}", embed=embed)
             
-            # Mensagem de agradecimento
-            thank_you_embed = disnake.Embed(
-                title="💜 Obrigado pela Sua Compra!",
-                description=f"{user.mention}, agradecemos por escolher nosso serviço!",
-                color=0x8B5CF6,
-                timestamp=datetime.now()
-            )
-            
-            thank_you_embed.add_field(
-                name="🙏 Suporte",
-                value="Se tiver qualquer dúvida ou precisar de ajuda, não hesite em nos contatar!",
-                inline=False
-            )
-            
-            # Buscar canal de feedback
-            guild_id_from_transaction = transaction.get('guild_id')
-            feedback_channel_id = await self._get_feedback_channel(guild_id_from_transaction)
-            if feedback_channel_id:
-                feedback_field = f"Avalie-nos em <#{feedback_channel_id}> - Sua opinião é muito importante!"
+            # Verificar se agradecimento já foi enviado para evitar spam
+            transaction_id = transaction.get('id')
+            if not hasattr(self, '_sent_thanks') or transaction_id not in self._sent_thanks:
+                # Inicializar set se não existir
+                if not hasattr(self, '_sent_thanks'):
+                    self._sent_thanks = set()
+                
+                # Marcar como enviado
+                self._sent_thanks.add(transaction_id)
+                
+                # Mensagem de agradecimento
+                thank_you_embed = disnake.Embed(
+                    title="💜 Obrigado pela Sua Compra!",
+                    description=f"{user.mention}, agradecemos por escolher nosso serviço!",
+                    color=0x8B5CF6,
+                    timestamp=datetime.now()
+                )
+                
+                thank_you_embed.add_field(
+                    name="🙏 Suporte",
+                    value="Se tiver qualquer dúvida ou precisar de ajuda, não hesite em nos contatar!",
+                    inline=False
+                )
+                
+                # Buscar canal de feedback
+                guild_id_from_transaction = transaction.get('guild_id')
+                feedback_channel_id = await self._get_feedback_channel(guild_id_from_transaction)
+                if feedback_channel_id:
+                    feedback_field = f"Avalie-nos em <#{feedback_channel_id}> - Sua opinião é muito importante!"
+                else:
+                    feedback_field = "Sua opinião é muito importante para nós. Considere deixar uma avaliação!"
+                
+                thank_you_embed.add_field(
+                    name="⭐ Avalie-nos",
+                    value=feedback_field,
+                    inline=False
+                )
+                
+                thank_you_embed.set_footer(text="Esperamos que você aproveite seu produto! 🌟")
+                
+                await channel.send(embed=thank_you_embed)
+                print(f"✅ Agradecimento enviado para transação #{transaction_id}")
             else:
-                feedback_field = "Sua opinião é muito importante para nós. Considere deixar uma avaliação!"
-            
-            thank_you_embed.add_field(
-                name="⭐ Avalie-nos",
-                value=feedback_field,
-                inline=False
-            )
-            
-            thank_you_embed.set_footer(text="Esperamos que você aproveite seu produto! 🌟")
-            
-            await channel.send(embed=thank_you_embed)
+                print(f"⚠️ Agradecimento já enviado para transação #{transaction_id}, pulando...")
             
             # Atualizar transação como completada
             update_data = {
