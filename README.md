@@ -94,6 +94,14 @@ Bot moderno de vendas no Discord com sistema de tickets automatizado, interface 
 
 ### **Novidades Recentes** 🆕
 
+- ✅ **Sistema de Split de Pagamento** - Implementado (28/10/2025)
+  - 💰 **Split Automático** - Admins recebem pagamentos direto na conta Mercado Pago
+  - 🔧 **Comissão Fixa** - R$ 0,80 por transação para a plataforma
+  - ⚙️ **Configuração Simples** - Comando `/configurar_pix` para vincular Account ID
+  - 📊 **Monitoramento** - Comando `/status_pix` para verificar configuração
+  - 🔄 **Fallback Inteligente** - Sistema funciona com ou sem split configurado
+  - **Benefícios:** Transparência total, sem necessidade de repasse manual, escalável infinitamente
+
 - ✅ **3 Melhorias de UX de Alto Impacto** - Implementado (24/10/2025)
   - 💳 **Botão "Gerar Pagamento"** - Zero digitação, apenas um clique!
   - ⏳ **Mensagens de Loading** - Feedback visual constante durante processamento
@@ -165,6 +173,10 @@ python bot.py
 /setup_ticket          # Configurar sistema de tickets de compra
 /setup_suporte         # Configurar sistema de tickets de suporte
 /close_ticket          # Fechar ticket manualmente
+
+# Comandos no Discord (Admin) - Split de Pagamento
+/configurar_pix        # Configurar split de pagamento (Account ID Mercado Pago)
+/status_pix           # Verificar status da configuração de split
 
 # Comandos no Discord (Usuário)
 /produtos              # Ver produtos disponíveis do servidor
@@ -299,6 +311,12 @@ BOT_PREFIX=?
 # Isso adicionará: campo unlimited_stock para produtos com estoque infinito
 ```
 
+**PASSO 2.7 - Execute o arquivo `database_split_payment_setup.sql`**
+```bash
+# Abra o arquivo database_split_payment_setup.sql e cole todo conteúdo no SQL Editor
+# Isso adicionará: campos de split de pagamento para sistema de comissões
+```
+
 **PASSO 3 - DESABILITAR RLS (Row Level Security) - ESSENCIAL!**
 ```sql
 -- Execute este SQL para permitir que o bot acesse as tabelas
@@ -402,6 +420,103 @@ Usuário → Paga → Bot detecta → Entrega automática
 - ✅ Comando `/comprar` **sem parâmetros** - detecta produto automaticamente
 - ✅ Mensagens claras e instruções diretas
 - ✅ Logs detalhados para troubleshooting
+
+## 💰 Sistema de Split de Pagamento
+
+Sistema revolucionário que permite que administradores de servidores Discord recebam pagamentos diretamente em suas contas Mercado Pago, com split automático de R$ 0,80 por transação para a plataforma.
+
+### Como Funciona
+
+**Com Split Configurado:**
+- Cliente paga R$ 50,00 via Pix
+- Mercado Pago divide automaticamente:
+  - R$ 49,20 → Conta do Admin (direto)
+  - R$ 0,80 → Sua Conta (comissão fixa)
+- Bot entrega produto automaticamente
+
+**Sem Split (Modo Centralizado):**
+- Cliente paga R$ 50,00 via Pix
+- Todo valor vai para sua conta
+- Você repassa manualmente (como antes)
+
+### Configuração para Administradores
+
+#### 1. Configurar Split
+```
+/configurar_pix
+```
+- Abre modal para inserir Account ID do Mercado Pago
+- Instruções detalhadas de onde encontrar o ID
+- Validação automática do formato
+- Confirmação com embed explicativo
+
+#### 2. Verificar Status
+```
+/status_pix
+```
+- Mostra se split está configurado
+- Account ID mascarado para segurança
+- Instruções para configurar se necessário
+- Status da configuração atual
+
+### Pré-requisitos
+
+**Para Administradores:**
+- ✅ Conta Mercado Pago verificada
+- ✅ Account ID válido (8-12 dígitos)
+- ✅ Permissões de administrador no Discord
+
+**Para Plataforma:**
+- ⚠️ Conta Mercado Pago deve ser **Marketplace aprovado**
+- Se não aprovado, sistema usa modo centralizado até aprovação
+
+### Como Encontrar Account ID
+
+1. Acesse: https://www.mercadopago.com.br/developers
+2. Faça login na sua conta
+3. Vá em **"Suas aplicações"** ou **"Credenciais"**
+4. Copie o **"User ID"** ou **"Account ID"**
+5. Cole no comando `/configurar_pix`
+
+### Benefícios
+
+✅ **Para Admins de Servidores:**
+- Recebem dinheiro direto na conta
+- Sem necessidade de repasse manual
+- Transparência total para clientes
+- Controle completo sobre recebimentos
+
+✅ **Para Você (Plataforma):**
+- Comissão fixa de R$ 0,80 por venda
+- Sistema escalável infinitamente
+- Um único webhook para todos os servidores
+- Sem necessidade de gerenciar repasses
+
+✅ **Para Clientes:**
+- Pagamento mais confiável
+- Dinheiro vai direto para quem vende
+- Menos objeções sobre saque
+- Transparência total do processo
+
+### Limitações Importantes
+
+**Aprovação Marketplace:**
+- Split automático só funciona se sua conta for **Marketplace aprovado**
+- Se não for aprovado, o código estará preparado mas split não funcionará
+- Sistema terá fallback para modo centralizado até aprovação
+
+**Para Solicitar Aprovação:**
+1. Acesse: https://www.mercadopago.com.br/developers
+2. Vá em "Marketplace"
+3. Solicite aprovação para split de pagamentos
+4. Aguarde aprovação (pode demorar dias/semanas)
+
+### Banco de Dados
+
+Execute o arquivo `database_split_payment_setup.sql` no Supabase para adicionar:
+- Campo `mercadopago_account_id` na tabela `guild_config`
+- Campos de split na tabela `transactions`
+- Índices para performance
 
 ## 🆘 Sistema de Suporte Customizado
 
