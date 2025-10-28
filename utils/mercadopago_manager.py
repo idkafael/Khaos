@@ -112,7 +112,7 @@ class MercadoPagoManager:
             print(f"📦 [MP] Item completo: {item_data}")
             print(f"📦 [MP] Pontos esperados: title(2) + description(2) + quantity(2) + unit_price(2) + category_id(3) + id(3) = 14 pontos")
             
-            # Criar pagamento
+            # Criar pagamento com statement_descriptor para ganhar 10 pontos
             payment_data = {
                 "transaction_amount": round(float(amount), 2),  # Sempre 2 casas decimais
                 "description": description,
@@ -124,6 +124,16 @@ class MercadoPagoManager:
                     "platform": "discord_bot",
                     "version": "2.0",
                     "device_id": "discord_bot_khaos"  # Identificador do dispositivo (ganha 2 pontos!)
+                },
+                "payment_methods": {
+                    "excluded_payment_methods": [
+                        {"id": "account_money"}  # Excluir efectivo em cuenta que não é válido
+                    ],
+                    "excluded_payment_types": [
+                        {"id": "ticket"},  # Excluir outros meios exceto Pix
+                        {"id": "atm"}
+                    ],
+                    "installments": 1
                 }
             }
             
