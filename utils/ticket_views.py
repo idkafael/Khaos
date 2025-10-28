@@ -502,6 +502,7 @@ class TicketConfigView(ui.View):
             'ticket_type': ticket_type,
             'mention_role': mention_role,  # Role ID para mencionar (passado como parâmetro)
             'product_ids': product_ids,  # IDs dos produtos (passado como parâmetro)
+            'ticket_timeout': 2,  # Tempo de fechamento automático em minutos (padrão: 2 minutos)
             'author': None,
             'thumbnail': None,
             'image': None,
@@ -522,6 +523,7 @@ class TicketConfigView(ui.View):
         self.add_item(ImageButton())
         self.add_item(FooterButton())
         self.add_item(ButtonNameButton())
+        self.add_item(TicketTimeoutButton())
         self.add_item(FinishButton())
     
     async def on_timeout(self):
@@ -606,6 +608,14 @@ class TicketConfigView(ui.View):
                 inline=True
             )
         
+        # Adicionar informações sobre timeout do ticket
+        timeout_hours = self.config.get('ticket_timeout', 2)
+        embed.add_field(
+            name="⏱️ Fechamento Automático",
+            value=f"Ticket será fechado automaticamente após **{timeout_hours} minutos**",
+            inline=True
+        )
+        
         # Adicionar informações sobre filtro de produtos (apenas para payment)
         if self.config['product_ids'] and self.config.get('ticket_type') == 'payment':
             embed.add_field(
@@ -687,6 +697,14 @@ class TicketConfigView(ui.View):
                     value=f"<@&{self.config['mention_role']}>",
                     inline=True
                 )
+            
+            # Adicionar informações sobre timeout do ticket
+            timeout_hours = self.config.get('ticket_timeout', 2)
+            embed.add_field(
+                name="⏱️ Fechamento Automático",
+                value=f"Ticket será fechado automaticamente após **{timeout_hours} minutos**",
+                inline=True
+            )
             
             # Adicionar informações sobre filtro de produtos (apenas para payment)
             if self.config['product_ids'] and self.config.get('ticket_type') == 'payment':
@@ -1412,6 +1430,89 @@ class MentionRoleButton(ui.Button):
             current_role_mention = f"<@&{current_role_id}>"
         modal = MentionRoleModal(current_role_mention)
         await interaction.response.send_modal(modal)
+
+class TicketTimeoutSelect(ui.Select):
+    """Select menu para escolher tempo de fechamento automático"""
+    
+    def __init__(self):
+        options = [
+            disnake.SelectOption(
+                label="1 minuto",
+                description="Fechamento muito rápido",
+                value="1",
+                emoji="⚡"
+            ),
+            disnake.SelectOption(
+                label="6 horas",
+                description="Fechamento no mesmo dia",
+                value="360",
+                emoji="🌅"
+            ),
+            disnake.SelectOption(
+                label="12 horas",
+                description="Fechamento após meio dia",
+                value="720",
+                emoji="🌞"
+            ),
+            disnake.SelectOption(
+                label="24 horas",
+                description="Fechamento no dia seguinte",
+                value="1440",
+                emoji="⏰"
+            )
+        ]
+        
+        super().__init__(
+            placeholder="Escolha o tempo de fechamento...",
+            min_values=1,
+            max_values=1,
+            options=options
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        """Callback quando usuário seleciona um tempo"""
+        selected_minutes = int(self.values[0])
+        
+        view = active_config_views.get(interaction.guild_id)
+        if view:
+            view.config['ticket_timeout'] = selected_minutes
+            if view.message:
+                await view.message.edit(embed=view._create_embed(), view=view)
+            
+            # Converter minutos para formato legível
+            if selected_minutes < 60:
+                time_text = f"{selected_minutes} minuto(s)"
+            elif selected_minutes < 1440:
+                time_text = f"{selected_minutes // 60} hora(s)"
+            else:
+                time_text = f"{selected_minutes // 60} hora(s)"
+            
+            await interaction.response.send_message(f"✅ Tempo de fechamento atualizado para {time_text}!", ephemeral=True)
+        else:
+            await interaction.response.send_message("❌ Sessão expirada.", ephemeral=True)
+
+class TicketTimeoutButton(ui.Button):
+    """Botão para editar tempo de fechamento do ticket"""
+    
+    def __init__(self):
+        super().__init__(
+            label="Fechamento",
+            style=disnake.ButtonStyle.secondary,
+            emoji="⏰",
+            custom_id="edit_ticket_timeout"
+        )
+    
+    async def callback(self, interaction: disnake.Interaction):
+        # Criar view temporária com select menu
+        view = ui.View(timeout=60)
+        select = TicketTimeoutSelect()
+        view.add_item(select)
+        
+        await interaction.response.send_message(
+            "⏱️ **Escolha o tempo de fechamento automático do ticket:**",
+            view=view,
+            ephemeral=True
+        )
 
 class FinishButton(ui.Button):
     """Botão para finalizar configuração"""
